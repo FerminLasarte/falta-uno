@@ -1,0 +1,50 @@
+[
+  {
+    "id": "pareja_serie",
+    "de": "Sofi",
+    "texto": "¿Vas a estar con el teléfono toda la noche? Dijimos que veíamos el capítulo.",
+    "minutoDesde": 1155,
+    "minutoHasta": 1200,
+    "probabilidad": 70,
+    "drenajePorAccion": 1.5,
+    "costoAtender": 15,
+    "efectosAtender": { "moral": 6 },
+    "registrarSiIgnorada": "pareja_ignorada"
+  },
+  {
+    "id": "jefe_planilla",
+    "de": "Jefe",
+    "texto": "Necesito la planilla actualizada antes del lunes. ¿La podés dejar lista hoy?",
+    "minutoDesde": 1165,
+    "minutoHasta": 1215,
+    "probabilidad": 55,
+    "drenajePorAccion": 1.2,
+    "costoAtender": 20,
+    "efectosAtender": { "moral": 2, "dinero": 2000 },
+    "registrarSiIgnorada": "trabajo_ignorado"
+  },
+  {
+    "id": "cancha_confirma",
+    "de": "Complejo Los Álamos",
+    "texto": "Buenas, ¿confirman la 21 o largamos la cancha? Tenemos gente esperando.",
+    "minutoDesde": 1185,
+    "minutoHasta": 1225,
+    "probabilidad": 85,
+    "drenajePorAccion": 2.0,
+    "costoAtender": 5,
+    "efectosAtender": { "moral": 3 },
+    "registrarSiIgnorada": "ignorado"
+  },
+  {
+    "id": "grupo_incendiado",
+    "de": "Grupo Los Pibes F5",
+    "texto": "37 mensajes sin leer. Están discutiendo por quién puso mal la última vez.",
+    "minutoDesde": 1200,
+    "minutoHasta": 1240,
+    "probabilidad": 60,
+    "drenajePorAccion": 1.0,
+    "costoAtender": 10,
+    "efectosAtender": { "moral": -2 },
+    "registrarSiIgnorada": "roce"
+  }
+]

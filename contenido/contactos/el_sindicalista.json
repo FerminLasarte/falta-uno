@@ -1,0 +1,68 @@
+{
+  "id": "el_sindicalista",
+  "nombre": "Beto",
+  "rol": "defensor",
+  "habilidad": 64,
+  "rasgos": [
+    "capitan"
+  ],
+  "probabilidadBajaInicial": 20,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Contá conmigo, pero te aviso una cosa.",
+        "Si el complejo te quiere cobrar de más, me avisás a mí y lo arreglamos. Con esa gente ya tuve palabras."
+      ],
+      "opciones": [
+        {
+          "id": "aceptar_ayuda",
+          "texto": "Te tomo la palabra, Beto. Hablales vos.",
+          "costoReloj": 4,
+          "efectos": {
+            "moral": -2,
+            "dinero": 4000,
+            "probabilidadBaja": -15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "rechazar_ayuda",
+          "texto": "Está todo bien con la cancha, gracias igual.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": 2
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[No abrir esa puerta]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Ahí estamos entonces. Yo llevo pecheras."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Gracias Beto. Los 1500 cuando puedas.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

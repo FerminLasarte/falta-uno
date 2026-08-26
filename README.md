@@ -15,8 +15,8 @@ cancelaciones de último minuto y las crisis personales.
 
 ## Estado
 
-🟡 **Pre-producción.** No hay código todavía. El diseño está cerrado en la v2 del GDD y la Fase 1
-(núcleo de simulación) es lo próximo.
+🟢 **Fase 1 completa.** El núcleo de simulación funciona, tiene 78 tests y se puede jugar un viernes
+entero por consola. No hay interfaz gráfica todavía: eso es la Fase 3.
 
 ## Documentación
 
@@ -79,7 +79,58 @@ posible para descubrirlo.
 
 ## Desarrollo
 
-Todavía no hay setup. Se documenta acá cuando arranque la Fase 1.
+```bash
+npm install
+```
+
+| Comando | Qué hace |
+|---|---|
+| `npm run jugar` | Juga un viernes completo por consola. Acepta stdin por pipe. |
+| `npm run validar` | Valida todo el contenido y reporta el volumen escrito. |
+| `npm run bot -- 500` | Corre 500 viernes headless por perfil y reporta balance. |
+| `npm run bot -- 1 --narrar` | Imprime un partido completo con su desglose y narración. |
+| `npm test` | Corre la suite. |
+| `npm run typecheck` | `tsc --noEmit` en modo estricto. |
+
+`SEMILLA=loquesea npm run jugar` fija la semilla del RNG: la misma semilla y las mismas acciones
+producen exactamente la misma partida.
+
+### Estructura
+
+```
+src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
+  rng.ts         RNG determinista y serializable.
+  tiempo.ts      El reloj que avanza por acción.
+  partida.ts     El agregado: estado, comandos, triggers.
+  roster.ts      Composición del plantel, química y roces.
+  resolucion.ts  El algoritmo del partido y la narración atribuida.
+  bitacora.ts    Registro de por qué pasó cada cosa.
+src/datos/       Schema, validador de grafo y carga de contenido.
+src/cli/         Herramientas de consola: jugar, validar, bot.
+contenido/       Los datos del juego. Un archivo por contacto.
+tests/           78 tests sobre el núcleo y el contenido.
+```
+
+### El contrato del contenido
+
+`npm run validar` falla si un árbol de diálogo tiene un link roto, un nodo inalcanzable, ids de
+opción duplicados, un campo que no existe en el schema o un contacto al que es imposible decirle
+que sí. Un error de contenido rompe la validación, nunca la partida.
+
+### Balance
+
+El bot juega miles de viernes contra el núcleo headless. Estado actual (300 viernes por perfil):
+
+| Perfil | Llega a 10 | Gana | Moral al final |
+|---|---|---|---|
+| El Acomodado | 100% | 62% | 21 |
+| El Pibe de Barrio | 100% | 66% | 29 |
+| El Oficinista | 100% | 63% | 24 |
+
+**Pendiente de la Fase 6:** un jugador competente arma el equipo el 100% de las veces. La presión de
+moral y de reloj funciona (se termina con ~20 de moral y usando 112 de los 120 minutos), pero con 12
+contactos para 10 lugares y todos convencibles, no hay forma real de fracasar. La dificultad tiene
+que salir del contenido: menos margen, más contactos que dicen que no, más interrupciones.
 
 ## Licencia
 

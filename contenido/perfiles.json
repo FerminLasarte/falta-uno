@@ -1,0 +1,29 @@
+[
+  {
+    "id": "acomodado",
+    "nombre": "El Acomodado",
+    "moralInicial": 60,
+    "dineroInicial": 22000,
+    "ventaja": "Empezás con plata de sobra: podés tapar agujeros pagando.",
+    "desventaja": "Poca moral inicial. Todos esperan que vos pongas.",
+    "contactoUnico": "el_politico"
+  },
+  {
+    "id": "pibe_de_barrio",
+    "nombre": "El Pibe de Barrio",
+    "moralInicial": 92,
+    "dineroInicial": 3000,
+    "ventaja": "Moral alta y la gente te contesta rápido.",
+    "desventaja": "No tenés un peso. Dependés de que cada uno ponga lo suyo.",
+    "contactoUnico": "el_kiosquero"
+  },
+  {
+    "id": "oficinista",
+    "nombre": "El Oficinista",
+    "moralInicial": 78,
+    "dineroInicial": 9000,
+    "ventaja": "Balance medio en todo.",
+    "desventaja": "El jefe te interrumpe mucho más seguido.",
+    "contactoUnico": "el_sindicalista"
+  }
+]

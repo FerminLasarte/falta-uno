@@ -1,0 +1,69 @@
+{
+  "id": "el_politico",
+  "nombre": "Doctor Ferreyra",
+  "rol": "delantero",
+  "habilidad": 44,
+  "rasgos": [
+    "impuntual"
+  ],
+  "probabilidadBajaInicial": 25,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Querido, qué gusto. Contá conmigo siempre.",
+        "Ahora, una consulta: ¿el complejo ese es el de la calle Rivadavia? Porque el dueño me debe un favor. Podría conseguirte la cancha sin seña."
+      ],
+      "opciones": [
+        {
+          "id": "aceptar_favor",
+          "texto": "Si podés arreglarlo, te lo agradezco muchísimo.",
+          "costoReloj": 8,
+          "efectos": {
+            "moral": -5,
+            "dinero": 9000,
+            "probabilidadBaja": -10,
+            "registrar": "favor"
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "pagar_igual",
+          "texto": "Gracias, pero prefiero pagarla y listo.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": 3
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Mejor no deberle nada]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Perfecto. Nos vemos en la cancha. Guardame un lugar adelante que atrás ya no corro."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Ahí quedás. Los 1500 cuando puedas.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

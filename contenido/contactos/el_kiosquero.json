@@ -1,0 +1,87 @@
+{
+  "id": "el_kiosquero",
+  "nombre": "Don Zenón",
+  "rol": "mediocampista",
+  "habilidad": 63,
+  "rasgos": [
+    "capitan"
+  ],
+  "probabilidadBajaInicial": 15,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Yo cierro el kiosco 20:30, así que llego.",
+        "Y mirá, si te falta gente tengo dos pibes del barrio que juegan bien y andan al pedo. ¿Los llamo?"
+      ],
+      "opciones": [
+        {
+          "id": "aceptar_pibes",
+          "texto": "Llamalos, Don Zenón. Me salvás la noche.",
+          "costoReloj": 6,
+          "efectos": {
+            "moral": -2,
+            "dineroAportado": 3000,
+            "probabilidadBaja": -10,
+            "registrar": "favor"
+          },
+          "siguiente": "trae"
+        },
+        {
+          "id": "solo_el",
+          "texto": "Con vos ya estoy bien, gracias.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": 1
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Después le escribo]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "trae": {
+      "mensajes": [
+        "Listo, van los dos y ya pusieron su parte. Gente seria."
+      ],
+      "opciones": [
+        {
+          "id": "confirma",
+          "texto": "Gracias de verdad. Nos vemos a las 21.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500,
+            "moral": 4
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Ahí estoy. Llevo agua fría para todos."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Genial. Los 1500 cuando pueda.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

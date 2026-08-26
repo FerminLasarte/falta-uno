@@ -1,0 +1,91 @@
+{
+  "id": "fede_el_habilidoso",
+  "nombre": "Fede",
+  "rol": "mediocampista",
+  "habilidad": 85,
+  "rasgos": [
+    "habilidoso"
+  ],
+  "probabilidadBajaInicial": 40,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Depende quién va.",
+        "Si está el Tano paso, la última vez me pegó tres patadas y se rió."
+      ],
+      "opciones": [
+        {
+          "id": "negar",
+          "texto": "El Tano no viene hoy.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -3,
+            "probabilidadBaja": -20,
+            "enojo": 5
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "sincerar",
+          "texto": "Va a estar, pero jugás en otro equipo. Te lo prometo.",
+          "costoReloj": 4,
+          "efectos": {
+            "moral": -2,
+            "probabilidadBaja": -5
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "apurar",
+          "texto": "Fede, es un picadito de barrio, no la Champions.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -3,
+            "probabilidadBaja": 35,
+            "enojo": 30,
+            "registrar": "apuro"
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Dejarlo en visto]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Bueno, voy. Pero si me lesionan me debés una."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Anotado. Pasame los 1500.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Dale, vení nomás.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 20
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

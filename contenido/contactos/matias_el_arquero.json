@@ -1,0 +1,92 @@
+{
+  "id": "matias_el_arquero",
+  "nombre": "Matías",
+  "rol": "arquero",
+  "habilidad": 79,
+  "rasgos": [
+    "habilidoso",
+    "impuntual"
+  ],
+  "probabilidadBajaInicial": 35,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Che, justo hoy tenía cumple de mi sobrina.",
+        "Puedo hacer un esfuerzo pero llego 21:15 mínimo. ¿Te sirve?"
+      ],
+      "opciones": [
+        {
+          "id": "esperamos",
+          "texto": "Te esperamos, arrancamos con uno menos.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
+            "probabilidadBaja": -15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "favor",
+          "texto": "Te paso a buscar yo así llegás a horario.",
+          "costoReloj": 8,
+          "efectos": {
+            "moral": -7,
+            "probabilidadBaja": -35,
+            "registrar": "favor"
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "apurar",
+          "texto": "Matías, siempre lo mismo con vos. O venís 21 o no venís.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -3,
+            "probabilidadBaja": 35,
+            "enojo": 30,
+            "registrar": "apuro"
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Dejarlo en visto]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Dale, me organizo. Anotame."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Buenísimo. Pasame los 1500.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Ahí quedás anotado, la plata la vemos allá.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 20
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

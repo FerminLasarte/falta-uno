@@ -1,0 +1,77 @@
+{
+  "id": "juanma",
+  "nombre": "Juanma",
+  "rol": "mediocampista",
+  "habilidad": 61,
+  "rasgos": [
+    "impuntual"
+  ],
+  "probabilidadBajaInicial": 25,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Estoy saliendo del laburo recién.",
+        "Si llego, llego justo. ¿Arrancan puntual?"
+      ],
+      "opciones": [
+        {
+          "id": "flexible",
+          "texto": "Arrancamos cuando estés. Vení tranquilo.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "firme",
+          "texto": "21 en punto. Si llegás tarde entrás cambiado.",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 15,
+            "enojo": 10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[No insistir]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Dale, ahí voy derecho para allá."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Perfecto. Los 1500 por transferencia.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Listo, quedás anotado.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 15
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

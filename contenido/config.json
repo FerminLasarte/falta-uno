@@ -1,0 +1,9 @@
+{
+  "horaInicio": 1140,
+  "horaCorte": 1260,
+  "jugadoresNecesarios": 10,
+  "senaCancha": 15000,
+  "costoVacante": 5000,
+  "umbralBaja": 80,
+  "minutoRevision": 1230
+}

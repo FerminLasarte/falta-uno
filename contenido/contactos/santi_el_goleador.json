@@ -1,0 +1,92 @@
+{
+  "id": "santi_el_goleador",
+  "nombre": "Santi",
+  "rol": "delantero",
+  "habilidad": 82,
+  "rasgos": [
+    "habilidoso",
+    "cagon"
+  ],
+  "probabilidadBajaInicial": 30,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "¿Cuánto sale?",
+        "Porque la última vez pagué 1500 y jugamos media hora."
+      ],
+      "opciones": [
+        {
+          "id": "explicar",
+          "texto": "1500 y jugamos la hora completa, te lo garantizo.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "invitar",
+          "texto": "Hoy va por mi cuenta. Vení.",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -1500,
+            "probabilidadBaja": -30,
+            "moral": -1
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "apurar",
+          "texto": "Santi, es lo mismo de siempre. ¿Venís o no?",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -3,
+            "probabilidadBaja": 30,
+            "enojo": 25,
+            "registrar": "apuro"
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Dejarlo en visto]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Dale, ahí voy."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Listo. Mandame la transferencia.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Quedás anotado.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 20
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

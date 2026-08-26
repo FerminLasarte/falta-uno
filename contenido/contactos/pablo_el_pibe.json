@@ -1,0 +1,76 @@
+{
+  "id": "pablo_el_pibe",
+  "nombre": "Pablo",
+  "rol": "delantero",
+  "habilidad": 74,
+  "rasgos": [
+    "habilidoso"
+  ],
+  "probabilidadBajaInicial": 35,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Uh, hoy tenía juntada.",
+        "Pero si me decís que hace falta me escapo un rato."
+      ],
+      "opciones": [
+        {
+          "id": "necesito",
+          "texto": "Te necesito, Pablo. Sin vos no llego a diez.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
+            "probabilidadBaja": -20
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "restar",
+          "texto": "Si no podés no pasa nada, ya tengo casi todo.",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 30
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Que vaya a su juntada]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Bueno, voy un rato y me escapo temprano."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Dale. Pasame los 1500 ahora así reservo.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Vení nomás, la plata después.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 30
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

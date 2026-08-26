@@ -1,0 +1,69 @@
+{
+  "id": "el_tano",
+  "nombre": "El Tano",
+  "rol": "defensor",
+  "habilidad": 58,
+  "rasgos": [
+    "rustico",
+    "aguantador"
+  ],
+  "probabilidadBajaInicial": 10,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Yo juego siempre, sabés que sí.",
+        "¿Va a estar el pibe ese que se hace el Messi? Porque si se hace el vivo lo cruzo."
+      ],
+      "opciones": [
+        {
+          "id": "tranquilizar",
+          "texto": "Tano, es un picadito. Vengan a jugar y listo.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -5
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "azuzar",
+          "texto": "Va a estar. Marcalo vos que le sacás las ganas.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
+            "enojo": 15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Dejarlo para después]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Ahí estoy. Llevo la pelota buena."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Grande Tano. Los 1500 cuando puedas.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "id": "el_gordo_ruben",
+  "nombre": "Rubén",
+  "rol": "arquero",
+  "habilidad": 55,
+  "rasgos": [
+    "quejoso"
+  ],
+  "probabilidadBajaInicial": 15,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Uhh loco, hoy tengo la rodilla hecha percha.",
+        "Igual si no consiguen a nadie más me pongo los guantes, pero avisame ya porque después no salgo de casa."
+      ],
+      "opciones": [
+        {
+          "id": "agradecer",
+          "texto": "Sos un fenómeno Rubencito. Vos al arco y listo.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "apurar",
+          "texto": "Dale que no tengo tiempo, ¿venís o no venís?",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -3,
+            "probabilidadBaja": 25,
+            "enojo": 25,
+            "registrar": "apuro"
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[No contestarle]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Bueno dale, contá conmigo. Pero pongan a alguien que marque adelante mío, eh."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Listo. Pasame los 1500 así reservo.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Después arreglamos la plata, vení nomás.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 15,
+            "moral": -1
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

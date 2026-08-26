@@ -1,0 +1,94 @@
+{
+  "id": "carlos_el_quejoso",
+  "nombre": "Carlos",
+  "rol": "defensor",
+  "habilidad": 62,
+  "rasgos": [
+    "quejoso",
+    "impuntual"
+  ],
+  "probabilidadBajaInicial": 30,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Otra vez el viernes...",
+        "Mirá, la última vez terminamos jugando 6 contra 4 porque no vino nadie, y encima puse yo la cancha. No me hagas eso de nuevo.",
+        "¿Ya hay confirmados o me estás escribiendo a todos al mismo tiempo?"
+      ],
+      "opciones": [
+        {
+          "id": "sincero",
+          "texto": "Estoy armando ahora. Sos de los primeros a los que le escribo.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
+            "probabilidadBaja": -15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "mentir",
+          "texto": "Ya somos ocho, faltás vos nomás.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": 20,
+            "enojo": 10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "apurar",
+          "texto": "Carlos, no arranques. ¿Venís sí o no?",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -4,
+            "probabilidadBaja": 30,
+            "enojo": 35,
+            "registrar": "apuro"
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Cerrar el chat]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Bueno. Pero si somos menos de diez yo me vuelvo, te aviso."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Somos diez. Pasame los 1500 y quedate tranquilo.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Vení tranquilo, después vemos.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 25,
+            "moral": -2
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}
