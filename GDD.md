@@ -1,0 +1,378 @@
+# Documento de Diseño: "Falta Uno"
+
+**Versión 2.0** — 26 de agosto de 2026
+Revisión del documento original (v1). Las secciones 1 a 7 incorporan las correcciones
+acordadas; la sección 8 reúne ideas propuestas que todavía no son decisiones tomadas.
+
+### Qué cambió respecto de la v1
+
+| Tema | v1 | v2 |
+|---|---|---|
+| Empaquetado | Tauri **o** Electron | **Electron** (decidido) |
+| Lenguaje / UI | JS vanilla o framework | **TypeScript + Svelte** (decidido) |
+| Reloj del viernes | Tiempo real acelerado (1:10) | **Avanza por acción** |
+| Perder el partido | "Se empieza de nuevo" | No termina la campaña; sube la dificultad |
+| Gestión semanal | Menú estático aparte | Dentro del mismo teléfono |
+| Resolución del partido | Porcentaje + narración | Narración **atribuida** a decisiones concretas |
+| Autoría de diálogo | JSON crudo, un archivo | Un archivo por contacto, validado en build |
+| Hoja de ruta | Audio y empaquetado en Fase 6 | Empaquetado en Fase 2, audio en Fase 3 |
+
+---
+
+## 1. Ficha Técnica
+
+- **Género:** Gestión de Recursos / Thriller Psicológico de Interfaz / Texto interactivo.
+- **Plataforma:** PC (Steam) — Windows, macOS, Linux. **Steam Deck como objetivo de primera clase.**
+- **Motor / Tecnología:** HTML5, CSS3, **TypeScript** sobre **Svelte**, empaquetado con **Electron**.
+- **Arquitectura:** Núcleo de simulación puro (sin DOM) + capa de vista reactiva. Estado en memoria,
+  contenido consumido desde archivos de datos validados por schema.
+- **Estilo Visual:** UI responsiva imitando una app de mensajería móvil. Diseño limpio y minimalista
+  que contraste con el caos de las notificaciones.
+
+### Por qué Electron y no Tauri
+
+Se evaluó Tauri y se descartó. Su ventaja es el tamaño del binario (~10 MB contra ~180 MB), que en
+Steam es irrelevante: los usuarios bajan juegos de varios GB. Sus desventajas sí pesan:
+
+- Tauri usa el **webview del sistema** (WebView2 / WKWebView / WebKitGTK). El juego se ve, suena y se
+  comporta distinto según la máquina. WebKitGTK en Linux es el punto flojo histórico — justo el
+  entorno del Steam Deck.
+- Electron empaqueta Chromium: un solo runtime, mismo render y mismos codecs de audio en las tres
+  plataformas.
+- **Steamworks** (logros, cloud saves, rich presence) tiene camino trillado en Node vía `steamworks.js`.
+  En Tauri hay que armar la plomería desde Rust.
+
+### Por qué no un motor de juego
+
+La UI *es* el juego: listas de chat con scroll, burbujas, texto rico, tipografía, notificaciones.
+No hay física, sprites ni escenas 3D. El rich text y el layout de Godot y Unity son notablemente
+peores que HTML/CSS para esto, y no aportan nada que este proyecto necesite.
+
+### Decisiones técnicas de base
+
+- **TypeScript, no JavaScript.** El contenido serán cientos de nodos de diálogo enlazados entre sí.
+  Con tipos y validación de schema en build, un link roto falla al compilar en vez de fallar en la
+  cara de un jugador.
+- **El núcleo de simulación no toca el DOM.** Ni una referencia. Habilita tests headless y bots de
+  balanceo. Es regla dura, no aspiración.
+- **RNG con semilla, siempre.** Sin esto no se puede reproducir el bug que reporta un jugador ni
+  testear balance de forma comparable.
+- **Navegación por foco desde el día 1.** Nada que dependa de `hover`, roving tabindex, todo
+  alcanzable con teclado y gamepad. Es barato si se planifica y carísimo de retrofitear.
+- **Texto por claves, no inline.** Aunque el lanzamiento sea sólo en español rioplatense.
+
+---
+
+## 2. El Concepto y Objetivo del Juego
+
+Sos el organizador de un equipo de fútbol amateur inscripto en un torneo local. Tu misión es asegurar
+la asistencia de exactamente 10 jugadores con roles funcionales para el partido de las 21:00, gestionar
+el pago de la seña de la cancha y sobrevivir al estrés de las excusas, las cancelaciones de último
+minuto y las crisis personales.
+
+### Bucle de Jugabilidad (Core Loop)
+
+1. **Gestión Semanal.** Decisiones rápidas de texto sobre tu vida laboral y personal que afectan tus
+   recursos iniciales para el viernes. **Ocurre dentro del mismo teléfono**, como mensajes que van
+   llegando durante la semana — no es una pantalla ni un menú aparte.
+2. **El Viernes de Terror (gameplay principal).** De 19:00 a 21:00 virtuales gestionás la agenda de
+   contactos para cerrar la lista de 10.
+3. **La Simulación del Partido (resolución).** El sistema calcula el resultado en base a tus elecciones
+   y lo narra atribuyendo cada evento a una decisión concreta.
+4. **Consecuencia.** El resultado modifica tus recursos y la dificultad de la semana siguiente. La
+   campaña continúa.
+
+### Condiciones de derrota (corrección importante respecto de la v1)
+
+La v1 decía "si se pierde, se empieza de nuevo", y a la vez decía que perder aumenta la dificultad.
+Son cosas incompatibles. Queda definido así:
+
+> **Perder un partido no termina la campaña.** Es un mal resultado: menos dinero, menos prestigio,
+> contactos más difíciles de convencer la semana siguiente.
+
+Las condiciones de derrota reales son las de recursos, y son las únicas que cortan la campaña:
+
+- **Moral en 0** → colapsás por estrés y no vas a jugar.
+- **Bancarrota** → a las 21:00 no llegás a 10 jugadores y no tenés plata para cubrir las vacantes.
+- **Disolución del equipo** → varias fechas consecutivas sin poder armar el partido.
+
+El motivo es de diseño de contenido, no de piedad: en un juego de texto, reiniciar obliga a releer
+material ya visto y quema el contenido a una velocidad brutal.
+
+### El primer viernes es el tutorial
+
+No hay tutorial explícito. El primer partido es un **amistoso** con pocos contactos disponibles y
+consecuencias suaves, que enseña el reloj, el chat y los recursos jugando.
+
+---
+
+## 3. Clases y Perfiles (El Trasfondo)
+
+Al iniciar la campaña, el jugador elige su perfil, que define recursos iniciales y contactos de
+emergencia:
+
+| Perfil | Ventaja | Desventaja | Contacto Único Desbloqueado |
+|---|---|---|---|
+| **El Acomodado** | Empieza con mucho Dinero. | Poca Moral inicial (presión social). | Político / Presidente (al arco). |
+| **El Pibe de Barrio** | Moral alta y química de equipo. | Dinero inicial muy bajo. | Kiosquero. |
+| **El Oficinista** | Balance medio. | El Jefe interrumpe un 50% más. | Sindicalista (anula pasivas rivales). |
+
+---
+
+## 4. Recursos y Sistemas Principales
+
+### A. Los Recursos
+
+- **Paciencia / Moral.** Tu barra de vida. Se consume al lidiar con quejas, mensajes hostiles o peleas
+  con tu pareja. Si llega a 0, colapsás por estrés.
+- **Dinero.** Necesario para pagar la seña del complejo. También sirve para cubrir vacantes de último
+  momento (pagarle a alguien para que venga).
+- **El Reloj.** De 19:00 a 21:00. **Avanza por acción, no en tiempo real.**
+
+### El Reloj: por qué cambia respecto de la v1
+
+La v1 proponía tiempo real acelerado (1 minuto real = 10 virtuales). Tiene dos problemas serios:
+
+1. **Duración.** Dos horas virtuales serían 12 minutos reales. Demasiado corto para ser el gameplay
+   principal del juego.
+2. **Contradice la mecánica central.** El costo de Moral es leer mensajes largos y lidiar con gente,
+   pero un cronómetro en tiempo real castiga al jugador por leer. Se le pide que lea con ansiedad y
+   después se lo penaliza por tardar.
+
+**El tiempo avanza cuando el jugador hace algo**, con costo visible antes de elegir:
+
+| Acción | Costo aproximado |
+|---|---|
+| Mandar un mensaje | 2 min |
+| Insistir / mensaje largo | 4 min |
+| Llamar por teléfono | 8 min |
+| Atender a tu pareja | 15 min |
+| Resolver un pedido del trabajo | 20 min |
+
+Ganás tres cosas: el jugador puede leer tranquilo, la presión se vuelve **legible** (ve el costo antes
+de comprometerse) y el balance deja de depender de la velocidad de lectura de cada persona.
+
+**La ansiedad viene de las notificaciones, no del cronómetro.** Los mensajes entrantes sí llegan con
+timers reales cortos, se apilan y suenan. Esa es la fuente del agobio.
+
+### B. El Sistema de Conversación (Dirigido por Datos)
+
+- **Árboles de Diálogo.** Los NPCs no usan IA en tiempo de ejecución (ver sección 6). Se navegan
+  mediante opciones de respuesta rápida almacenadas en archivos de contenido.
+- **Modificadores Ocultos.** Cada respuesta altera el estado del NPC (`probabilidad_baja`, `enojo`,
+  `dinero_aportado`) y tus propios recursos (`paciencia`).
+- **Cancelaciones Dinámicas.** Un NPC confirmado puede activar un trigger a las 20:30 para bajarse si
+  su `probabilidad_baja` superó el 80% por tus respuestas anteriores.
+
+### C. Sistema de Eventos y Tensiones
+
+- **Eventos de la Semana (lore).** "Te pasaste de rosca en el gimnasio haciendo piernas y te dio un
+  tirón." Si aceptás descansar, perdés habilidad para el partido; si forzás, arrastrás estrés al viernes.
+- **Misiones Secundarias (favores).** Resolver un problema para un número desconocido te consume Moral
+  hoy, pero te desbloquea un contacto random vital para el próximo partido.
+- **Interrupciones del Viernes.** Tu pareja reclamando atención o el trabajo exigiendo una tarea.
+  Ignorarlos consume Moral pasiva masiva; atenderlos consume reloj.
+
+### D. HUD de Roster (agregado en v2)
+
+El jugador tiene que ver **siempre**, sin abrir nada: `7/10 — faltan 2 defensores y 1 arquero`.
+Es la información central del juego y no puede estar escondida detrás de un click.
+
+---
+
+## 5. El Torneo y la Simulación
+
+### La Fase de Gestión
+
+- **Química y Roles.** Invitar a 5 delanteros baja el porcentaje de victoria global. Mezclar al
+  habilidoso con el "rústico" puede generar peleas en el chat (consumiendo Moral) pero aumenta el
+  porcentaje de victoria.
+- **Pasivas Random.** Un contacto de emergencia (ej. el Sindicalista) te salva el cupo, pero su pasiva
+  puede suspender el partido o garantizar la victoria por escritorio.
+
+### El Motor de Resolución
+
+A las 21:00 exactas se corta el chat. El sistema calcula:
+
+```
+Probabilidad Base del Equipo + Química de Roles + Variables de Pasivas = % de Victoria Final
+```
+
+### La narración atribuida (cambio importante respecto de la v1)
+
+La fórmula está bien. El problema es su presentación: el jugador trabajó cuarenta minutos y el
+desenlace lo decide un número aleatorio. Se siente arbitrario.
+
+**La matemática no cambia. Cambia la narración: cada evento del partido se atribuye a una decisión
+concreta que el jugador tomó.**
+
+- "Carlos, que vino de mala gana porque lo apuraste a las 20:15, erra el gol en la última."
+- "El arquero que te consiguió el Político ataja todo. Valió cada peso."
+- "Se arma lío entre el Rústico y el Habilidoso. Los tenías juntos y ya se habían cruzado en el chat."
+
+Es el cambio con mejor relación esfuerzo/impacto de todo el proyecto: cero modificación del modelo,
+diferencia enorme en cómo se siente el desenlace.
+
+El partido se narra mediante un panel de notificaciones estilo feed de texto. Ganar otorga Prestigio y
+Dinero para la semana siguiente. Perder aumenta la dificultad para conseguir jugadores.
+
+---
+
+## 6. Arquitectura Técnica
+
+### Capas
+
+```
+┌─────────────────────────────────────────┐
+│  Vista (Svelte)                         │  Sin lógica de negocio.
+│  El teléfono, los chats, el HUD         │  Función pura del estado.
+├─────────────────────────────────────────┤
+│  Store reactivo                         │  Puente. Traduce intención → comando.
+├─────────────────────────────────────────┤
+│  Núcleo de simulación (TypeScript puro) │  Cero DOM. Testeable headless.
+│  Partida · Contacto · Reloj · Resolución│  RNG con semilla.
+├─────────────────────────────────────────┤
+│  Contenido (datos validados por schema) │  Un archivo por contacto.
+└─────────────────────────────────────────┘
+```
+
+El núcleo expone comandos (`responder(contactoId, opcionId)`, `llamar(contactoId)`) y devuelve estado
+nuevo. La vista nunca calcula nada: sólo dibuja lo que el núcleo dice.
+
+### Estructura de Datos
+
+Cada contacto es un archivo propio con su estado base y su árbol de conversaciones:
+
+```json
+{
+  "id": "carlos_el_quejoso",
+  "rol": "defensor",
+  "estado": "pendiente",
+  "dialogos": { }
+}
+```
+
+**No un archivo gigante.** Un archivo por contacto, más un schema JSON validado en el build. Un link
+roto o un efecto mal escrito rompe la compilación, no la partida.
+
+### La IA en este proyecto
+
+**Decisión: los NPCs no usan LLM en tiempo de ejecución.** No es sólo eficiencia; son cinco razones
+que se acumulan:
+
+1. **Costo recurrente contra venta única.** Un jugador de 20 horas cuesta plata real, para siempre,
+   sobre un pago que se cobró una sola vez.
+2. **Steam espera offline.** Un juego que se rompe cuando vence una API key es reviews negativas
+   garantizadas y pedidos de reembolso.
+3. **Latencia.** Dos a cuatro segundos por respuesta destruyen el ritmo frenético que es el punto del juego.
+4. **Determinismo.** Toda la mecánica son modificadores ocultos. Un LLM no los mueve de forma confiable.
+   Forzarlo requiere salida estructurada y opciones acotadas: es el mismo JSON con pasos de más.
+5. **Localización.** El texto generado no se traduce y rompe el pipeline multi-idioma de Steam.
+
+Y la razón de fondo: **el chiste es la escritura.** Una excusa escrita a mano que da exactamente en el
+clavo es más graciosa que una excusa plausible generada. Eso es el producto.
+
+**Dónde la IA sí se usa: en el pipeline de producción, no en runtime.**
+
+- Generar cientos de variantes de excusas offline, curar las buenas, shipear el resultado como datos.
+  Multiplicador de contenido enorme con costo cero para el jugador.
+- Un agente que juegue miles de partidas contra el núcleo headless para encontrar balance roto.
+- Borradores de localización.
+
+### Persistencia
+
+- **Guardado en cada acción.** Un viernes a medias tiene que poder retomarse.
+- **Steam Cloud** desde el principio.
+- El save es el estado serializado del núcleo más la semilla del RNG.
+
+### Integración con Steam
+
+- `steamworks.js` para logros, cloud saves y rich presence.
+- **Verificar el Steam Overlay sobre Electron en la Fase 2.** Es fricción conocida en apps Chromium
+  (afecta capturas con F12 y Steam Input). No es bloqueante, pero es de las cosas que hay que descubrir
+  en la semana 2, no en la semana 30.
+- **Steam Deck:** un juego Electron sólo-mouse arranca como "Unsupported". Ver navegación por foco en
+  la sección 1.
+
+---
+
+## 7. Fases de Desarrollo (Hoja de Ruta)
+
+- **Fase 1 — Motor y Datos (núcleo lógico).** Clases `Partida`, `Contacto`, `Reloj`; parseador y
+  validador de contenido; lógica de avance del tiempo. Todo por consola, con tests. Sin interfaz.
+- **Fase 2 — Empaquetado y Steam.** *(Subida desde la Fase 6.)* Un "hola mundo" en Electron corriendo
+  desde Steam, en Windows, macOS y Deck. Steamworks conectado, un logro de prueba, cloud save de prueba,
+  overlay verificado. Elimina el riesgo de plataforma antes de invertir treinta semanas.
+- **Fase 3 — Maquetación UI y Audio.** *(Audio subido desde la Fase 6.)* La pantalla del teléfono en
+  HTML/CSS, scroll de chats, HUD de roster, navegación por foco. **Con sonido de notificaciones desde
+  el principio: las notificaciones son el estrés, y sin audio no se puede evaluar si el juego funciona.**
+- **Fase 4 — Integración.** Conectar la vista con el núcleo: chatear de verdad, ver bajar Moral y Reloj.
+- **Fase 5 — El Simulador.** La pantalla de las 21:00, el algoritmo de resolución y la narración atribuida.
+- **Fase 6 — Contenido.** Escribir el guion: contactos, excusas, eventos de la semana, interrupciones.
+  Es la fase más larga del proyecto.
+- **Fase 7 — Pulido y Lanzamiento.** Balance con bots, localización si aplica, página de Steam,
+  certificación de Deck, build final.
+
+---
+
+## 8. Ideas propuestas (a evaluar, no decididas)
+
+Todo lo de esta sección son propuestas abiertas. Ninguna está comprometida.
+
+### 8.1 Autoría del contenido: Ink en vez de datos crudos
+
+[Ink](https://www.inklestudios.com/ink/) es el lenguaje de guion narrativo de inkle, con runtime para
+JavaScript (`inkjs`) y editor propio (Inky). Está diseñado exactamente para árboles de diálogo con
+variables y contenido condicional.
+
+- **A favor:** la Fase 6 implica escribir *muchísimo* texto. Hacerlo en un editor de guion en vez de
+  entre llaves de JSON cambia la velocidad de escritura por completo.
+- **En contra:** Ink asume una narrativa más lineal que el modelo de conversaciones paralelas de este
+  juego.
+- **Forma posible:** Ink para los árboles *dentro* de cada contacto; el motor propio para la
+  orquestación (reloj, recursos, triggers, cancelaciones).
+- **Alternativa más conservadora:** YAML con schema, que al menos es más cómodo de escribir que JSON.
+
+### 8.2 Variación por plantillas para que "se sienta vivo"
+
+Sin LLM y sin costo de runtime: plantillas con variación gramatical (estilo Tracery) más etiquetas de
+tono. El mismo mensaje en seis fraseos distintos según el estado del NPC. Es offline, determinista y
+cubre casi toda la sensación de "no se repite" que motivaría usar IA.
+
+### 8.3 Meta-progresión entre campañas
+
+Si una campaña termina (Moral en 0, bancarrota), que algo persista: contactos ya conocidos, excusas ya
+escuchadas, "ya sabés que Carlos siempre miente". Convierte el fracaso en conocimiento y hace que
+volver a empezar no sea releer.
+
+### 8.4 Modo IA opcional post-lanzamiento
+
+Una vez que el juego esté vendido y estable, un modo opt-in con modelo local pequeño o API key propia
+del jugador, claramente marcado como experimental. Nunca en la v1, nunca como camino por defecto.
+
+### 8.5 Bot de balanceo
+
+Un agente que juegue diez mil partidas contra el núcleo headless y reporte: porcentaje de victoria por
+perfil, contactos que nunca se usan, decisiones que son siempre óptimas (o sea, decisiones falsas).
+Barato de escribir gracias a la regla de "el núcleo no toca el DOM", y es la única forma realista de
+balancear un juego de sistemas sin cientos de playtesters.
+
+### 8.6 Logros de Steam como diseño, no como decoración
+
+Los logros son una herramienta de diseño gratis: "Cerrar la lista antes de las 20:00", "Ganar con once
+jugadores que nunca habían jugado juntos", "Sobrevivir un viernes sin responderle a tu pareja".
+Enseñan mecánicas y sugieren estilos de juego. Conviene diseñarlos junto con el contenido, no pegarlos
+al final.
+
+### 8.7 Localización a inglés
+
+El humor es profundamente rioplatense y buena parte no sobrevive la traducción literal. Si se hace, se
+hace como **localización** (reescritura cultural), no como traducción. La decisión puede postergarse,
+pero la preparación técnica (texto por claves) ya está tomada en la sección 1 porque es casi gratis
+hacerla ahora y cara hacerla después.
+
+### 8.8 Vertical slice antes de escalar contenido
+
+Antes de la Fase 6 completa, un viernes entero con ocho contactos, pulido al máximo, jugable de punta a
+punta. Sirve para playtesting real, para el trailer y para la página de Steam. Es también el momento
+honesto para decidir si el juego funciona antes de escribir el 90% restante del guion.
