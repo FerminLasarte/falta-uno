@@ -8,20 +8,30 @@
     "node": ">=22"
   },
   "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/construir.mjs",
+    "empaquetar": "npm run build && electron-builder --dir",
     "jugar": "tsx src/cli/jugar.ts",
     "validar": "tsx src/cli/validar.ts",
+    "bot": "tsx src/cli/bot.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
-    "bot": "tsx src/cli/bot.ts"
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.app.json --noEmit",
+    "humo": "npm run build && node scripts/humo.mjs"
   },
   "dependencies": {
+    "steamworks.js": "^0.4.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
+    "electron": "^44.0.0",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
+    "vite": "^5.4.21",
     "vitest": "^2.1.8"
-  }
+  },
+  "main": "dist/electron/main.cjs"
 }

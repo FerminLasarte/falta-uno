@@ -20,5 +20,6 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "tests"]
+  "//": "Sin lib DOM a propósito: el núcleo no puede tocar el DOM y acá eso se vuelve un error de compilación, no una convención.",
+  "include": ["src/core", "src/datos", "src/cli", "electron", "tests"]
 }

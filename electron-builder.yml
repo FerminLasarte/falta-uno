@@ -1,0 +1,38 @@
+appId: ar.faltauno.juego
+productName: Falta Uno
+copyright: © Fermín Lasarte
+
+directories:
+  output: release
+  buildResources: recursos
+
+files:
+  - dist/**/*
+  - package.json
+  - "!**/*.map"
+
+# Los binarios nativos de Steam no pueden vivir adentro del asar: el SDK los
+# carga desde disco. Sin esto, Steam no engancha en el build empaquetado.
+asarUnpack:
+  - "**/node_modules/steamworks.js/**"
+
+extraResources:
+  - from: contenido
+    to: contenido
+
+# Para Steam se sube el directorio desempaquetado tal cual: la instalación y
+# las actualizaciones las maneja Steam, no un instalador propio.
+win:
+  target:
+    - target: dir
+      arch: [x64]
+mac:
+  target:
+    - target: dir
+      arch: [x64, arm64]
+  category: public.app-category.games
+linux:
+  target:
+    - target: dir
+      arch: [x64]
+  category: Game

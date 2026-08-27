@@ -15,8 +15,12 @@ cancelaciones de último minuto y las crisis personales.
 
 ## Estado
 
-🟢 **Fase 1 completa.** El núcleo de simulación funciona, tiene 78 tests y se puede jugar un viernes
-entero por consola. No hay interfaz gráfica todavía: eso es la Fase 3.
+🟢 **Fases 1 y 2 completas.** El núcleo de simulación funciona con 78 tests y se puede jugar un
+viernes entero por consola. El juego empaqueta y corre como app de Electron en las tres plataformas,
+con Steam cableado y degradando con gracia cuando no está.
+
+La interfaz del juego todavía no existe: la ventana muestra una pantalla de diagnóstico de
+plataforma. El teléfono llega en la Fase 3.
 
 ## Documentación
 
@@ -85,12 +89,26 @@ npm install
 
 | Comando | Qué hace |
 |---|---|
+| `npm run dev` | Levanta el juego en Electron con recarga en caliente. |
+| `npm run build` | Compila proceso principal, preload y ventana a `dist/`. |
+| `npm run empaquetar` | Genera el build listo para subir a un depot de Steam. |
+| `npm run humo` | Smoke test: levanta el juego, verifica que la ventana cargue, lo cierra. |
 | `npm run jugar` | Juga un viernes completo por consola. Acepta stdin por pipe. |
 | `npm run validar` | Valida todo el contenido y reporta el volumen escrito. |
 | `npm run bot -- 500` | Corre 500 viernes headless por perfil y reporta balance. |
 | `npm run bot -- 1 --narrar` | Imprime un partido completo con su desglose y narración. |
 | `npm test` | Corre la suite. |
-| `npm run typecheck` | `tsc --noEmit` en modo estricto. |
+| `npm run typecheck` | `tsc --noEmit` estricto, para el lado Node y para la ventana. |
+
+### Variables de entorno
+
+| Variable | Para qué |
+|---|---|
+| `STEAM_APP_ID` | App ID de Steam. Sin ella se usa `480` (Spacewar, el público de pruebas). |
+| `FALTA_UNO_SIN_STEAM=1` | Arranca sin tocar Steam. Útil para reproducir el caso sin cliente. |
+| `FALTA_UNO_DIAGNOSTICO=1` | Imprime el diagnóstico de plataforma en JSON y sale, sin abrir ventana. |
+| `FALTA_UNO_CAPTURA=x.png` | Captura la ventana a PNG y sale. |
+| `SEMILLA` | Fija la semilla del RNG en el CLI de consola. |
 
 `SEMILLA=loquesea npm run jugar` fija la semilla del RNG: la misma semilla y las mismas acciones
 producen exactamente la misma partida.
@@ -98,6 +116,10 @@ producen exactamente la misma partida.
 ### Estructura
 
 ```
+electron/        Proceso principal, preload y capa de Steam.
+  steam.ts       Logros, cloud y overlay. Degrada con gracia sin Steam.
+  guardado.ts    Guardado local + Steam Cloud.
+src/app/         La ventana. El único lugar del proyecto que ve el DOM.
 src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
   rng.ts         RNG determinista y serializable.
   tiempo.ts      El reloj que avanza por acción.
@@ -110,6 +132,12 @@ src/cli/         Herramientas de consola: jugar, validar, bot.
 contenido/       Los datos del juego. Un archivo por contacto.
 tests/           78 tests sobre el núcleo y el contenido.
 ```
+
+### Cómo se hace cumplir la regla del núcleo
+
+`tsconfig.json` compila el núcleo, el CLI y el proceso principal **sin `lib: DOM`**. Si alguien
+escribe `document` o `window` en `src/core`, no es una convención violada: es un error de
+compilación. Solo `tsconfig.app.json`, que cubre `src/app`, incluye el DOM.
 
 ### El contrato del contenido
 
@@ -131,6 +159,20 @@ El bot juega miles de viernes contra el núcleo headless. Estado actual (300 vie
 moral y de reloj funciona (se termina con ~20 de moral y usando 112 de los 120 minutos), pero con 12
 contactos para 10 lugares y todos convencibles, no hay forma real de fracasar. La dificultad tiene
 que salir del contenido: menos margen, más contactos que dicen que no, más interrupciones.
+
+## Steam
+
+El juego arranca y es jugable **sin Steam corriendo, sin App ID y sin SDK**. Esa es la
+implementación definitiva, no un placeholder: un Steam caído no puede convertir el juego en un
+ladrillo.
+
+Lo que ya funciona y está verificado en macOS: el build empaquetado, la carga del módulo nativo
+fuera del asar, la preparación del overlay de Chromium, el guardado local, y el diagnóstico headless
+que se corre por SSH en una Deck.
+
+Lo que necesita tu cuenta de Steamworks y está cableado pero sin probar: logros reales, cuota de
+Steam Cloud, overlay in-game y detección de Deck en hardware. El paso a paso está en
+[docs/steam.md](docs/steam.md).
 
 ## Licencia
 
