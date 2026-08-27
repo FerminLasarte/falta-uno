@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "node:path";
 import { writeFile } from "node:fs/promises";
 import { CANALES, type Versiones } from "./canal.js";
+import { cargarContenido, ErrorDeContenido, type Contenido } from "../src/datos/cargar.js";
 import { cargar, configurarCarpeta, guardar } from "./guardado.js";
 import { carpetaBundle } from "./rutas.js";
 import {
@@ -61,6 +62,29 @@ if (process.env["FALTA_UNO_DIAGNOSTICO"] === "1") {
   });
 }
 
+/**
+ * El contenido lo carga y valida el proceso principal, no la ventana: así el
+ * validador con zod corre también en el build empaquetado, y la ventana nunca
+ * toca el disco. Si el contenido está roto, el juego no arranca — que es
+ * exactamente el contrato prometido en el diseño.
+ */
+let contenido: Contenido | null = null;
+
+async function cargarContenidoDelJuego(): Promise<void> {
+  const raiz = esProduccion ? join(process.resourcesPath, "contenido") : "contenido";
+  try {
+    contenido = await cargarContenido(raiz);
+    console.log(`[contenido] ${contenido.contactos.length} contactos cargados desde ${raiz}`);
+  } catch (error) {
+    if (error instanceof ErrorDeContenido) {
+      console.error(`\n[contenido] EL JUEGO NO PUEDE ARRANCAR\n${error.message}\n`);
+    } else {
+      console.error(`[contenido] no se pudo leer desde ${raiz}: ${String(error)}`);
+    }
+    app.exit(3);
+  }
+}
+
 function crearVentana(): void {
   const ventana = new BrowserWindow({
     width: 1100,
@@ -114,7 +138,13 @@ function crearVentana(): void {
     void ventana.loadURL(servidorDev);
     ventana.webContents.openDevTools({ mode: "detach" });
   } else {
-    void ventana.loadFile(join(aquí, "..", "renderer", "index.html"));
+    // FALTA_UNO_MORAL fuerza un estado de moral. Sirve para capturar la
+    // degradación en cualquier punto sin tener que jugar hasta ahí, y para
+    // sacar las imágenes de la ficha de Steam en el momento exacto.
+    const moral = process.env["FALTA_UNO_MORAL"];
+    void ventana.loadFile(join(aquí, "..", "renderer", "index.html"), {
+      ...(moral ? { query: { moral } } : {}),
+    });
   }
 }
 
@@ -130,8 +160,9 @@ if (!app.requestSingleInstanceLock()) {
     }
   });
 
-  void app.whenReady().then(() => {
+  void app.whenReady().then(async () => {
     configurarCarpeta(app.getPath("userData"));
+    await cargarContenidoDelJuego();
     registrarCanales();
     crearVentana();
     app.on("activate", () => {
@@ -182,6 +213,7 @@ function registrarCanales(): void {
     };
   });
 
+  ipcMain.handle(CANALES.contenido, () => contenido);
   ipcMain.handle(CANALES.estadoSteam, () => estadoSteam());
   ipcMain.handle(CANALES.activarLogro, (_e, id: string) => logros.activar(id));
   ipcMain.handle(CANALES.logroActivado, (_e, id: string) => logros.activado(id));

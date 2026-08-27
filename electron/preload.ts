@@ -6,6 +6,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { CANALES } from "./canal.js";
 
 const api = {
+  contenido: () => ipcRenderer.invoke(CANALES.contenido),
   versiones: () => ipcRenderer.invoke(CANALES.versiones),
   estadoSteam: () => ipcRenderer.invoke(CANALES.estadoSteam),
   activarLogro: (id: string) => ipcRenderer.invoke(CANALES.activarLogro, id),

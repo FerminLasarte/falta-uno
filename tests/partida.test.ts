@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { costoDeLeer, Partida } from "../src/core/partida.js";
+import type { EstadoDeContacto } from "../src/core/tipos.js";
 import {
   agendaCompleta,
   CONFIG,
@@ -111,6 +112,20 @@ describe("conversación", () => {
   });
 });
 
+function estadoDe(cambios: Partial<EstadoDeContacto> = {}): EstadoDeContacto {
+  return {
+    id: "x",
+    estado: "hablando",
+    probabilidadBaja: 0,
+    enojo: 0,
+    dineroAportado: 0,
+    nodoActual: null,
+    historial: [],
+    leidoHasta: 0,
+    ...cambios,
+  };
+}
+
 describe("lo que cuesta leer", () => {
   const LARGO =
     "Mirá, la última vez terminamos jugando seis contra cuatro porque no vino " +
@@ -137,18 +152,55 @@ describe("lo que cuesta leer", () => {
 
   it("costoDeLeer es cero por debajo del largo tolerable", () => {
     const definicion = contacto("x");
-    const estado = { id: "x", estado: "hablando" as const, probabilidadBaja: 0, enojo: 0, dineroAportado: 0, nodoActual: null, historial: [] };
+    const estado = estadoDe();
     expect(costoDeLeer("¿A qué hora?", definicion, estado)).toBe(0);
     expect(costoDeLeer(LARGO, definicion, estado)).toBeGreaterThan(0);
   });
 
   it("alguien enojado cansa más aunque no sea quejoso de fábrica", () => {
     const definicion = contacto("x");
-    const tranquilo = { id: "x", estado: "hablando" as const, probabilidadBaja: 0, enojo: 0, dineroAportado: 0, nodoActual: null, historial: [] };
-    const caliente = { ...tranquilo, enojo: 80 };
-    expect(costoDeLeer(LARGO, definicion, caliente)).toBeGreaterThan(
-      costoDeLeer(LARGO, definicion, tranquilo),
+    expect(costoDeLeer(LARGO, definicion, estadoDe({ enojo: 80 }))).toBeGreaterThan(
+      costoDeLeer(LARGO, definicion, estadoDe()),
     );
+  });
+});
+
+describe("la lista de chats", () => {
+  let p: Partida;
+  beforeEach(() => {
+    p = nueva();
+  });
+
+  it("un contacto sin escribir no tiene último mensaje ni no leídos", () => {
+    const c = p.contactos()[0]!;
+    expect(c.ultimoMensaje).toBeNull();
+    expect(c.minutoUltimo).toBeNull();
+    expect(c.sinLeer).toBe(0);
+  });
+
+  it("los mensajes recibidos cuentan como no leídos y traen su hora", () => {
+    p.escribir("c0");
+    const c = p.contactos().find((x) => x.id === "c0")!;
+    expect(c.sinLeer).toBeGreaterThan(0);
+    expect(c.ultimoMensaje).toBe("¿A qué hora?");
+    expect(c.minutoUltimo).toBe(p.reloj.minutos);
+  });
+
+  it("abrir el chat los marca como vistos y no cuesta reloj", () => {
+    p.escribir("c0");
+    const antes = p.reloj.minutos;
+    p.marcarLeido("c0");
+    expect(p.contactos().find((x) => x.id === "c0")!.sinLeer).toBe(0);
+    expect(p.reloj.minutos).toBe(antes);
+  });
+
+  it("un mensaje nuevo después de leer vuelve a marcar sin leer", () => {
+    p.escribir("c0");
+    p.marcarLeido("c0");
+    p.responder("c0", "si");
+    const c = p.contactos().find((x) => x.id === "c0")!;
+    expect(c.estado).toBe("confirmado");
+    expect(c.sinLeer).toBe(0); // "si" cierra la charla sin mensajes nuevos
   });
 });
 

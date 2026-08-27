@@ -15,12 +15,11 @@ cancelaciones de último minuto y las crisis personales.
 
 ## Estado
 
-🟢 **Fases 1 y 2 completas.** El núcleo de simulación funciona con 78 tests y se puede jugar un
-viernes entero por consola. El juego empaqueta y corre como app de Electron en las tres plataformas,
-con Steam cableado y degradando con gracia cuando no está.
+🟡 **Fase 3 en curso.** Las fases 1 y 2 están completas: el núcleo simula un viernes entero y el
+juego empaqueta y corre en Electron con Steam cableado. La Fase 3 tiene el sistema de diseño y la
+primera pantalla (la lista de chats a las 19:00) funcionando con datos reales del núcleo.
 
-La interfaz del juego todavía no existe: la ventana muestra una pantalla de diagnóstico de
-plataforma. El teléfono llega en la Fase 3.
+Falta el chat abierto, las notificaciones, el audio y la pantalla de las 21:00.
 
 ## Documentación
 
@@ -108,6 +107,7 @@ npm install
 | `FALTA_UNO_SIN_STEAM=1` | Arranca sin tocar Steam. Útil para reproducir el caso sin cliente. |
 | `FALTA_UNO_DIAGNOSTICO=1` | Imprime el diagnóstico de plataforma en JSON y sale, sin abrir ventana. |
 | `FALTA_UNO_CAPTURA=x.png` | Captura la ventana a PNG y sale. |
+| `FALTA_UNO_MORAL=15` | Fuerza un estado de moral. Para capturar la degradación sin jugar hasta ahí. |
 | `SEMILLA` | Fija la semilla del RNG en el CLI de consola. |
 
 `SEMILLA=loquesea npm run jugar` fija la semilla del RNG: la misma semilla y las mismas acciones
@@ -120,6 +120,11 @@ electron/        Proceso principal, preload y capa de Steam.
   steam.ts       Logros, cloud y overlay. Degrada con gracia sin Steam.
   guardado.ts    Guardado local + Steam Cloud.
 src/app/         La ventana. El único lugar del proyecto que ve el DOM.
+  estilos/       Tokens y base. Todo el sistema de diseño vive acá.
+  escena/        La cocina: mesa, objetos, luz. Puro CSS y SVG.
+  telefono/      El aparato y su barra de estado.
+  mensajeria/    La app de adentro: lista de chats, roster fijado, avatares.
+  estado/        El puente al núcleo y la curva de deterioro.
 src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
   rng.ts         RNG determinista y serializable.
   tiempo.ts      El reloj que avanza por acción.
@@ -132,6 +137,32 @@ src/cli/         Herramientas de consola: jugar, validar, bot.
 contenido/       Los datos del juego. Un archivo por contacto.
 tests/           78 tests sobre el núcleo y el contenido.
 ```
+
+## Dirección de arte
+
+**Mundo sucio y real por fuera, app impecable que se pudre por dentro.**
+
+La escena es una cocina de noche vista desde arriba, con el teléfono apoyado en un mantel de hule.
+Está construida enteramente con CSS y SVG: no hay un solo asset de imagen. Adentro del teléfono, la
+app de mensajería es lo único ordenado de la escena.
+
+### La degradación es un solo valor
+
+De la moral sale un único `deterioro` de 0 a 1
+([deterioro.ts](src/app/estado/deterioro.ts)) que alimenta todos los tokens de CSS: el aire entre
+elementos, la saturación, la interlínea, el grano y el tinte enfermizo
+([tokens.css](src/app/estilos/tokens.css)).
+
+**Ningún componente pregunta por la moral.** Leen tokens, y los tokens ya vienen deteriorados. Eso
+significa que la degradación se afina en un archivo, se puede animar, y un componente nuevo viene
+degradado sin que nadie se acuerde de degradarlo.
+
+La regla que la acota: **la degradación nunca toca la legibilidad del texto que el jugador necesita
+leer.** Toca el aire, el color, el ruido y el cromo. Nunca desenfoca un mensaje. Si leer se vuelve
+difícil de verdad, dejamos de simular el desgaste y se lo pasamos al ojo del jugador, que es
+exactamente lo que este juego no quiere hacer.
+
+Para verla sin jugar hasta quedarte sin moral: **F2** en `npm run dev` abre un slider.
 
 ### Cómo se hace cumplir la regla del núcleo
 

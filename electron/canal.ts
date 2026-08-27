@@ -1,5 +1,6 @@
 /** Contrato entre el proceso principal y la ventana. Lo comparten los dos lados. */
 import type { EstadoSteam } from "./steam.js";
+import type { Contenido } from "../src/datos/cargar.js";
 
 export interface Versiones {
   readonly electron: string;
@@ -18,6 +19,7 @@ export interface ResultadoGuardado {
 }
 
 export interface ApiPuente {
+  contenido(): Promise<Contenido>;
   versiones(): Promise<Versiones>;
   estadoSteam(): Promise<EstadoSteam>;
   activarLogro(id: string): Promise<boolean>;
@@ -29,6 +31,7 @@ export interface ApiPuente {
 }
 
 export const CANALES = {
+  contenido: "contenido:cargar",
   versiones: "plataforma:versiones",
   estadoSteam: "steam:estado",
   activarLogro: "steam:logro:activar",

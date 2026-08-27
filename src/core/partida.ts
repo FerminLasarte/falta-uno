@@ -48,6 +48,9 @@ export interface VistaContacto {
   readonly rol: Rol;
   readonly estado: EstadoDeContacto["estado"];
   readonly sinLeer: number;
+  /** Lo último que dijo, para el preview de la lista. */
+  readonly ultimoMensaje: string | null;
+  readonly minutoUltimo: number | null;
   readonly opciones: readonly VistaOpcion[];
 }
 
@@ -126,6 +129,7 @@ export class Partida {
         dineroAportado: 0,
         nodoActual: null,
         historial: [],
+        leidoHasta: 0,
       });
     }
 
@@ -198,12 +202,15 @@ export class Partida {
   contactos(): VistaContacto[] {
     return [...this.agenda.values()].map((d) => {
       const e = this.estadoDe(d.id);
+      const ultimo = e.historial.at(-1);
       return {
         id: d.id,
         nombre: d.nombre,
         rol: d.rol,
         estado: e.estado,
-        sinLeer: e.historial.length,
+        sinLeer: Math.max(0, e.historial.length - e.leidoHasta),
+        ultimoMensaje: ultimo?.texto ?? null,
+        minutoUltimo: ultimo?.minuto ?? null,
         opciones: this.opcionesDisponibles(d.id).map((o) => ({
           id: o.id,
           texto: o.texto,
@@ -211,6 +218,12 @@ export class Partida {
         })),
       };
     });
+  }
+
+  /** Abrir el chat marca lo recibido como visto. No consume reloj: mirar es gratis. */
+  marcarLeido(id: string): void {
+    const estado = this.estadoDe(id);
+    estado.leidoHasta = estado.historial.length;
   }
 
   opcionesDisponibles(id: string): OpcionDialogo[] {
@@ -380,7 +393,7 @@ export class Partida {
     if (!nodo) throw new Error(`Nodo "${estado.nodoActual}" inexistente en "${id}"`);
     const definicion = this.definicion(id);
     for (const mensaje of nodo.mensajes) {
-      estado.historial.push(mensaje);
+      estado.historial.push({ texto: mensaje, minuto: this.reloj.minutos });
       this.emitir("mensaje", mensaje, definicion.nombre);
       this.ajustarMoral(-costoDeLeer(mensaje, definicion, estado));
     }

@@ -31,6 +31,10 @@ mac:
     - target: dir
       arch: [x64, arm64]
   category: public.app-category.games
+  # Sin firma: electron-builder toma cualquier identidad del llavero si no se
+  # le dice que no. identity null la deja explicitamente sin firmar.
+  identity: null
+  notarize: false
 linux:
   target:
     - target: dir

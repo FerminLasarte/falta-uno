@@ -1,0 +1,85 @@
+/*
+ * Tokens del juego.
+ *
+ * Regla central: `--deterioro` (0 a 1) es el ÚNICO valor que la lógica escribe
+ * acá. Todo lo demás se deriva de él con calc() y color-mix(). Ningún
+ * componente pregunta por la moral: leen tokens y ya vienen deteriorados.
+ *
+ * Segunda regla, igual de importante: la degradación nunca toca la legibilidad
+ * del texto que el jugador NECESITA leer. Toca el aire, el color, el ruido, el
+ * cromo y la densidad de notificaciones. Nunca desenfoca un mensaje. Si leer se
+ * vuelve difícil de verdad, dejamos de simular el desgaste y se lo pasamos al
+ * ojo del jugador, que es exactamente lo que este juego no quiere hacer.
+ */
+
+:root {
+  --deterioro: 0;
+  --escala-ui: 1;
+
+  /* ---- derivados del deterioro ------------------------------------------ */
+  --aire: calc(1 - var(--deterioro) * 0.3);
+  --sat: calc(1 - var(--deterioro) * 0.58);
+  --interlinea: calc(1.58 - var(--deterioro) * 0.22);
+  --apretado: calc(var(--deterioro) * -0.004em);
+  --ruido: calc(0.018 + var(--deterioro) * 0.07);
+  --enfermo: calc(var(--deterioro) * 0.17);
+  --luz: calc(1 - var(--deterioro) * 0.2);
+
+  /* ---- espaciado --------------------------------------------------------- */
+  --e0: calc(4px * var(--aire));
+  --e1: calc(8px * var(--aire));
+  --e2: calc(12px * var(--aire));
+  --e3: calc(16px * var(--aire));
+  --e4: calc(24px * var(--aire));
+  --e5: calc(34px * var(--aire));
+
+  /* ---- el mundo: cocina de noche, tubo fluorescente ---------------------- */
+  --mundo-fondo: #0E0C08;
+  --mundo-luz: #DCE4CE;
+  --mesa: #5E563A;
+  --mesa-clara: #7C7150;
+  --mesa-oscura: #2C2819;
+  --mesa-mancha: #1E1B10;
+
+  /* ---- el aparato -------------------------------------------------------- */
+  --bisel: #101214;
+  --bisel-borde: #2A2F33;
+
+  /* ---- la app: impecable, acromática ------------------------------------ */
+  /* Sin color de marca a propósito. En esta app el color ES información: lo
+     único con color es el estado de tus jugadores. */
+  --enfermizo: #C7C065;
+
+  --app-fondo: color-mix(in oklab, #F5F6F7 calc(100% - var(--enfermo) * 100%), var(--enfermizo));
+  --app-superficie: color-mix(in oklab, #FFFFFF calc(100% - var(--enfermo) * 100%), var(--enfermizo));
+  --app-cromo: color-mix(in oklab, #191D21 calc(100% - var(--enfermo) * 60%), var(--enfermizo));
+  --app-tinta: #15181B;
+  --app-tinta-2: color-mix(in oklab, #596068 calc(100% - var(--enfermo) * 70%), var(--enfermizo));
+  --app-tinta-3: color-mix(in oklab, #8D959D calc(100% - var(--enfermo) * 80%), var(--enfermizo));
+  --app-linea: color-mix(in oklab, #E3E6E9 calc(100% - var(--enfermo) * 90%), var(--enfermizo));
+  --app-hover: color-mix(in oklab, #EFF1F3 calc(100% - var(--enfermo) * 90%), var(--enfermizo));
+
+  /* ---- estado de los jugadores: la única fuente de color ----------------- */
+  --gris-muerto: #737974;
+  --est-confirmado: color-mix(in oklab, #12875A calc(var(--sat) * 100%), var(--gris-muerto));
+  --est-hablando: color-mix(in oklab, #2A6AB6 calc(var(--sat) * 100%), var(--gris-muerto));
+  --est-esperando: color-mix(in oklab, #B37810 calc(var(--sat) * 100%), var(--gris-muerto));
+  --est-rechazado: color-mix(in oklab, #A63A2E calc(var(--sat) * 100%), var(--gris-muerto));
+  --est-bajado: color-mix(in oklab, #7C2B24 calc(var(--sat) * 100%), var(--gris-muerto));
+  --est-neutro: var(--app-tinta-3);
+
+  /* ---- tipografía -------------------------------------------------------- */
+  --fuente-app: "Public Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --fuente-cromo: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --t-titulo: calc(17px * var(--escala-ui));
+  --t-nombre: calc(15.5px * var(--escala-ui));
+  --t-mensaje: calc(14.5px * var(--escala-ui));
+  --t-meta: calc(12.5px * var(--escala-ui));
+  --t-micro: calc(11px * var(--escala-ui));
+
+  /* ---- radios y sombras -------------------------------------------------- */
+  --radio-app: 10px;
+  --radio-chip: 999px;
+  --sombra-app: 0 1px 2px rgb(21 24 27 / 6%), 0 8px 24px -18px rgb(21 24 27 / 30%);
+}

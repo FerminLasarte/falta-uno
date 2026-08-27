@@ -112,6 +112,11 @@ export interface Config {
   readonly minutoRevision: number;
 }
 
+export interface MensajeRecibido {
+  readonly texto: string;
+  readonly minuto: number;
+}
+
 /** Estado mutable de un contacto durante un viernes. */
 export interface EstadoDeContacto {
   readonly id: string;
@@ -121,7 +126,9 @@ export interface EstadoDeContacto {
   dineroAportado: number;
   nodoActual: string | null;
   /** Mensajes del NPC ya recibidos, en orden. */
-  historial: string[];
+  historial: MensajeRecibido[];
+  /** Cuántos mensajes del historial ya vio el jugador. */
+  leidoHasta: number;
 }
 
 export interface Desglose {
