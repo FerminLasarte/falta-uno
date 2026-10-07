@@ -3,7 +3,7 @@
   import Escena from "./escena/Escena.svelte";
   import Mensajeria from "./mensajeria/Mensajeria.svelte";
   import BarraEstado from "./telefono/BarraEstado.svelte";
-  import Telefono from "./telefono/Telefono.svelte";
+  import Pantalla from "./telefono/Pantalla.svelte";
   import { calcularDeterioro } from "./estado/deterioro.js";
   import { juego } from "./estado/juego.svelte.js";
 
@@ -30,7 +30,7 @@
 </script>
 
 <Escena>
-  <Telefono>
+  <Pantalla>
     {#if juego.error}
       <div class="falla">
         <p class="titulo">No se pudo cargar el juego</p>
@@ -48,7 +48,7 @@
     {:else}
       <div class="cargando"><span></span></div>
     {/if}
-  </Telefono>
+  </Pantalla>
 </Escena>
 
 {#if import.meta.env.DEV}

@@ -1,21 +1,71 @@
 <!--
-  La cocina, siempre desde arriba. El teléfono va en el slot: la escena no sabe
-  nada de él, solo le hace lugar y le pone la luz encima.
+  El living en primera persona. Tres capas, de atrás para adelante:
+
+    1. el fondo, renderizado y desenfocado en Blender;
+    2. la app de verdad, en el hueco de la pantalla;
+    3. las manos y el celular, también renderizados, con la pantalla agujereada.
+
+  Dónde cae cada cosa lo dice escena.json, que exporta arte/exportar_capas.py junto con
+  las imágenes. Si cambia el render, cambia solo: acá no hay una sola medida a ojo.
 -->
 <script lang="ts">
-  import Mesa from "./Mesa.svelte";
-  import Objetos from "./Objetos.svelte";
+  import datos from "./capas/escena.json";
+  import fondo from "./capas/fondo.webp";
+  import primerPlano from "./capas/primer_plano.webp";
 
   let { children } = $props();
+
+  /** La app se diseña a este ancho, como un teléfono real, y después se escala al hueco. */
+  const ANCHO_LOGICO = 390;
+
+  const { cuadro, pantalla, camaraFrontal, tele } = datos;
+  const altoLogico = Math.round(
+    (ANCHO_LOGICO * (pantalla.alto * cuadro.alto)) / (pantalla.ancho * cuadro.ancho),
+  );
+
+  let anchoCuadro = $state(0);
+  const escala = $derived((anchoCuadro * pantalla.ancho) / ANCHO_LOGICO);
+
+  /** Fracciones del cuadro a porcentajes para `style`. */
+  const pct = (fraccion: number): string => `${fraccion * 100}%`;
 </script>
 
 <div class="escena">
-  <Mesa />
-  <Objetos />
-  <div class="tubo" aria-hidden="true"></div>
-  <div class="vineta" aria-hidden="true"></div>
-  <div class="hueco">
-    {@render children?.()}
+  <div class="cuadro" bind:clientWidth={anchoCuadro} style:--proporcion={cuadro.ancho / cuadro.alto}>
+    <div class="mundo" aria-hidden="true">
+      <img src={fondo} alt="" />
+      <div
+        class="tele"
+        style:left={pct(tele.izquierda)}
+        style:top={pct(tele.arriba)}
+        style:width={pct(tele.ancho)}
+        style:height={pct(tele.alto)}
+      ></div>
+    </div>
+
+    <div class="manos">
+      <div class="pulso">
+        <div
+          class="hueco"
+          style:left={pct(pantalla.izquierda)}
+          style:top={pct(pantalla.arriba)}
+          style:width={pct(pantalla.ancho)}
+          style:height={pct(pantalla.alto)}
+        >
+          <div
+            class="vidrio"
+            style:width="{ANCHO_LOGICO}px"
+            style:height="{altoLogico}px"
+            style:transform="scale({escala})"
+            style:--radio-pantalla="{pantalla.radio * ANCHO_LOGICO}px"
+            style:--camara-centro="{camaraFrontal.centroY * altoLogico}px"
+          >
+            {@render children?.()}
+          </div>
+        </div>
+        <img class="frente" src={primerPlano} alt="" />
+      </div>
+    </div>
   </div>
 </div>
 
@@ -26,49 +76,140 @@
     height: 100%;
     overflow: hidden;
     background: var(--mundo-fondo);
+    container-type: size;
   }
 
   /*
-    Tubo fluorescente arriba a la izquierda: luz fría con verde, que es lo que
-    hace que la cocina se vea barata y que la pantalla del teléfono se vea
-    limpia por contraste.
+    El cuadro del render cubre la ventana, como un background-size: cover. Con un tope:
+    en una pantalla ultra ancha "cubrir" cortaría el celular, así que el alto del cuadro
+    nunca pasa de 1,12 veces el de la ventana y sobran bandas a los costados.
   */
-  /*
-    Charco de luz, no un baño uniforme. La mesa es oscura de base y el tubo
-    ilumina una zona: sin esa caída no hay noche, hay pared verde.
-  */
-  .tubo {
+  .cuadro {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(max(100cqw, calc(100cqh * var(--proporcion))), calc(112cqh * var(--proporcion)));
+    aspect-ratio: var(--proporcion);
+    translate: -50% -50%;
+  }
+
+  .mundo,
+  .manos,
+  .pulso {
     position: absolute;
     inset: 0;
+  }
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
-    mix-blend-mode: screen;
-    opacity: calc(0.9 * var(--luz));
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* El living se apaga y se destiñe con la moral, como la app. */
+  .mundo {
+    filter: brightness(var(--luz)) saturate(var(--sat));
+    scale: 1.03;
+    animation: contraluz 5.2s ease-in-out infinite;
+  }
+
+  /* En ultra ancho, los bordes del render se funden con la noche en vez de cortar. */
+  @container (aspect-ratio > 1.79) {
+    .mundo {
+      mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+    }
+  }
+
+  /*
+    La luz de la tele no es fija: cambia de plano, se aclara en una toma abierta, se
+    oscurece en un primer plano. Un resplandor encima del fondo, con cortes irregulares.
+  */
+  .tele {
+    position: absolute;
     background: radial-gradient(
-      ellipse 64% 56% at 47% 38%,
-      color-mix(in oklab, var(--mundo-luz) 52%, transparent) 0%,
-      color-mix(in oklab, var(--mundo-luz) 26%, transparent) 46%,
-      transparent 78%
+      ellipse 70% 70% at 50% 50%,
+      rgb(170 235 180 / 55%),
+      rgb(120 200 140 / 22%) 55%,
+      transparent 80%
     );
+    mix-blend-mode: screen;
+    scale: 1.5;
+    opacity: 0.2;
+    animation: tele 9s step-end infinite;
+  }
+
+  /*
+    Respirar: las manos suben y bajan apenas, y se mecen de costado con otro período,
+    para que el movimiento nunca se repita igual. El fondo se mueve al revés y menos:
+    eso es lo que da profundidad.
+  */
+  .manos {
+    animation:
+      respirar 5.2s ease-in-out infinite,
+      mecer 7.7s ease-in-out infinite;
+  }
+
+  /* Con la moral baja, la mano tiembla. Solo pasado cierto umbral: antes, quieta. */
+  .pulso {
+    --temblor: max(0%, calc((var(--deterioro) - 0.45) * 0.16%));
+    animation: temblar 140ms linear infinite alternate;
   }
 
   .hueco {
     position: absolute;
-    inset: 0;
-    display: grid;
-    place-items: center;
-    padding: 2vh 0;
   }
 
-  .vineta {
+  /* La app vive a 390 px lógicos y se escala al hueco: el diseño no depende de la ventana. */
+  .vidrio {
     position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      ellipse 62% 58% at 47% 42%,
-      transparent 18%,
-      rgb(16 13 9 / 38%) 60%,
-      rgb(16 13 9 / 82%) 86%,
-      rgb(11 9 6 / 94%) 100%
-    );
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @keyframes respirar {
+    0%, 100% { translate: 0 0; }
+    45% { translate: 0 -0.22%; }
+  }
+
+  @keyframes mecer {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(0.12%); }
+  }
+
+  @keyframes contraluz {
+    0%, 100% { translate: 0 0; }
+    45% { translate: 0 0.06%; }
+  }
+
+  @keyframes temblar {
+    from { translate: calc(var(--temblor) * -1) 0; }
+    to { translate: var(--temblor) calc(var(--temblor) * 0.6); }
+  }
+
+  @keyframes tele {
+    0% { opacity: 0.2; }
+    14% { opacity: 0.32; }
+    23% { opacity: 0.12; }
+    41% { opacity: 0.26; }
+    58% { opacity: 0.38; }
+    66% { opacity: 0.18; }
+    83% { opacity: 0.3; }
+  }
+
+  /* Sin movimiento si el sistema lo pide: la escena queda quieta, no rota. */
+  @media (prefers-reduced-motion: reduce) {
+    .mundo,
+    .tele,
+    .manos,
+    .pulso {
+      animation: none;
+    }
   }
 </style>

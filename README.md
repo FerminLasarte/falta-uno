@@ -121,8 +121,9 @@ electron/        Proceso principal, preload y capa de Steam.
   guardado.ts    Guardado local + Steam Cloud.
 src/app/         La ventana. El único lugar del proyecto que ve el DOM.
   estilos/       Tokens y base. Todo el sistema de diseño vive acá.
-  escena/        La cocina: mesa, objetos, luz. Puro CSS y SVG.
-  telefono/      El aparato y su barra de estado.
+  escena/        El living en primera persona: capas renderizadas y su movimiento.
+    capas/       Lo que exporta arte/exportar_capas.py. No se edita a mano.
+  telefono/      El vidrio de la pantalla y la barra de estado.
   mensajeria/    La app de adentro: lista de chats, roster fijado, avatares.
   estado/        El puente al núcleo y la curva de deterioro.
 src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
@@ -135,23 +136,55 @@ src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
 src/datos/       Schema, validador de grafo y carga de contenido.
 src/cli/         Herramientas de consola: jugar, validar, bot.
 contenido/       Los datos del juego. Un archivo por contacto.
-tests/           78 tests sobre el núcleo y el contenido.
+arte/            La escena en Blender, el script que la exporta y los créditos de assets.
+tests/           Tests sobre el núcleo y el contenido.
 ```
 
 ## Dirección de arte
 
 **Mundo sucio y real por fuera, app impecable que se pudre por dentro.**
 
-La escena es una cocina de noche vista desde arriba, con el teléfono apoyado en un mantel de hule.
-Está construida enteramente con CSS y SVG: no hay un solo asset de imagen. Adentro del teléfono, la
-app de mensajería es lo único ordenado de la escena.
+La escena es un living de noche visto en primera persona: estás tirado en el sillón con el celular
+en las manos, la tele pasa un partido y la lámpara de pie es la única luz cálida. Adentro del
+teléfono, la app de mensajería es lo único ordenado de la escena.
+
+### La escena es un render en capas
+
+El living, las manos y el celular salen de Blender ([arte/living.blend](arte/living.blend)), no de
+CSS. [arte/exportar_capas.py](arte/exportar_capas.py) los exporta a
+[src/app/escena/capas/](src/app/escena/capas/) en tres piezas:
+
+| Capa | Qué es |
+|---|---|
+| `fondo.webp` | El living, desenfocado como lo ve un ojo enfocado en el celular. |
+| `primer_plano.webp` | Manos, buzo y celular, nítidos, con la pantalla agujereada. |
+| `escena.json` | Dónde cae la pantalla, la cámara frontal y la tele, en fracciones del cuadro. |
+
+La app de mensajería es HTML de verdad y va entre las dos imágenes: el fondo atrás, la app en el
+hueco, las manos adelante. Por eso los pulgares tapan la pantalla como la taparían en la mano.
+La app se diseña a 390 px lógicos y se escala al hueco, así el diseño no depende de la ventana.
+
+El movimiento es 2.5D: las manos respiran y se mecen, el fondo se mueve al revés y menos, la luz de
+la tele cambia de plano. Con la moral baja, la mano tiembla. Todo se apaga con
+`prefers-reduced-motion`.
+
+Si cambia la escena, se vuelve a exportar desde la consola de Python de Blender con `living.blend`
+abierto:
+
+```python
+exec(open(bpy.path.abspath("//exportar_capas.py")).read())
+```
+
+Las texturas de piel y ropa vienen de MPFB (MakeHuman) y los muebles de Poly Haven y Sketchfab.
+Origen y licencia de cada uno en [arte/CREDITOS.md](arte/CREDITOS.md).
 
 ### La degradación es un solo valor
 
 De la moral sale un único `deterioro` de 0 a 1
 ([deterioro.ts](src/app/estado/deterioro.ts)) que alimenta todos los tokens de CSS: el aire entre
 elementos, la saturación, la interlínea, el grano y el tinte enfermizo
-([tokens.css](src/app/estilos/tokens.css)).
+([tokens.css](src/app/estilos/tokens.css)). El living también lo lee: se apaga, se destiñe y la
+mano empieza a temblar.
 
 **Ningún componente pregunta por la moral.** Leen tokens, y los tokens ya vienen deteriorados. Eso
 significa que la degradación se afina en un archivo, se puede animar, y un componente nuevo viene

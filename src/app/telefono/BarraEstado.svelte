@@ -22,11 +22,14 @@
 </div>
 
 <style>
+  /* Alta como para que la hora y la batería queden a la altura de la cámara frontal,
+     que está en el render y no se mueve. */
   .barra {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: calc(var(--e2)) var(--e3) var(--e1);
+    min-height: calc(var(--camara-centro) * 2);
+    padding: 0 calc(var(--e3) + 6px);
     background: var(--app-cromo);
     color: color-mix(in oklab, #FFFFFF 88%, var(--enfermizo) calc(var(--enfermo) * 60%));
     font-family: var(--fuente-cromo);

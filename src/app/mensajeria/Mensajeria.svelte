@@ -104,6 +104,9 @@
     min-width: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    /* Los pulgares del render tapan el pie de la pantalla: sin este aire, el último
+       contacto quedaría siempre abajo de un dedo. */
+    padding-bottom: 110px;
     scrollbar-width: thin;
     scrollbar-color: var(--app-linea) transparent;
   }

@@ -21,7 +21,6 @@
   --sat: calc(1 - var(--deterioro) * 0.58);
   --interlinea: calc(1.58 - var(--deterioro) * 0.22);
   --apretado: calc(var(--deterioro) * -0.004em);
-  --ruido: calc(0.018 + var(--deterioro) * 0.07);
   --enfermo: calc(var(--deterioro) * 0.17);
   --luz: calc(1 - var(--deterioro) * 0.2);
 
@@ -33,17 +32,8 @@
   --e4: calc(24px * var(--aire));
   --e5: calc(34px * var(--aire));
 
-  /* ---- el mundo: cocina de noche, tubo fluorescente ---------------------- */
+  /* ---- el mundo: el living es un render; esto es lo que hay detrás ------- */
   --mundo-fondo: #0E0C08;
-  --mundo-luz: #DCE4CE;
-  --mesa: #5E563A;
-  --mesa-clara: #7C7150;
-  --mesa-oscura: #2C2819;
-  --mesa-mancha: #1E1B10;
-
-  /* ---- el aparato -------------------------------------------------------- */
-  --bisel: #101214;
-  --bisel-borde: #2A2F33;
 
   /* ---- la app: impecable, acromática ------------------------------------ */
   /* Sin color de marca a propósito. En esta app el color ES información: lo

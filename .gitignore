@@ -80,3 +80,6 @@ lerna-debug.log*
 assets-src/**/*.wav
 assets-src/**/*.aiff
 assets-src/**/*.psd
+
+# Copias de seguridad de Blender
+*.blend1
