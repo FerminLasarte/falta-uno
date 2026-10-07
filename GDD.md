@@ -1,10 +1,28 @@
 # Documento de Diseño: "Falta Uno"
 
-**Versión 2.0** — 26 de agosto de 2026
-Revisión del documento original (v1). Las secciones 1 a 7 incorporan las correcciones
-acordadas; la sección 8 reúne ideas propuestas que todavía no son decisiones tomadas.
+**Versión 3.0** — 7 de octubre de 2026
+Revisión de la v2. Suma la dirección de arte y la interfaz decididas entre septiembre y octubre
+(sección 6, nueva), el estado real de cada fase y el plan para cerrar un viernes (sección 8). Las
+secciones 1 a 8 son decisiones tomadas; la sección 9 reúne ideas que todavía no lo son.
 
-### Qué cambió respecto de la v1
+### Qué cambió respecto de la v2
+
+La v2 describía una cocina vista desde arriba, armada en CSS, con el teléfono apoyado en la mesa y la
+lista de chats como pantalla principal. Se probó y no funcionó: los objetos no se leían, la escala se
+rompía con el tamaño de la ventana y la lista de doce contactos iguales no generaba ninguna tensión.
+
+| Tema | v2 | v3 |
+|---|---|---|
+| Escena | Cocina cenital, CSS y SVG | **Living de noche en primera persona**, renderizado en Blender |
+| Teléfono | Rectángulo HTML sobre la mesa | Celular modelado, **en tus manos**; la app vive en el hueco de su pantalla |
+| Movimiento | Ninguno | **2.5D por capas**: respiración, contraluz, la tele, temblor con moral baja |
+| Pantalla principal | Lista de chats | **El grupo del equipo**, con la lista del partido fijada arriba |
+| HUD de roster | Tarjeta sobre la lista de chats | La lista numerada del grupo; una franja compacta en el resto |
+| Interrupciones | Alertas | **Chats** en la bandeja, como cualquier otro |
+| Bandeja | Doce filas iguales | Secciones por estado; los que no escribiste, en grilla |
+| Ergonomía | — | **Zona de pulgares**: en las esquinas de abajo no va nada que se toque |
+
+### Qué cambió de la v1 a la v2
 
 | Tema | v1 | v2 |
 |---|---|---|
@@ -26,8 +44,9 @@ acordadas; la sección 8 reúne ideas propuestas que todavía no son decisiones 
 - **Motor / Tecnología:** HTML5, CSS3, **TypeScript** sobre **Svelte**, empaquetado con **Electron**.
 - **Arquitectura:** Núcleo de simulación puro (sin DOM) + capa de vista reactiva. Estado en memoria,
   contenido consumido desde archivos de datos validados por schema.
-- **Estilo Visual:** UI responsiva imitando una app de mensajería móvil. Diseño limpio y minimalista
-  que contraste con el caos de las notificaciones.
+- **Estilo Visual:** Un living de noche en primera persona, renderizado, con el celular en las manos.
+  Adentro, una app de mensajería impecable que contrasta con el caos de las notificaciones y se va
+  pudriendo con la moral. Detalle en la sección 6.
 
 ### Por qué Electron y no Tauri
 
@@ -157,7 +176,7 @@ timers reales cortos, se apilan y suenan. Esa es la fuente del agobio.
 
 ### B. El Sistema de Conversación (Dirigido por Datos)
 
-- **Árboles de Diálogo.** Los NPCs no usan IA en tiempo de ejecución (ver sección 6). Se navegan
+- **Árboles de Diálogo.** Los NPCs no usan IA en tiempo de ejecución (ver sección 7). Se navegan
   mediante opciones de respuesta rápida almacenadas en archivos de contenido.
 - **Modificadores Ocultos.** Cada respuesta altera el estado del NPC (`probabilidad_baja`, `enojo`,
   `dinero_aportado`) y tus propios recursos (`paciencia`).
@@ -173,10 +192,15 @@ timers reales cortos, se apilan y suenan. Esa es la fuente del agobio.
 - **Interrupciones del Viernes.** Tu pareja reclamando atención o el trabajo exigiendo una tarea.
   Ignorarlos consume Moral pasiva masiva; atenderlos consume reloj.
 
-### D. HUD de Roster (agregado en v2)
+### D. HUD de Roster (agregado en v2, resuelto en v3)
 
 El jugador tiene que ver **siempre**, sin abrir nada: `7/10 — faltan 2 defensores y 1 arquero`.
 Es la información central del juego y no puede estar escondida detrás de un click.
+
+En la v3 el HUD es **la lista del partido**, fijada arriba del grupo con la forma que tiene en
+cualquier grupo de fútbol: numerada del 1 al 10, en el orden en que se fue anotando cada uno, con un
+signo de pregunta para los que están en duda y los huecos que faltan. Debajo, lo que falta por puesto
+y la seña. En cualquier otro chat la lista se achica a una franja de un renglón que sigue a la vista.
 
 ---
 
@@ -218,7 +242,51 @@ Dinero para la semana siguiente. Perder aumenta la dificultad para conseguir jug
 
 ---
 
-## 6. Arquitectura Técnica
+## 6. La escena y el teléfono (agregado en v3)
+
+### La escena
+
+Estás tirado en el sillón un viernes a la noche, con el celular en las dos manos. Atrás, desenfocado,
+el living: la tele pasando un partido, el mueble, una planta, la mesa ratona con el mate. Mundo sucio
+y real por fuera; la app, lo único ordenado.
+
+- **Primera persona, legibilidad primero.** El celular está a 30 cm de los ojos y casi de frente: la
+  pantalla no se deforma y el texto se lee como en un teléfono de verdad. Ocupa cerca del 75% del
+  alto del cuadro.
+- **Renderizada, no dibujada.** La escena sale de Blender (`arte/living.blend`) con assets de uso libre
+  (Poly Haven, MPFB/MakeHuman, Sketchfab con atribución; ver `arte/CREDITOS.md`).
+- **En capas.** Un fondo desenfocado y un primer plano nítido con la pantalla agujereada. La app es
+  HTML de verdad y va entre las dos: los pulgares del render tapan la pantalla como la taparían en la
+  mano. Un script exporta las capas y la geometría de la pantalla; la interfaz no tiene medidas a ojo.
+- **Movimiento 2.5D.** Las manos respiran y se mecen; el fondo se mueve al revés y menos; la luz de la
+  tele cambia de plano. Con la moral baja el living se apaga y la mano tiembla. Todo se apaga con
+  `prefers-reduced-motion`.
+
+### La degradación es un solo valor
+
+De la moral sale un único `deterioro` de 0 a 1 que alimenta todos los tokens de la interfaz y de la
+escena. Ningún componente pregunta por la moral. La regla que lo acota: **la degradación nunca toca la
+legibilidad del texto que el jugador necesita leer.**
+
+### La app
+
+- **El grupo es la pantalla principal.** El juego abre ahí. Arriba la lista (ver 4.D); en el medio lo
+  que pasa en el grupo; abajo no hay teclado sino acciones con su costo.
+- **Chats privados** para convencer a cada uno. Cada respuesta muestra su costo en minutos antes de
+  elegirla; lo que provoca en el otro queda oculto. Los gestos (cerrar el chat, no contestar) van
+  aparte, apagados.
+- **Las interrupciones son chats.** Sofi, el jefe, la cancha: llegan a la bandeja y se atienden ahí.
+- **La bandeja** pone arriba lo que reclama atención y separa a la gente por en qué está con vos. Los
+  que todavía no escribiste van en una grilla compacta.
+- **El color es información.** La app es acromática; lo único con color es el estado de cada jugador
+  (verde en la lista, azul hablando, rojo no viene), y se repite igual en la lista, en los nombres del
+  grupo y en el anillo de las fotos.
+- **Zona de pulgares.** Los pulgares del render tapan las esquinas de abajo. Ahí no va nada que haya
+  que tocar o leer, salvo centrado entre los dos dedos.
+
+---
+
+## 7. Arquitectura Técnica
 
 ### Capas
 
@@ -296,7 +364,7 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 
 ---
 
-## 7. Fases de Desarrollo (Hoja de Ruta)
+## 8. Fases de Desarrollo (Hoja de Ruta)
 
 - **Fase 1 — Motor y Datos (núcleo lógico).** Clases `Partida`, `Contacto`, `Reloj`; parseador y
   validador de contenido; lógica de avance del tiempo. Todo por consola, con tests. Sin interfaz.
@@ -313,13 +381,46 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 - **Fase 7 — Pulido y Lanzamiento.** Balance con bots, localización si aplica, página de Steam,
   certificación de Deck, build final.
 
+### Estado al 7 de octubre de 2026
+
+| Fase | Estado |
+|---|---|
+| 1 — Motor y datos | ✅ Completa. Núcleo con tests, 12 contactos, 4 interrupciones, bot de balance. |
+| 2 — Empaquetado y Steam | 🟡 Completa en macOS. Falta verificar Windows y una Deck real, y lo que necesita la cuenta de Steamworks. |
+| 3 — Interfaz y audio | 🟡 La escena y la app están hechas. **Falta el audio** y el gamepad. |
+| 4 — Integración | 🟡 Un viernes se juega de punta a punta adentro del teléfono. Faltan los mensajes que llegan solos y la vida del grupo. |
+| 5 — El simulador | 🟡 Resolución y narración atribuida en el núcleo; sin pantalla. |
+| 6 — Contenido | ⬜ No empezó. |
+| 7 — Pulido | ⬜ No empezó. |
+
+Pendientes que cruzan fases:
+
+- **Perfiles.** El juego arranca siempre como Pibe de Barrio y muestra los tres contactos únicos a la
+  vez: falta elegir perfil y que cada uno desbloquee solo el suyo.
+- **Guardado en cada acción.** La plomería de Electron y Steam Cloud existe, pero el juego no la usa.
+- **Pasivas** de los contactos únicos (el Sindicalista, el Político): no están en la resolución.
+- **Texto por claves** (sección 1): todavía no; todo el texto está escrito en el código y el contenido.
+- **Balance:** el bot completa la lista el 100% de las veces. Hoy no se puede perder un viernes.
+
+### Plan para cerrar un viernes
+
+1. **Que se sienta.** Mensajes que llegan solos con timers reales (la fuente de estrés que pide la
+   sección 4), la vibración del celular en la escena, el sonido de notificaciones y la vida propia del
+   grupo: charla, audios, roces visibles.
+2. **Cerrar el circuito.** Elegir perfil con su contacto único, guardar en cada acción y la pantalla
+   de las 21:00 con la narración atribuida.
+3. **Vertical slice** (9.8): un viernes con ocho contactos, pulido al máximo y difícil de verdad, para
+   probarlo con gente antes de escribir el resto del guion. Ahí se corrige el balance.
+4. **Deuda que no conviene estirar:** texto por claves, gamepad para la Deck, verificación en Windows y
+   en una Deck real.
+
 ---
 
-## 8. Ideas propuestas (a evaluar, no decididas)
+## 9. Ideas propuestas (a evaluar, no decididas)
 
 Todo lo de esta sección son propuestas abiertas. Ninguna está comprometida.
 
-### 8.1 Autoría del contenido: Ink en vez de datos crudos
+### 9.1 Autoría del contenido: Ink en vez de datos crudos
 
 [Ink](https://www.inklestudios.com/ink/) es el lenguaje de guion narrativo de inkle, con runtime para
 JavaScript (`inkjs`) y editor propio (Inky). Está diseñado exactamente para árboles de diálogo con
@@ -333,45 +434,50 @@ variables y contenido condicional.
   orquestación (reloj, recursos, triggers, cancelaciones).
 - **Alternativa más conservadora:** YAML con schema, que al menos es más cómodo de escribir que JSON.
 
-### 8.2 Variación por plantillas para que "se sienta vivo"
+### 9.2 Variación por plantillas para que "se sienta vivo"
 
 Sin LLM y sin costo de runtime: plantillas con variación gramatical (estilo Tracery) más etiquetas de
 tono. El mismo mensaje en seis fraseos distintos según el estado del NPC. Es offline, determinista y
 cubre casi toda la sensación de "no se repite" que motivaría usar IA.
 
-### 8.3 Meta-progresión entre campañas
+### 9.3 Meta-progresión entre campañas
 
 Si una campaña termina (Moral en 0, bancarrota), que algo persista: contactos ya conocidos, excusas ya
 escuchadas, "ya sabés que Carlos siempre miente". Convierte el fracaso en conocimiento y hace que
 volver a empezar no sea releer.
 
-### 8.4 Modo IA opcional post-lanzamiento
+### 9.4 Modo IA opcional post-lanzamiento
 
 Una vez que el juego esté vendido y estable, un modo opt-in con modelo local pequeño o API key propia
 del jugador, claramente marcado como experimental. Nunca en la v1, nunca como camino por defecto.
 
-### 8.5 Bot de balanceo
+### 9.5 Bot de balanceo
+
+**Hecho en la Fase 1** (`npm run bot`). Queda acá porque su alcance completo, contactos que nunca se
+usan y decisiones falsas, sigue abierto.
 
 Un agente que juegue diez mil partidas contra el núcleo headless y reporte: porcentaje de victoria por
 perfil, contactos que nunca se usan, decisiones que son siempre óptimas (o sea, decisiones falsas).
 Barato de escribir gracias a la regla de "el núcleo no toca el DOM", y es la única forma realista de
 balancear un juego de sistemas sin cientos de playtesters.
 
-### 8.6 Logros de Steam como diseño, no como decoración
+### 9.6 Logros de Steam como diseño, no como decoración
 
 Los logros son una herramienta de diseño gratis: "Cerrar la lista antes de las 20:00", "Ganar con once
 jugadores que nunca habían jugado juntos", "Sobrevivir un viernes sin responderle a tu pareja".
 Enseñan mecánicas y sugieren estilos de juego. Conviene diseñarlos junto con el contenido, no pegarlos
 al final.
 
-### 8.7 Localización a inglés
+### 9.7 Localización a inglés
 
 El humor es profundamente rioplatense y buena parte no sobrevive la traducción literal. Si se hace, se
 hace como **localización** (reescritura cultural), no como traducción. La decisión puede postergarse,
-pero la preparación técnica (texto por claves) ya está tomada en la sección 1 porque es casi gratis
+pero la preparación técnica (texto por claves) ya está decidida en la sección 1 porque es casi gratis
 hacerla ahora y cara hacerla después.
 
-### 8.8 Vertical slice antes de escalar contenido
+### 9.8 Vertical slice antes de escalar contenido
+
+**Adoptada:** es el paso 3 del plan de la sección 8.
 
 Antes de la Fase 6 completa, un viernes entero con ocho contactos, pulido al máximo, jugable de punta a
 punta. Sirve para playtesting real, para el trailer y para la página de Steam. Es también el momento

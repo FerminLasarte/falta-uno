@@ -25,7 +25,7 @@ Falta el sonido y las notificaciones que llegan solas, la vida propia del grupo,
 
 ## Documentación
 
-- **[GDD.md](GDD.md)** — documento de diseño completo, v2.0. Fuente de la verdad para mecánicas,
+- **[GDD.md](GDD.md)** — documento de diseño completo, v3.0. Fuente de la verdad para mecánicas,
   arquitectura y hoja de ruta.
 
 ## Stack
@@ -78,7 +78,7 @@ posible para descubrirlo.
   0, bancarrota, disolución del equipo.
 - **Los NPCs no usan LLM en tiempo de ejecución.** Costo recurrente sobre venta única, dependencia de
   internet, latencia que rompe el ritmo y pérdida de determinismo sobre los modificadores ocultos.
-  La IA se usa en el pipeline de producción, no en el juego. Ver GDD §6.
+  La IA se usa en el pipeline de producción, no en el juego. Ver GDD §7.
 - **La narración del partido atribuye cada evento a una decisión del jugador.** Misma matemática,
   desenlace que no se siente arbitrario.
 
