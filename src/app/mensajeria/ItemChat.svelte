@@ -1,50 +1,38 @@
 <!--
-  Una fila de la lista de chats. Es el componente que más se repite del juego,
-  así que no sabe nada del juego: recibe una VistaContacto y avisa cuando la
-  tocan.
+  Una fila de la bandeja. Es el componente que más se repite, así que no sabe
+  nada del juego: recibe la foto, el nombre, una línea y avisa cuando la tocan.
 -->
 <script lang="ts">
-  import type { VistaContacto } from "../../core/partida.js";
+  import type { Snippet } from "svelte";
   import { formatearHora } from "../../core/tiempo.js";
-  import Avatar from "./Avatar.svelte";
 
-  let { contacto, alAbrir }: { contacto: VistaContacto; alAbrir: (id: string) => void } = $props();
-
-  const ROTULO: Record<string, string> = {
-    sin_contactar: "sin escribir",
-    esperando: "esperando",
-    hablando: "abierto",
-    confirmado: "viene",
-    rechazado: "no viene",
-    bajado: "se bajó",
-  };
-
-  /* Sin mensajes, el renglón lo ocupa el rol: informa algo distinto en cada
-     fila. Repetir "todavía no le escribiste" doce veces se lee como un bug. */
-  const preview = $derived(contacto.ultimoMensaje);
+  let {
+    titulo,
+    linea,
+    minuto = null,
+    sinLeer = 0,
+    avatar,
+    alAbrir,
+  }: {
+    titulo: string;
+    linea: string;
+    minuto?: number | null;
+    sinLeer?: number;
+    avatar: Snippet;
+    alAbrir: () => void;
+  } = $props();
 </script>
 
-<button class="item" onclick={() => alAbrir(contacto.id)} class:sinabrir={contacto.sinLeer > 0}>
-  <Avatar nombre={contacto.nombre} id={contacto.id} estado={contacto.estado} />
-
-  <span class="centro">
-    <span class="linea">
-      <span class="nombre">{contacto.nombre}</span>
-      <span class="hora">
-        {contacto.minutoUltimo === null ? "" : formatearHora(contacto.minutoUltimo)}
-      </span>
+<button class="item" class:sinleer={sinLeer > 0} onclick={alAbrir}>
+  {@render avatar()}
+  <span class="cuerpo">
+    <span class="renglon">
+      <strong>{titulo}</strong>
+      {#if minuto !== null}<span class="hora">{formatearHora(minuto)}</span>{/if}
     </span>
-    <span class="linea">
-      {#if preview}
-        <span class="preview">{preview}</span>
-      {:else}
-        <span class="rol">{contacto.rol} · {ROTULO[contacto.estado]}</span>
-      {/if}
-      {#if contacto.sinLeer > 0}
-        <span class="badge">{contacto.sinLeer}</span>
-      {:else if contacto.estado === "confirmado"}
-        <span class="tilde" data-estado="confirmado" aria-label="confirmado">✓</span>
-      {/if}
+    <span class="renglon">
+      <span class="linea">{linea}</span>
+      {#if sinLeer > 0}<span class="badge">{sinLeer}</span>{/if}
     </span>
   </span>
 </button>
@@ -52,52 +40,44 @@
 <style>
   .item {
     display: flex;
-    gap: var(--e2);
-    align-items: flex-start;
+    align-items: center;
+    gap: 11px;
     width: 100%;
-    padding: calc(var(--e1) + 1px) var(--e3);
+    padding: 9px var(--e3);
     border-bottom: 1px solid var(--app-linea);
     background: var(--app-superficie);
   }
   .item:hover { background: var(--app-hover); }
   .item:focus-visible { outline-offset: -2px; }
 
-  .centro { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .cuerpo { flex: 1; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1px; }
+  .renglon { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 
-  .linea { display: flex; align-items: baseline; gap: var(--e1); }
-
-  .nombre {
+  strong {
     flex: 1;
     min-width: 0;
     font-size: var(--t-nombre);
     font-weight: 600;
-    color: var(--app-tinta);
     letter-spacing: var(--apretado);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
+  .hora { flex: none; font-size: var(--t-micro); color: var(--app-tinta-3); font-variant-numeric: tabular-nums; }
+  .sinleer strong { font-weight: 700; }
+  .sinleer .hora { color: var(--est-hablando); font-weight: 600; }
 
-  .hora {
-    flex: none;
-    font-size: var(--t-micro);
-    font-variant-numeric: tabular-nums;
-    color: var(--app-tinta-3);
-  }
-
-  .preview {
+  .linea {
     flex: 1;
     min-width: 0;
-    font-size: var(--t-mensaje);
-    /* El texto que el jugador tiene que leer nunca se degrada. */
+    font-size: calc(13.5px * var(--escala-ui));
     line-height: 1.35;
     color: var(--app-tinta-2);
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
-  .sinabrir .nombre { font-weight: 700; }
-  .sinabrir .preview { color: var(--app-tinta); }
+  .sinleer .linea { color: var(--app-tinta); }
 
   .badge {
     flex: none;
@@ -113,23 +93,4 @@
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
-
-  .rol {
-    flex: 1;
-    min-width: 0;
-    font-size: var(--t-meta);
-    color: var(--app-tinta-3);
-    letter-spacing: 0.01em;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .tilde {
-    flex: none;
-    font-size: var(--t-meta);
-    font-weight: 700;
-    line-height: 1;
-  }
-  .tilde[data-estado="confirmado"] { color: var(--est-confirmado); }
 </style>

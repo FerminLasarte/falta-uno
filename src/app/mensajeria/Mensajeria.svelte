@@ -1,67 +1,146 @@
 <!--
   La app de mensajería adentro del teléfono. Impecable a propósito: es lo único
   ordenado de toda la escena, y se pudre a medida que se te cae la moral.
+
+  Es el único componente de la app que habla con el puente: decide qué pantalla
+  se ve y le pasa a cada una sus datos ya armados. Arranca en el grupo, que es
+  donde vive el partido.
 -->
 <script lang="ts">
-  import type { VistaContacto, VistaRoster } from "../../core/partida.js";
-  import Fijado from "./Fijado.svelte";
-  import ItemChat from "./ItemChat.svelte";
+  import { CHAT_GRUPO } from "../../core/partida.js";
+  import { COSTO } from "../../core/tiempo.js";
+  import { juego, type Vista } from "../estado/juego.svelte.js";
+  import Avatar from "./Avatar.svelte";
+  import Cabecera from "./Cabecera.svelte";
+  import Chat from "./Chat.svelte";
+  import Chats from "./Chats.svelte";
+  import Grupo from "./Grupo.svelte";
+  import { ROTULO_ESTADO } from "./rotulos.js";
 
-  let {
-    contactos,
-    roster,
-    dinero,
-    sena,
-    alAbrir,
-  }: {
-    contactos: readonly VistaContacto[];
-    roster: VistaRoster;
-    dinero: number;
-    sena: number;
-    alAbrir: (id: string) => void;
-  } = $props();
+  let { vista, sena, costoReemplazo }: { vista: Vista; sena: number; costoReemplazo: number } = $props();
 
-  /* Los que tienen algo pendiente suben. Es lo que hace una app de verdad y es
-     lo que el jugador necesita: lo urgente arriba. */
-  const PRIORIDAD: Record<string, number> = {
-    hablando: 0,
-    esperando: 1,
-    sin_contactar: 2,
-    confirmado: 3,
-    bajado: 4,
-    rechazado: 5,
-  };
+  const pantalla = $derived(juego.pantalla);
+  const delGrupo = $derived(vista.eventos.filter((e) => e.chat === CHAT_GRUPO));
 
-  const ordenados = $derived(
-    [...contactos].sort((a, b) => {
-      if (b.sinLeer !== a.sinLeer) return b.sinLeer - a.sinLeer;
-      const pa = PRIORIDAD[a.estado] ?? 9;
-      const pb = PRIORIDAD[b.estado] ?? 9;
-      if (pa !== pb) return pa - pb;
-      return (b.minutoUltimo ?? 0) - (a.minutoUltimo ?? 0);
-    }),
+  /** Todo lo que te espera sin leer fuera de la pantalla actual: va en el botón de volver. */
+  const sinLeerAfuera = $derived.by(() => {
+    const p = pantalla;
+    const contactos = vista.contactos
+      .filter((c) => !(p.tipo === "contacto" && p.id === c.id))
+      .reduce((t, c) => t + c.sinLeer, 0);
+    const avisos = vista.interrupciones.filter(
+      (i) => i.sinLeer && !(p.tipo === "interrupcion" && p.id === i.id),
+    ).length;
+    const grupo = p.tipo === "grupo" ? 0 : vista.grupoSinLeer;
+    return contactos + avisos + grupo;
+  });
+
+  const volver = $derived({ cuenta: sinLeerAfuera, alVolver: () => juego.volver() });
+  const irAlGrupo = (): void => juego.ir({ tipo: "grupo" });
+  const abrirContacto = (id: string): void => juego.ir({ tipo: "contacto", id });
+
+  const contacto = $derived(
+    pantalla.tipo === "contacto" ? vista.contactos.find((c) => c.id === pantalla.id) ?? null : null,
+  );
+  const interrupcion = $derived(
+    pantalla.tipo === "interrupcion"
+      ? vista.interrupciones.find((i) => i.id === pantalla.id) ?? null
+      : null,
+  );
+  const delChat = $derived(
+    pantalla.tipo === "contacto" || pantalla.tipo === "interrupcion"
+      ? vista.eventos.filter((e) => e.chat === pantalla.id)
+      : [],
   );
 
-  const sinLeerTotal = $derived(contactos.reduce((t, c) => t + c.sinLeer, 0));
+  const puedeLlamar = $derived(
+    contacto !== null && contacto.estado !== "rechazado" && contacto.estado !== "bajado" && !vista.terminada,
+  );
 </script>
 
 <div class="app">
-  <header class="encabezado">
-    <span class="marca">Mensajes</span>
-    {#if sinLeerTotal > 0}
-      <span class="total">{sinLeerTotal} sin leer</span>
-    {/if}
-  </header>
-
-  <Fijado {roster} {dinero} {sena} />
-
-  <div class="lista" role="list">
-    {#each ordenados as contacto (contacto.id)}
-      <div role="listitem">
-        <ItemChat {contacto} {alAbrir} />
-      </div>
-    {/each}
-  </div>
+  {#if pantalla.tipo === "grupo"}
+    <Grupo
+      eventos={delGrupo}
+      lista={vista.lista}
+      contactos={vista.contactos}
+      roster={vista.roster}
+      dinero={vista.dinero}
+      {sena}
+      {costoReemplazo}
+      {sinLeerAfuera}
+      alVolver={() => juego.volver()}
+      alAbrir={abrirContacto}
+      alEscribirAAlguien={() => juego.ir({ tipo: "chats" })}
+      alPagar={(rol) => juego.pagarReemplazo(rol)}
+    />
+  {:else if pantalla.tipo === "chats"}
+    <Chats
+      contactos={vista.contactos}
+      interrupciones={vista.interrupciones}
+      ultimoDelGrupo={delGrupo.at(-1) ?? null}
+      grupoSinLeer={vista.grupoSinLeer}
+      roster={vista.roster}
+      dinero={vista.dinero}
+      {sena}
+      alAbrirGrupo={irAlGrupo}
+      alAbrirContacto={abrirContacto}
+      alAbrirInterrupcion={(id) => juego.ir({ tipo: "interrupcion", id })}
+    />
+  {:else if contacto}
+    {@const c = contacto}
+    <Chat
+      eventos={delChat}
+      opciones={c.opciones}
+      principal={c.estado === "sin_contactar" && !vista.terminada
+        ? { texto: `Escribirle a ${c.nombre}`, minutos: COSTO.mensaje }
+        : null}
+      nota={c.estado === "confirmado" ? `${c.nombre} está en la lista.` : ROTULO_ESTADO[c.estado]}
+      roster={vista.roster}
+      dinero={vista.dinero}
+      {sena}
+      alElegir={(opcionId) => juego.responder(c.id, opcionId)}
+      alPrincipal={() => juego.escribir(c.id)}
+      alVerLista={irAlGrupo}
+    >
+      {#snippet cabecera()}
+        <Cabecera titulo={c.nombre} subtitulo="{c.rol} · {ROTULO_ESTADO[c.estado]}" {volver}>
+          {#snippet avatar()}
+            <Avatar nombre={c.nombre} id={c.id} estado={c.estado} tam={38} fondo="var(--app-cromo)" />
+          {/snippet}
+          {#snippet accion()}
+            {#if puedeLlamar}
+              <button class="llamar" onclick={() => juego.llamar(c.id)} aria-label="Llamar a {c.nombre}, {COSTO.llamar} minutos">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 6 6L15 14l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2" />
+                </svg>
+                <span>{COSTO.llamar} min</span>
+              </button>
+            {/if}
+          {/snippet}
+        </Cabecera>
+      {/snippet}
+    </Chat>
+  {:else if interrupcion}
+    {@const i = interrupcion}
+    <Chat
+      eventos={delChat}
+      principal={i.pendiente && !vista.terminada ? { texto: "Atender", minutos: i.costoAtender } : null}
+      roster={vista.roster}
+      dinero={vista.dinero}
+      {sena}
+      alPrincipal={() => juego.atender(i.id)}
+      alVerLista={irAlGrupo}
+    >
+      {#snippet cabecera()}
+        <Cabecera titulo={i.de} subtitulo={i.pendiente ? "esperando que contestes" : "en línea"} {volver}>
+          {#snippet avatar()}
+            <Avatar nombre={i.de} id={i.id} tam={38} />
+          {/snippet}
+        </Cabecera>
+      {/snippet}
+    </Chat>
+  {/if}
 </div>
 
 <style>
@@ -73,41 +152,15 @@
     background: var(--app-fondo);
   }
 
-  .encabezado {
+  .llamar {
     flex: none;
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: var(--e2);
-    padding: var(--e1) var(--e3) var(--e2);
-    background: var(--app-cromo);
-    color: #FFFFFF;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 2px 4px;
+    color: rgb(255 255 255 / 88%);
   }
-
-  .marca {
-    font-family: var(--fuente-cromo);
-    font-size: var(--t-titulo);
-    font-weight: 700;
-    letter-spacing: -0.015em;
-  }
-
-  .total {
-    font-size: var(--t-micro);
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    color: color-mix(in oklab, #FFFFFF 62%, transparent);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .lista {
-    flex: 1;
-    min-width: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    /* Los pulgares del render tapan el pie de la pantalla: sin este aire, el último
-       contacto quedaría siempre abajo de un dedo. */
-    padding-bottom: 110px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--app-linea) transparent;
-  }
+  .llamar svg { width: 20px; height: 20px; }
+  .llamar span { font-size: calc(10px * var(--escala-ui)); color: rgb(255 255 255 / 55%); font-variant-numeric: tabular-nums; }
 </style>

@@ -48,6 +48,13 @@
   --app-tinta-3: color-mix(in oklab, #8D959D calc(100% - var(--enfermo) * 80%), var(--enfermizo));
   --app-linea: color-mix(in oklab, #E3E6E9 calc(100% - var(--enfermo) * 90%), var(--enfermizo));
   --app-hover: color-mix(in oklab, #EFF1F3 calc(100% - var(--enfermo) * 90%), var(--enfermizo));
+  /* El fondo de una conversación y la burbuja de lo que escribís vos. */
+  --app-papel: color-mix(in oklab, #ECEEF0 calc(100% - var(--enfermo) * 100%), var(--enfermizo));
+  --app-propio: color-mix(in oklab, #DFE7EE calc(100% - var(--enfermo) * 80%), var(--enfermizo));
+
+  /* Alto que tapan los pulgares del render sobre el pie de la pantalla, en px
+     lógicos. Ahí no va nada que haya que tocar o leer, salvo centrado. */
+  --zona-pulgares: 118px;
 
   /* ---- estado de los jugadores: la única fuente de color ----------------- */
   --gris-muerto: #737974;

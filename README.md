@@ -15,11 +15,13 @@ cancelaciones de último minuto y las crisis personales.
 
 ## Estado
 
-🟡 **Fase 3 en curso.** Las fases 1 y 2 están completas: el núcleo simula un viernes entero y el
-juego empaqueta y corre en Electron con Steam cableado. La Fase 3 tiene el sistema de diseño y la
-primera pantalla (la lista de chats a las 19:00) funcionando con datos reales del núcleo.
+🟡 **Fases 3 y 4 en curso.** Las fases 1 y 2 están completas: el núcleo simula un viernes entero y
+el juego empaqueta y corre en Electron con Steam cableado. La escena en primera persona está
+terminada y el viernes se juega de punta a punta adentro del teléfono: el grupo con la lista, los
+chats privados con sus respuestas y costos, las interrupciones como chats y la bandeja.
 
-Falta el chat abierto, las notificaciones, el audio y la pantalla de las 21:00.
+Falta el sonido y las notificaciones que llegan solas, la vida propia del grupo, la pantalla de las
+21:00 y la elección de perfil.
 
 ## Documentación
 
@@ -124,7 +126,7 @@ src/app/         La ventana. El único lugar del proyecto que ve el DOM.
   escena/        El living en primera persona: capas renderizadas y su movimiento.
     capas/       Lo que exporta arte/exportar_capas.py. No se edita a mano.
   telefono/      El vidrio de la pantalla y la barra de estado.
-  mensajeria/    La app de adentro: lista de chats, roster fijado, avatares.
+  mensajeria/    La app de adentro: el grupo con la lista, los chats privados y la bandeja.
   estado/        El puente al núcleo y la curva de deterioro.
 src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
   rng.ts         RNG determinista y serializable.

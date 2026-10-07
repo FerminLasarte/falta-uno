@@ -39,11 +39,9 @@
     {:else if juego.vista && juego.contenido}
       <BarraEstado hora={juego.vista.hora} restante={juego.vista.restante} />
       <Mensajeria
-        contactos={juego.vista.contactos}
-        roster={juego.vista.roster}
-        dinero={juego.vista.dinero}
+        vista={juego.vista}
         sena={juego.contenido.config.senaCancha}
-        alAbrir={(id) => juego.abrirChat(id)}
+        costoReemplazo={juego.contenido.config.costoVacante}
       />
     {:else}
       <div class="cargando"><span></span></div>

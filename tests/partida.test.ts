@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { costoDeLeer, Partida } from "../src/core/partida.js";
+import { CHAT_GRUPO, costoDeLeer, Partida } from "../src/core/partida.js";
 import type { EstadoDeContacto } from "../src/core/tipos.js";
 import {
   agendaCompleta,
@@ -201,6 +201,51 @@ describe("la lista de chats", () => {
     const c = p.contactos().find((x) => x.id === "c0")!;
     expect(c.estado).toBe("confirmado");
     expect(c.sinLeer).toBe(0); // "si" cierra la charla sin mensajes nuevos
+  });
+});
+
+describe("la lista del grupo", () => {
+  it("guarda el orden en que se anotaron, no el de la agenda", () => {
+    const p = nueva();
+    p.escribir("c5");
+    p.responder("c5", "si");
+    p.escribir("c0");
+    p.responder("c0", "si");
+    p.pagarVacante("delantero");
+    expect(p.lista().map((l) => l.id)).toEqual(["c5", "c0", "relleno_1"]);
+    expect(p.lista().map((l) => l.relleno)).toEqual([false, false, true]);
+  });
+
+  it("el que se baja deja su lugar", () => {
+    const p = nueva();
+    p.escribir("c0");
+    p.responder("c0", "apurar");
+    p.escribir("c1");
+    p.responder("c1", "si");
+    p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    expect(p.lista().map((l) => l.id)).toEqual(["c1"]);
+  });
+});
+
+describe("cada evento sabe a qué chat pertenece", () => {
+  it("lo que se habla con un contacto queda en su chat", () => {
+    const p = nueva();
+    p.escribir("c0");
+    const delChat = p.eventos().filter((e) => e.chat === "c0");
+    expect(delChat.map((e) => e.clase)).toEqual(["propio", "mensaje"]);
+  });
+
+  it("las confirmaciones se anuncian en el grupo", () => {
+    const p = nueva();
+    p.escribir("c0");
+    p.responder("c0", "si");
+    expect(p.eventos().some((e) => e.chat === CHAT_GRUPO && e.texto.includes("confirmó"))).toBe(true);
+  });
+
+  it("una interrupción llega en su propio chat", () => {
+    const p = nueva(agendaCompleta(), [interrupcionSegura("sofi", 1142)]);
+    p.escribir("c0");
+    expect(p.eventos().filter((e) => e.chat === "sofi").map((e) => e.de)).toEqual(["Sofi"]);
   });
 });
 

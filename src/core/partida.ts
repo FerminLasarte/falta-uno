@@ -22,11 +22,19 @@ export interface OpcionesPartida {
   readonly semilla: number | string;
 }
 
+/** El chat del grupo del equipo, donde se arma la lista. */
+export const CHAT_GRUPO = "grupo";
+
 export interface EventoFeed {
   readonly minuto: number;
   readonly de: string;
   readonly texto: string;
   readonly clase: "mensaje" | "propio" | "sistema" | "alerta";
+  /**
+   * La conversación a la que pertenece: el id de un contacto, el de una
+   * interrupción o CHAT_GRUPO. Sin chat es un aviso de la partida entera.
+   */
+  readonly chat?: string;
 }
 
 export interface ResultadoComando {
@@ -52,6 +60,15 @@ export interface VistaContacto {
   readonly ultimoMensaje: string | null;
   readonly minutoUltimo: number | null;
   readonly opciones: readonly VistaOpcion[];
+}
+
+/** Un lugar ocupado en la lista, en el orden en que se anotó. */
+export interface VistaPuesto {
+  readonly id: string;
+  readonly nombre: string;
+  readonly rol: Rol;
+  /** Alguien que entró pagando, no un contacto de la agenda. */
+  readonly relleno: boolean;
 }
 
 export interface VistaRoster {
@@ -101,6 +118,8 @@ export class Partida {
   private readonly rng: Rng;
   private readonly feed: EventoFeed[] = [];
   private readonly sintéticos: DefinicionContacto[] = [];
+  /** Ids en el orden en que entraron a la lista. Puede tener bajas: lista() las filtra. */
+  private readonly ordenLista: string[] = [];
 
   private _moral: number;
   private _dinero: number;
@@ -133,7 +152,12 @@ export class Partida {
       });
     }
 
-    this.emitir("sistema", `Son las ${this.reloj}. Tenés ${this.config.jugadoresNecesarios} lugares que llenar.`);
+    this.emitir(
+      "sistema",
+      `Son las ${this.reloj}. Tenés ${this.config.jugadoresNecesarios} lugares que llenar.`,
+      "Sistema",
+      CHAT_GRUPO,
+    );
   }
 
   // ---------------------------------------------------------------- lecturas
@@ -199,6 +223,18 @@ export class Partida {
     };
   }
 
+  /** La lista del grupo: los que confirmaron, en el orden en que se anotaron. */
+  lista(): VistaPuesto[] {
+    const rellenos = new Map(this.sintéticos.map((s) => [s.id, s]));
+    return this.ordenLista.flatMap((id): VistaPuesto[] => {
+      const relleno = rellenos.get(id);
+      if (relleno) return [{ id, nombre: relleno.nombre, rol: relleno.rol, relleno: true }];
+      if (this.estadoDe(id).estado !== "confirmado") return [];
+      const d = this.definicion(id);
+      return [{ id, nombre: d.nombre, rol: d.rol, relleno: false }];
+    });
+  }
+
   contactos(): VistaContacto[] {
     return [...this.agenda.values()].map((d) => {
       const e = this.estadoDe(d.id);
@@ -252,7 +288,7 @@ export class Partida {
         return this.fallo(`Ya le escribiste a ${this.definicion(id).nombre}.`);
       }
       const definicion = this.definicion(id);
-      this.emitir("propio", `Che, ¿jugás hoy a las 21?`, definicion.nombre);
+      this.emitir("propio", `Che, ¿jugás hoy a las 21?`, definicion.nombre, id);
       this.consumir(COSTO.mensaje);
       estado.estado = "hablando";
       estado.nodoActual = definicion.nodoInicial;
@@ -270,14 +306,14 @@ export class Partida {
       const definicion = this.definicion(id);
       const estado = this.estadoDe(id);
 
-      this.emitir("propio", opcion.texto, definicion.nombre);
+      this.emitir("propio", opcion.texto, definicion.nombre, id);
       this.consumir(opcion.costoReloj);
       this.aplicarEfectos(id, opcion.efectos);
 
       if (estado.estado === "confirmado") {
         this.registrarConfirmacion(id);
       } else if (estado.estado === "rechazado") {
-        this.emitir("alerta", `${definicion.nombre} no viene.`);
+        this.emitir("alerta", `${definicion.nombre} no viene.`, "Sistema", id);
       }
 
       estado.nodoActual = opcion.siguiente;
@@ -294,13 +330,13 @@ export class Partida {
       if (estado.estado === "rechazado" || estado.estado === "bajado") {
         return this.fallo(`${definicion.nombre} ya te dijo que no.`);
       }
-      this.emitir("propio", `📞 Lo llamás a ${definicion.nombre}.`, definicion.nombre);
+      this.emitir("propio", `📞 Lo llamás a ${definicion.nombre}.`, definicion.nombre, id);
       this.consumir(COSTO.llamar);
       this.ajustarMoral(-3);
       estado.probabilidadBaja = limitar(estado.probabilidadBaja - 30, 0, 100);
       estado.enojo = limitar(estado.enojo + 10, 0, 100);
       this.bitacora.registrar("apuro", this.reloj.minutos, id, "lo llamaste por teléfono");
-      this.emitir("mensaje", `Bueno, bueno, ya te dije que voy. Cortá.`, definicion.nombre);
+      this.emitir("mensaje", `Bueno, bueno, ya te dije que voy. Cortá.`, definicion.nombre, id);
       return this.exito();
     });
   }
@@ -325,8 +361,14 @@ export class Partida {
         nodos: {},
       };
       this.sintéticos.push(relleno);
+      this.ordenLista.push(relleno.id);
       this.bitacora.registrar("plata", this.reloj.minutos, relleno.id, `pagaste un ${rol}`);
-      this.emitir("sistema", `Pagaste $${this.config.costoVacante}. Entra ${relleno.nombre}.`);
+      this.emitir(
+        "sistema",
+        `Pagaste $${this.config.costoVacante}. Entra ${relleno.nombre}.`,
+        "Sistema",
+        CHAT_GRUPO,
+      );
       return this.exito();
     });
   }
@@ -342,7 +384,12 @@ export class Partida {
       this.interrupcionesActivas.splice(indice, 1);
       this.consumir(activa.definicion.costoAtender);
       this.aplicarEfectosGlobales(activa.definicion.efectosAtender);
-      this.emitir("sistema", `Atendiste a ${activa.definicion.de}. Te comió ${activa.definicion.costoAtender} minutos.`);
+      this.emitir(
+        "sistema",
+        `Atendiste a ${activa.definicion.de}. Te comió ${activa.definicion.costoAtender} minutos.`,
+        "Sistema",
+        activa.definicion.id,
+      );
       return this.exito();
     });
   }
@@ -394,7 +441,7 @@ export class Partida {
     const definicion = this.definicion(id);
     for (const mensaje of nodo.mensajes) {
       estado.historial.push({ texto: mensaje, minuto: this.reloj.minutos });
-      this.emitir("mensaje", mensaje, definicion.nombre);
+      this.emitir("mensaje", mensaje, definicion.nombre, id);
       this.ajustarMoral(-costoDeLeer(mensaje, definicion, estado));
     }
   }
@@ -432,6 +479,7 @@ export class Partida {
     // entra al grupo se pelea una vez, no una vez con cada uno. Sin este tope el
     // costo escala al cuadrado y los cruces se comen el juego entero.
     const roces = rocesAlSumar(plantelPrevio, definicion);
+    if (!this.ordenLista.includes(id)) this.ordenLista.push(id);
     for (const roce of roces) {
       const otro = this.definicion(roce.a);
       this.bitacora.registrar(
@@ -450,6 +498,8 @@ export class Partida {
         roces.length === 1
           ? `${otro.nombre} y ${definicion.nombre} se están cruzando en el grupo.`
           : `Se armó en el grupo: ${definicion.nombre} se está cruzando con ${roces.length} más.`,
+        "Sistema",
+        CHAT_GRUPO,
       );
     }
     if (estado.enojo < 30) {
@@ -459,6 +509,8 @@ export class Partida {
     this.emitir(
       "sistema",
       `${definicion.nombre} confirmó. Van ${roster.confirmados}/${roster.necesarios}.`,
+      "Sistema",
+      CHAT_GRUPO,
     );
   }
 
@@ -505,7 +557,7 @@ export class Partida {
         minutoLlegada: this.reloj.minutos,
         drenajeAcumulado: 0,
       });
-      this.emitir("alerta", definicion.texto, definicion.de);
+      this.emitir("alerta", definicion.texto, definicion.de, definicion.id);
     }
   }
 
@@ -525,13 +577,17 @@ export class Partida {
         "alerta",
         `Perdón, me surgió algo. No voy a poder llegar.`,
         definicion.nombre,
+        estado.id,
       );
+      this.emitir("alerta", `${definicion.nombre} se bajó de la lista.`, "Sistema", CHAT_GRUPO);
       this.ajustarMoral(-6);
     }
     const roster = this.roster();
     this.emitir(
       "sistema",
       `${formatearHora(this.reloj.minutos)} — última revisión. Van ${roster.confirmados}/${roster.necesarios}.`,
+      "Sistema",
+      CHAT_GRUPO,
     );
   }
 
@@ -550,7 +606,8 @@ export class Partida {
     }
   }
 
-  private emitir(clase: EventoFeed["clase"], texto: string, de = "Sistema"): void {
-    this.feed.push({ minuto: this.reloj.minutos, de, texto, clase });
+  private emitir(clase: EventoFeed["clase"], texto: string, de = "Sistema", chat?: string): void {
+    const evento: EventoFeed = { minuto: this.reloj.minutos, de, texto, clase };
+    this.feed.push(chat === undefined ? evento : { ...evento, chat });
   }
 }
