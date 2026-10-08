@@ -132,8 +132,6 @@ export interface EstadoDeContacto {
   nodoActual: string | null;
   /** Mensajes del NPC ya recibidos, en orden. */
   historial: MensajeRecibido[];
-  /** Cuántos mensajes del historial ya vio el jugador. */
-  leidoHasta: number;
 }
 
 export interface Desglose {

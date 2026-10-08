@@ -26,6 +26,11 @@ export interface ApiPuente {
   logroActivado(id: string): Promise<boolean>;
   limpiarLogro(id: string): Promise<boolean>;
   guardar(nombre: string, contenido: string): Promise<ResultadoGuardado>;
+  /**
+   * Lo mismo, pero bloquea hasta terminar. Solo para cuando se cierra la
+   * ventana: ahí una llamada asincrónica puede no llegar nunca.
+   */
+  guardarYa(nombre: string, contenido: string): ResultadoGuardado;
   cargar(nombre: string): Promise<{ contenido: string | null; origen: string | null }>;
   archivosEnNube(): Promise<{ nombre: string; bytes: number }[]>;
 }
@@ -38,6 +43,7 @@ export const CANALES = {
   logroActivado: "steam:logro:consultar",
   limpiarLogro: "steam:logro:limpiar",
   guardar: "guardado:escribir",
+  guardarYa: "guardado:escribir-ya",
   cargar: "guardado:leer",
   archivosEnNube: "guardado:listar",
 } as const;

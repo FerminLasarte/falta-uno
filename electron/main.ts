@@ -232,6 +232,9 @@ function registrarCanales(): void {
   ipcMain.handle(CANALES.guardar, (_e, nombre: string, contenido: string) =>
     guardar(nombre, contenido),
   );
+  ipcMain.on(CANALES.guardarYa, (evento, nombre: string, contenido: string) => {
+    evento.returnValue = guardar(nombre, contenido);
+  });
   ipcMain.handle(CANALES.cargar, (_e, nombre: string) => cargar(nombre));
   ipcMain.handle(CANALES.archivosEnNube, () => nube.listar());
 }

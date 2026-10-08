@@ -1,20 +1,27 @@
 /**
  * El puente entre el núcleo y la vista. La vista nunca calcula nada del juego:
  * lee esta instantánea, que es un objeto plano. Cada comando la recalcula.
+ *
+ * También guarda: cada comando pasa por el registro, que anota lo que hiciste,
+ * y después de cada uno el viernes se escribe entero. Al abrir, si hay un
+ * viernes a medias, se retoma donde quedó.
  */
 import {
   CHAT_GRUPO,
   Partida,
   type EventoFeed,
+  type OpcionesPartida,
   type VistaContacto,
   type VistaPuesto,
   type VistaRoster,
 } from "../../core/partida.js";
 import type { Tipeo } from "../../core/pulso.js";
+import { FORMATO_GUARDADO, huella, leerGuardado, Registro, type Guardado, type Paso } from "../../core/registro.js";
 import { formatearHora } from "../../core/tiempo.js";
 import type { Contenido } from "../../datos/cargar.js";
-import type { PerfilId, Rol } from "../../core/tipos.js";
+import type { DefinicionPerfil, PerfilId, Rol } from "../../core/tipos.js";
 import { vistaPrevia } from "../mensajeria/rotulos.js";
+import { Leidos } from "./leidos.js";
 
 /** Dónde está parado el jugador adentro del teléfono. El juego abre en el grupo. */
 export type Pantalla =
@@ -36,6 +43,11 @@ export interface VistaInterrupcion {
   readonly sinLeer: number;
 }
 
+/** Un contacto con lo que te escribió y todavía no viste. */
+export interface ContactoEnVista extends VistaContacto {
+  readonly sinLeer: number;
+}
+
 export interface Vista {
   readonly hora: string;
   readonly minutos: number;
@@ -44,7 +56,7 @@ export interface Vista {
   readonly dinero: number;
   readonly roster: VistaRoster;
   readonly lista: readonly VistaPuesto[];
-  readonly contactos: readonly VistaContacto[];
+  readonly contactos: readonly ContactoEnVista[];
   readonly interrupciones: readonly VistaInterrupcion[];
   readonly eventos: readonly EventoFeed[];
   readonly grupoSinLeer: number;
@@ -84,19 +96,24 @@ const LATIDO_MS = 100;
  */
 const TOPE_LATIDO_MS = 250;
 
+/** El único archivo de guardado. Viaja por Steam Cloud. */
+const ARCHIVO = "partida.json";
+
 class Juego {
   contenido = $state<Contenido | null>(null);
   vista = $state<Vista | null>(null);
   error = $state<string | null>(null);
   pantalla = $state<Pantalla>({ tipo: "grupo" });
 
-  #partida: Partida | null = null;
+  #registro: Registro | null = null;
+  #semilla = "";
+  /** Huella del contenido con el que se juega este viernes. */
+  #huella = "";
   #anterior: Pantalla = { tipo: "grupo" };
-  /** Cuántos eventos del grupo ya viste. */
-  #grupoVisto = 0;
-  /** Cuántos mensajes de cada interrupción ya viste. */
-  #interrupcionesVistas = new Map<string, number>();
+  #leidos = new Leidos();
   #ultimoLatido = 0;
+  /** Lo que sobró de milisegundo en el último latido: el tiempo se le pasa al núcleo entero. */
+  #resto = 0;
   /** Quién estaba escribiendo en el último refresco, para no redibujar de más. */
   #firmaTipeo = "";
   #oyentes = new Set<(llegada: Llegada) => void>();
@@ -114,29 +131,86 @@ class Juego {
     return { tipo: "contacto", id: chat };
   }
 
+  get #partida(): Partida | null {
+    return this.#registro?.partida ?? null;
+  }
+
+  /**
+   * Arranca el juego. Si hay un viernes guardado, lo retoma donde quedó; si no,
+   * empieza uno nuevo con ese perfil y esa semilla.
+   */
   async iniciar(perfilId: PerfilId = "pibe_de_barrio", semilla = String(Date.now())): Promise<void> {
     try {
       const contenido = await window.faltaUno.contenido();
       if (!contenido) throw new Error("el proceso principal no devolvió contenido");
       this.contenido = contenido;
+      this.#huella = huella(JSON.stringify(contenido));
 
-      const perfil = contenido.perfiles.find((p) => p.id === perfilId) ?? contenido.perfiles[0];
-      if (!perfil) throw new Error("no hay perfiles definidos");
-
-      this.#partida = new Partida({
-        perfil,
-        agenda: contenido.contactos,
-        interrupciones: contenido.interrupciones,
-        grupo: contenido.grupo,
-        config: contenido.config,
-        semilla,
-      });
+      if (!this.#retomar(contenido, await window.faltaUno.cargar(ARCHIVO))) {
+        const perfil = contenido.perfiles.find((p) => p.id === perfilId) ?? contenido.perfiles[0];
+        if (!perfil) throw new Error("no hay perfiles definidos");
+        this.#semilla = semilla;
+        this.#registro = new Registro(new Partida(opcionesDe(contenido, perfil, semilla)));
+      }
       this.#refrescar();
       this.#ultimoLatido = performance.now();
       setInterval(() => this.#latir(), LATIDO_MS);
+      // Al ocultar la ventana se guarda lo que pasó desde el último comando. Al
+      // cerrarla, igual, pero esperando a que termine: después ya no hay a quién avisar.
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) this.#guardar();
+      });
+      addEventListener("pagehide", () => this.#guardar(true));
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error);
     }
+  }
+
+  /** Retoma el viernes guardado, si hay uno que se pueda leer. */
+  #retomar(contenido: Contenido, archivo: { contenido: string | null }): boolean {
+    const guardado = archivo.contenido === null ? null : leerGuardado(archivo.contenido);
+    if (!guardado) return false;
+    const { viernes } = guardado;
+    const perfil = contenido.perfiles.find((p) => p.id === viernes.perfil);
+    if (!perfil) return false;
+
+    const { registro, aplicados } = Registro.reproducir(opcionesDe(contenido, perfil, viernes.semilla), viernes.pasos);
+    if (aplicados < viernes.pasos.length) {
+      console.info(
+        `[guardado] el contenido cambió (${viernes.contenido} → ${this.#huella}): ` +
+          `se retomó en el paso ${aplicados} de ${viernes.pasos.length}`,
+      );
+    }
+    this.#registro = registro;
+    this.#semilla = viernes.semilla;
+    this.#restaurarVista(guardado.vista, contenido);
+    return true;
+  }
+
+  #restaurarVista(crudo: unknown, contenido: Contenido): void {
+    if (typeof crudo !== "object" || crudo === null) return;
+    const { pantalla, leidos } = crudo as Record<string, unknown>;
+    this.#leidos = Leidos.desde(leidos);
+    if (typeof pantalla !== "object" || pantalla === null) return;
+    const { tipo, id } = pantalla as Record<string, unknown>;
+    if (tipo === "grupo" || tipo === "chats") this.pantalla = { tipo };
+    else if (tipo === "contacto" && contenido.contactos.some((c) => c.id === id)) this.pantalla = { tipo, id: id as string };
+    else if (tipo === "interrupcion" && contenido.interrupciones.some((i) => i.id === id)) this.pantalla = { tipo, id: id as string };
+  }
+
+  /** Escribe el viernes entero. `ya` espera a que termine: es para cuando se cierra la ventana. */
+  #guardar(ya = false): void {
+    const p = this.#partida;
+    const registro = this.#registro;
+    if (!p || !registro) return;
+    const guardado: Guardado = {
+      formato: FORMATO_GUARDADO,
+      viernes: { perfil: p.perfil.id, semilla: this.#semilla, contenido: this.#huella, pasos: registro.pasos },
+      vista: { pantalla: this.pantalla, leidos: this.#leidos.serializar() },
+    };
+    const texto = JSON.stringify(guardado);
+    if (ya) window.faltaUno.guardarYa(ARCHIVO, texto);
+    else void window.faltaUno.guardar(ARCHIVO, texto);
   }
 
   // ------------------------------------------------------------ navegación
@@ -162,36 +236,38 @@ class Juego {
   // -------------------------------------------------------------- comandos
 
   escribir(id: string): void {
-    this.#comando(() => this.#partida?.escribir(id));
+    this.#comando(["escribir", id]);
   }
 
   responder(id: string, opcionId: string): void {
-    this.#comando(() => this.#partida?.responder(id, opcionId));
+    this.#comando(["responder", id, opcionId]);
   }
 
   llamar(id: string): void {
-    this.#comando(() => this.#partida?.llamar(id));
+    this.#comando(["llamar", id]);
   }
 
   atender(interrupcionId: string): void {
-    this.#comando(() => this.#partida?.atender(interrupcionId));
+    this.#comando(["atender", interrupcionId]);
   }
 
   pagarReemplazo(rol: Rol): void {
-    this.#comando(() => this.#partida?.pagarVacante(rol));
+    this.#comando(["pagar", rol]);
   }
 
   escuchar(audioId: string): void {
-    this.#comando(() => this.#partida?.escuchar(audioId));
+    this.#comando(["escuchar", audioId]);
   }
 
   calmar(): void {
-    this.#comando(() => this.#partida?.calmar());
+    this.#comando(["calmar"]);
   }
 
-  #comando(accion: () => unknown): void {
-    accion();
+  /** Todo lo que hace el jugador pasa por acá: se anota, se dibuja y se guarda. */
+  #comando(paso: Paso): void {
+    const resultado = this.#registro?.hacer(paso);
     this.#refrescar();
+    if (resultado?.ok) this.#guardar();
   }
 
   /**
@@ -202,11 +278,17 @@ class Juego {
     const ahora = performance.now();
     const delta = Math.min(ahora - this.#ultimoLatido, TOPE_LATIDO_MS);
     this.#ultimoLatido = ahora;
+    const registro = this.#registro;
     const p = this.#partida;
-    if (!p || p.terminada || document.hidden) return;
-    const { nuevos } = p.transcurrir(delta);
+    if (!registro || !p || p.terminada || document.hidden) return;
+    // Milisegundos enteros: así se pueden sumar en el registro sin que el redondeo cambie nada.
+    const ms = Math.floor(delta + this.#resto);
+    this.#resto = delta + this.#resto - ms;
+    const { nuevos } = registro.hacer(["t", ms]);
     if (nuevos.length > 0 || firma(p.escribiendo()) !== this.#firmaTipeo) this.#refrescar();
     for (const evento of nuevos) this.#avisar(evento);
+    // Si el viernes terminó solo (te quedaste sin moral leyendo), se guarda como quedó.
+    if (p.terminada) this.#guardar();
   }
 
   #avisar(evento: EventoFeed): void {
@@ -233,20 +315,17 @@ class Juego {
     if (!p || !contenido) return;
 
     // Lo que está en pantalla se da por leído, también lo que llega mientras lo mirás.
-    const actual = this.pantalla;
     const eventos = p.eventos();
-    const delGrupo = eventos.filter((e) => e.chat === CHAT_GRUPO).length;
-    if (actual.tipo === "contacto") p.marcarLeido(actual.id);
-    if (actual.tipo === "grupo") this.#grupoVisto = delGrupo;
+    const llegados = llegadosPorChat(eventos);
+    const cuantos = (chat: string): number => llegados.get(chat) ?? 0;
+    const abierto = chatDe(this.pantalla);
+    if (abierto !== null) this.#leidos.ver(abierto, cuantos(abierto));
+    const sinLeer = (chat: string): number => this.#leidos.sinLeer(chat, cuantos(chat));
 
     const pendientes = new Set(p.interrupcionesActivas.map((i) => i.definicion.id));
     const interrupciones = contenido.interrupciones.flatMap((def): VistaInterrupcion[] => {
-      const suyos = eventos.filter((e) => e.chat === def.id && e.de === def.de);
-      const ultimo = suyos.at(-1);
+      const ultimo = eventos.findLast((e) => e.chat === def.id && e.de === def.de);
       if (!ultimo) return [];
-      if (actual.tipo === "interrupcion" && actual.id === def.id) {
-        this.#interrupcionesVistas.set(def.id, suyos.length);
-      }
       return [
         {
           id: def.id,
@@ -255,7 +334,7 @@ class Juego {
           minuto: ultimo.minuto,
           costoAtender: def.costoAtender,
           pendiente: pendientes.has(def.id),
-          sinLeer: suyos.length - (this.#interrupcionesVistas.get(def.id) ?? 0),
+          sinLeer: sinLeer(def.id),
         },
       ];
     });
@@ -271,16 +350,48 @@ class Juego {
       dinero: p.dinero,
       roster: p.roster(),
       lista: p.lista(),
-      contactos: p.contactos(),
+      contactos: p.contactos().map((c) => ({ ...c, sinLeer: sinLeer(c.id) })),
       interrupciones,
       eventos: [...eventos],
-      grupoSinLeer: delGrupo - this.#grupoVisto,
+      grupoSinLeer: sinLeer(CHAT_GRUPO),
       escribiendo,
       audiosEscuchados: eventos.flatMap((e) => (e.audio && p.escuchado(e.audio.id) ? [e.audio.id] : [])),
       calmar: p.accionCalmar,
       terminada: p.terminada,
     };
   }
+}
+
+function opcionesDe(contenido: Contenido, perfil: DefinicionPerfil, semilla: string): OpcionesPartida {
+  return {
+    perfil,
+    agenda: contenido.contactos,
+    interrupciones: contenido.interrupciones,
+    grupo: contenido.grupo,
+    config: contenido.config,
+    semilla,
+  };
+}
+
+/** El chat que se está leyendo en esa pantalla. La bandeja no es ninguno. */
+function chatDe(pantalla: Pantalla): string | null {
+  if (pantalla.tipo === "grupo") return CHAT_GRUPO;
+  if (pantalla.tipo === "chats") return null;
+  return pantalla.id;
+}
+
+/**
+ * Cuánto llegó a cada chat. En el grupo cuenta todo, como siempre contó el
+ * grupo; en los demás, lo que te escribió otro: ni lo tuyo ni los avisos.
+ */
+function llegadosPorChat(eventos: readonly EventoFeed[]): Map<string, number> {
+  const llegados = new Map<string, number>();
+  for (const e of eventos) {
+    if (e.chat === undefined) continue;
+    if (e.chat !== CHAT_GRUPO && (e.clase === "propio" || e.de === "Sistema")) continue;
+    llegados.set(e.chat, (llegados.get(e.chat) ?? 0) + 1);
+  }
+  return llegados;
 }
 
 function firma(tipeo: readonly Tipeo[]): string {

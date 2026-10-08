@@ -82,7 +82,6 @@ export interface VistaContacto {
   readonly nombre: string;
   readonly rol: Rol;
   readonly estado: EstadoDeContacto["estado"];
-  readonly sinLeer: number;
   /** Lo último que dijo, para el preview de la lista. */
   readonly ultimoMensaje: string | null;
   readonly minutoUltimo: number | null;
@@ -212,7 +211,6 @@ export class Partida {
         dineroAportado: 0,
         nodoActual: null,
         historial: [],
-        leidoHasta: 0,
       });
     }
 
@@ -310,7 +308,6 @@ export class Partida {
         nombre: d.nombre,
         rol: d.rol,
         estado: e.estado,
-        sinLeer: Math.max(0, e.historial.length - e.leidoHasta),
         ultimoMensaje: ultimo?.texto ?? null,
         minutoUltimo: ultimo?.minuto ?? null,
         enCamino: this.pulso.enCamino(d.id),
@@ -321,12 +318,6 @@ export class Partida {
         })),
       };
     });
-  }
-
-  /** Abrir el chat marca lo recibido como visto. No consume reloj: mirar es gratis. */
-  marcarLeido(id: string): void {
-    const estado = this.estadoDe(id);
-    estado.leidoHasta = estado.historial.length;
   }
 
   opcionesDisponibles(id: string): OpcionDialogo[] {

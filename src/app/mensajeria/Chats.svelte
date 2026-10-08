@@ -5,9 +5,9 @@
   grilla compacta: doce filas iguales se leen como un error, no como una agenda.
 -->
 <script lang="ts">
-  import { CHAT_GRUPO, type EventoFeed, type VistaContacto, type VistaRoster } from "../../core/partida.js";
+  import { CHAT_GRUPO, type EventoFeed, type VistaRoster } from "../../core/partida.js";
   import type { EstadoContacto } from "../../core/tipos.js";
-  import type { VistaInterrupcion } from "../estado/juego.svelte.js";
+  import type { ContactoEnVista, VistaInterrupcion } from "../estado/juego.svelte.js";
   import Avatar from "./Avatar.svelte";
   import Cabecera from "./Cabecera.svelte";
   import Franja from "./Franja.svelte";
@@ -27,7 +27,7 @@
     alAbrirContacto,
     alAbrirInterrupcion,
   }: {
-    contactos: readonly VistaContacto[];
+    contactos: readonly ContactoEnVista[];
     interrupciones: readonly VistaInterrupcion[];
     /** Los chats donde alguien está escribiendo. */
     escribiendo: ReadonlySet<string>;
@@ -47,7 +47,7 @@
     { titulo: "No vienen", estados: ["rechazado", "bajado"] },
   ];
 
-  const recientes = (a: VistaContacto, b: VistaContacto): number =>
+  const recientes = (a: ContactoEnVista, b: ContactoEnVista): number =>
     (b.minutoUltimo ?? 0) - (a.minutoUltimo ?? 0);
 
   const secciones = $derived(
@@ -62,7 +62,7 @@
   /* Interrupciones nuevas arriba de todo; las atendidas quedan como chats viejos. */
   const avisos = $derived([...interrupciones].sort((a, b) => b.minuto - a.minuto));
 
-  function lineaDe(c: VistaContacto): string {
+  function lineaDe(c: ContactoEnVista): string {
     return c.ultimoMensaje ?? ROTULO_ESTADO[c.estado];
   }
 </script>

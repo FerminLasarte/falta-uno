@@ -125,7 +125,6 @@ function estadoDe(cambios: Partial<EstadoDeContacto> = {}): EstadoDeContacto {
     dineroAportado: 0,
     nodoActual: null,
     historial: [],
-    leidoHasta: 0,
     ...cambios,
   };
 }
@@ -178,39 +177,18 @@ describe("la lista de chats", () => {
     p = nueva();
   });
 
-  it("un contacto sin escribir no tiene último mensaje ni no leídos", () => {
+  it("un contacto sin escribir no tiene último mensaje", () => {
     const c = p.contactos()[0]!;
     expect(c.ultimoMensaje).toBeNull();
     expect(c.minutoUltimo).toBeNull();
-    expect(c.sinLeer).toBe(0);
   });
 
-  it("los mensajes recibidos cuentan como no leídos y traen su hora", () => {
+  it("lo último que dijo trae su hora", () => {
     p.escribir("c0");
     alDia(p);
     const c = p.contactos().find((x) => x.id === "c0")!;
-    expect(c.sinLeer).toBeGreaterThan(0);
     expect(c.ultimoMensaje).toBe("¿A qué hora?");
     expect(c.minutoUltimo).toBe(p.reloj.minutos);
-  });
-
-  it("abrir el chat los marca como vistos y no cuesta reloj", () => {
-    p.escribir("c0");
-    alDia(p);
-    const antes = p.reloj.minutos;
-    p.marcarLeido("c0");
-    expect(p.contactos().find((x) => x.id === "c0")!.sinLeer).toBe(0);
-    expect(p.reloj.minutos).toBe(antes);
-  });
-
-  it("un mensaje nuevo después de leer vuelve a marcar sin leer", () => {
-    p.escribir("c0");
-    alDia(p);
-    p.marcarLeido("c0");
-    p.responder("c0", "si");
-    const c = p.contactos().find((x) => x.id === "c0")!;
-    expect(c.estado).toBe("confirmado");
-    expect(c.sinLeer).toBe(0); // "si" cierra la charla sin mensajes nuevos
   });
 });
 

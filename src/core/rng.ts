@@ -1,3 +1,13 @@
+/** FNV-1a de 32 bits: un número estable a partir de un texto. */
+export function hashTexto(texto: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < texto.length; i++) {
+    h ^= texto.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+
 /**
  * RNG determinista y serializable. Sin esto no se puede reproducir el bug que
  * reporta un jugador ni comparar corridas de balance.
@@ -6,17 +16,8 @@ export class Rng {
   private estado: number;
 
   constructor(semilla: number | string) {
-    this.estado = typeof semilla === "number" ? semilla >>> 0 : Rng.hash(semilla);
+    this.estado = typeof semilla === "number" ? semilla >>> 0 : hashTexto(semilla);
     if (this.estado === 0) this.estado = 0x9e3779b9;
-  }
-
-  private static hash(texto: string): number {
-    let h = 2166136261 >>> 0;
-    for (let i = 0; i < texto.length; i++) {
-      h ^= texto.charCodeAt(i);
-      h = Math.imul(h, 16777619) >>> 0;
-    }
-    return h >>> 0;
   }
 
   /** mulberry32 */

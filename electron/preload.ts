@@ -14,6 +14,8 @@ const api = {
   limpiarLogro: (id: string) => ipcRenderer.invoke(CANALES.limpiarLogro, id),
   guardar: (nombre: string, contenido: string) =>
     ipcRenderer.invoke(CANALES.guardar, nombre, contenido),
+  guardarYa: (nombre: string, contenido: string) =>
+    ipcRenderer.sendSync(CANALES.guardarYa, nombre, contenido),
   cargar: (nombre: string) => ipcRenderer.invoke(CANALES.cargar, nombre),
   archivosEnNube: () => ipcRenderer.invoke(CANALES.archivosEnNube),
 };

@@ -140,6 +140,7 @@ src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
   partida.ts     El agregado: estado, comandos, triggers.
   roster.ts      Composición del plantel, química y roces.
   resolucion.ts  El algoritmo del partido y la narración atribuida.
+  registro.ts    El viernes guardado: la semilla y lo que hiciste, para retomarlo.
   bitacora.ts    Registro de por qué pasó cada cosa.
 src/datos/       Schema, validador de grafo y carga de contenido.
 src/cli/         Herramientas de consola: jugar, validar, bot.

@@ -404,7 +404,12 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 
 - **Guardado en cada acción.** Un viernes a medias tiene que poder retomarse.
 - **Steam Cloud** desde el principio.
-- El save es el estado serializado del núcleo más la semilla del RNG.
+- El save de un viernes a medias es la semilla más la lista de comandos, `transcurrir` incluido, y se
+  retoma jugándolos de nuevo (decidido en octubre de 2026). No hay que acordarse de serializar cada
+  campo nuevo del núcleo, y el save de un jugador reproduce su bug tal cual. El tiempo real seguido
+  se anota como un solo paso, en milisegundos enteros. Lo que la vista recuerda (la pantalla abierta,
+  lo ya leído) va aparte, en el mismo archivo.
+- Cada copia lleva un sello que sube con cada guardado: entre la nube y el disco gana la más nueva.
 
 ### Integración con Steam
 
