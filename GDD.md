@@ -439,40 +439,93 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 - **Fase 7 — Pulido y Lanzamiento.** Balance con bots, localización si aplica, página de Steam,
   certificación de Deck, build final.
 
-### Estado al 7 de octubre de 2026
+### Estado al 8 de octubre de 2026
 
-| Fase | Estado |
-|---|---|
-| 1 — Motor y datos | ✅ Completa. Núcleo con tests, 12 contactos, 4 interrupciones, bot de balance. |
-| 2 — Empaquetado y Steam | 🟡 Completa en macOS. Falta verificar Windows y una Deck real, y lo que necesita la cuenta de Steamworks. |
-| 3 — Interfaz y audio | 🟡 La escena, la app, la vibración y el sonido de las notificaciones están hechos. Falta el ambiente del living y el gamepad. |
-| 4 — Integración | ✅ Un viernes se juega de punta a punta adentro del teléfono, con los mensajes llegando solos y el grupo con vida propia. |
-| 5 — El simulador | ✅ La pantalla de las 21:00 con la narración atribuida, la cuenta de cada fecha y la campaña con sus tres finales. |
-| 6 — Contenido | ⬜ No empezó. |
-| 7 — Pulido | ⬜ No empezó. |
+Avance hacia el lanzamiento: **43%**, pesando cada fase por el trabajo que lleva (el contenido pesa
+40%). El vertical slice está en un **70%**.
 
-Pendientes que cruzan fases:
+| Fase | Peso | Avance | Estado |
+|---|---|---|---|
+| 1 — Motor y datos | 10% | 100% | ✅ Núcleo con tests, bot de balance con estilos, analizador de partidas. |
+| 2 — Empaquetado y Steam | 5% | 60% | 🟡 Completa en macOS. Falta Windows, una Deck real y lo que necesita la cuenta de Steamworks. |
+| 3 — Interfaz y audio | 15% | 70% | 🟡 Escena, app, vibración, sonido, modos y apodos. Falta el ambiente del living y el gamepad. |
+| 4 — Integración | 8% | 100% | ✅ Un viernes se juega de punta a punta adentro del teléfono. |
+| 5 — El simulador | 7% | 85% | 🟡 Relato atribuido, cuenta de la fecha y campaña con sus finales. Faltan las pasivas. |
+| 6 — Contenido | 40% | 12% | 🟡 El slice: 12 contactos del Oficinista (8 a fondo, 4 de segunda línea), grupo e interrupciones. |
+| 7 — Pulido | 15% | 5% | ⬜ Solo las herramientas de balance. |
 
-- **Margen de la agenda.** Cada perfil ve los contactos comunes más su contacto único: trece para
-  diez lugares. Con eso el bot llega a 10 entre el 84% y el 92% de las veces, más fácil que antes; se
-  ajusta en el vertical slice.
-- **Pasivas** de los contactos únicos (el Sindicalista, el Político): no están en la resolución.
-- **Texto por claves** (sección 1): todavía no; todo el texto está escrito en el código y el contenido.
-- **Balance:** con la vida del grupo el bot llega a 10 el 71% de las veces: el viernes ya se puede
-  perder. El reloj es el límite (el bot usa 119 de los 120 minutos), así que cada cosa nueva que
-  cueste minutos lo mueve mucho. Se afina en el vertical slice.
+Balance del slice (torneo F5, Oficinista, 1000 viernes): se cumplen 3 de los 7 objetivos.
+
+| Objetivo | Meta | Medido |
+|---|---|---|
+| Razonable llena la lista | 55–65% | 60% ✓ |
+| Atento llena la lista | 75–85% | 89% ✗ |
+| Apurado llena la lista | 20–35% | 20% ✓ |
+| Gana | 45–55% | 51% ✓ |
+| Bajas por viernes | 0,6–1 | 2,3 ✗ |
+| Rechazos por viernes | 1–2 | 0,7 ✗ |
+| Ninguna causa de fracaso pasa del 50% | <50% | bajas 93–100% ✗ |
+
+Lo que dicen los números, más allá de los objetivos:
+
+- **La baja no se ve venir.** Se decide a las 20:30 con un umbral sobre una calentura que la pantalla
+  no muestra en ningún lado. El jugador llena la lista a las 19:48 y después espera: cuando alguien se
+  baja se siente mala suerte, no un error propio.
+- **A quién traés casi no cambia el partido.** El razonable gana el 51% y el atento el 53%. La
+  probabilidad sale casi toda del promedio de habilidad, y llevando 8 de 12 ese promedio se mueve
+  poco.
+- **En los formatos grandes jugar bien rinde menos.** En torneo F8 el atento llena la lista 7 puntos
+  más que el razonable; en F5, 27. Tendría que ser al revés.
+- **El relato se repite.** Tres fraseos por gol y uno por cada tipo de momento: en cuatro partidos
+  seguidos sale cuatro veces "vino de mala gana y erra un gol hecho".
 
 ### Plan para cerrar un viernes
 
-1. **Que se sienta.** Mensajes que llegan solos con timers reales (la fuente de estrés que pide la
-   sección 4), la vibración del celular en la escena, el sonido de notificaciones y la vida propia del
-   grupo: charla, audios, roces visibles.
-2. **Cerrar el circuito.** Elegir perfil con su contacto único, guardar en cada acción y la pantalla
+1. ✅ **Que se sienta.** Mensajes que llegan solos con timers reales, la vibración del celular en la
+   escena, el sonido de notificaciones y la vida propia del grupo.
+2. ✅ **Cerrar el circuito.** Elegir perfil con su contacto único, guardar en cada acción y la pantalla
    de las 21:00 con la narración atribuida.
 3. **Vertical slice** (9.8): un viernes con ocho contactos, pulido al máximo y difícil de verdad, para
-   probarlo con gente antes de escribir el resto del guion. Ahí se corrige el balance.
+   probarlo con gente antes de escribir el resto del guion. Sigue abajo.
 4. **Deuda que no conviene estirar:** texto por claves, gamepad para la Deck, verificación en Windows y
    en una Deck real.
+
+### Plan del vertical slice
+
+Cada paso se mide con el bot antes y después. El orden de las perillas sigue siendo instrumento →
+contenido → margen → plata → reloj.
+
+1. ✅ **Instrumento, contenido y modos.** Bot con estilos, archivo de partidas, analizador; los doce
+   contactos en el tono nuevo; partido y torneo en F5, F6 y F8; apodos.
+2. ✅ **El relato no inventa.** Un roce de alguien que se bajó ya no se narra.
+3. **Que la baja se vea venir.** Cuando un confirmado se calienta, avisa con un mensaje propio antes
+   de las 20:30; leerlo a tiempo da para llamarlo o bajarle un cambio. Una señal escrita por
+   contacto, en el tono de cada uno. Meta: bajas 0,6–1 por viernes; el atento las ataja, el razonable
+   a veces, el apurado nunca.
+4. **Que el "no" aparezca.** Más caminos de rechazo por algo que hiciste, como "hoy armás vos carlos",
+   que cuesta a Beto. Meta: rechazos 1–2 por viernes.
+5. **Repartir las causas.** Que la plata, el reloj y la moral expliquen entre 15% y 30% de los
+   fracasos cada una, y las bajas menos de la mitad. Después, el atento a 75–85%.
+6. **Que la formación pese.** Que a quién traés y en qué puesto cambie la probabilidad bastante más
+   que los 2 puntos de hoy entre el razonable y el atento.
+7. **El relato variado.** Varios fraseos por momento y por gol, sin repetir dentro del partido, en
+   contenido y no en el código (un primer pedazo del texto por claves).
+8. **Los formatos grandes.** Que en F6 y F8 la diferencia entre jugar bien y jugar más o menos sea
+   igual o mayor que en F5.
+9. **Para los testers.** Build de Windows, "Exportar partidas" desde el menú y una hoja de
+   instrucciones. Cada viernes jugado ya queda en `partidas/` con su build.
+10. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
+    manden. Es el momento honesto de decidir si el juego funciona (9.8).
+
+### Después del slice
+
+- **Deuda:** texto por claves completo, gamepad, Windows y una Deck real, Steamworks.
+- **El concepto completo:** la gestión semanal (paso 1 del bucle, sección 2), el amistoso que hace de
+  tutorial, las pasivas del Sindicalista y del Político, y los otros dos perfiles con su contenido.
+- **Contenido (fase 6):** todas las fechas del torneo, los contactos del Acomodado y del Pibe de
+  Barrio, los eventos de la semana. Es cerca del 88% del texto que falta.
+- **Pulido (fase 7):** balance de la campaña entera, logros (9.6), página de Steam, certificación de
+  Deck, build final.
 
 ---
 
