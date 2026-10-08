@@ -497,21 +497,25 @@ contenido → margen → plata → reloj.
 
 1. ✅ **Instrumento, contenido y modos.** Bot con estilos, archivo de partidas, analizador; los doce
    contactos en el tono nuevo; partido y torneo en F5, F6 y F8; apodos.
-2. ✅ **El relato no inventa.** Un roce de alguien que se bajó ya no se narra.
-3. **Que la baja se vea venir.** Cuando un confirmado se calienta, avisa con un mensaje propio antes
+2. ✅ **El relato no inventa.** Un roce de alguien que se bajó, o el invitado que no vino, ya no se
+   narran jugando.
+3. ✅ **Que la baja se vea venir.** Cuando un confirmado se calienta, avisa con un mensaje propio antes
    de las 20:30; leerlo a tiempo da para llamarlo o bajarle un cambio. Una señal escrita por
    contacto, en el tono de cada uno. Meta: bajas 0,6–1 por viernes; el atento las ataja, el razonable
-   a veces, el apurado nunca.
+   a veces, el apurado nunca. *Hecho: bajas del razonable de 2,3 a 1,5 y del atento de 0,9 a 0,6
+   (lo que le queda son invitados que no vienen).*
 4. **Que el "no" aparezca.** Más caminos de rechazo por algo que hiciste, como "hoy armás vos carlos",
    que cuesta a Beto. Meta: rechazos 1–2 por viernes.
 5. **Repartir las causas.** Que la plata, el reloj y la moral expliquen entre 15% y 30% de los
    fracasos cada una, y las bajas menos de la mitad. Después, el atento a 75–85%.
-6. **Que la formación pese.** Que a quién traés y en qué puesto cambie la probabilidad bastante más
-   que los 2 puntos de hoy entre el razonable y el atento.
-7. **El relato variado.** Varios fraseos por momento y por gol, sin repetir dentro del partido, en
-   contenido y no en el código (un primer pedazo del texto por claves).
+6. ✅ **Que la formación pese.** Arrancan los mejores de cada puesto; fuera de puesto se rinde 20
+   puntos menos y el banco no suma. *Hecho: el atento gana 61% y el razonable 51% (antes 53% y
+   51%). Queda: que la habilidad se lea en la escritura, no solo en el retrato.*
+7. ✅ **El relato variado.** `contenido/relato.json`: de tres a seis fraseos por momento y por gol,
+   sin repetir dentro del partido.
 8. **Los formatos grandes.** Que en F6 y F8 la diferencia entre jugar bien y jugar más o menos sea
-   igual o mayor que en F5.
+   igual o mayor que en F5. *Ahora se pasó para el otro lado: en torneo F6 el atento llena la lista
+   el 100% y el razonable el 29%; en los partidos sueltos el atento llega al 100%.*
 9. **Para los testers.** Build de Windows, "Exportar partidas" desde el menú y una hoja de
    instrucciones. Cada viernes jugado ya queda en `partidas/` con su build.
 10. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
