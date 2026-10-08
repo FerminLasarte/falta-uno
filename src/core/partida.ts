@@ -9,6 +9,7 @@ import {
   type MensajeGrupo,
   type PlantillaRoce,
 } from "./grupo.js";
+import { textosDeInscripcion, type DefinicionInscripcion } from "./inscripcion.js";
 import type { DefinicionInterrupcion, InterrupcionActiva } from "./interrupciones.js";
 import { Pulso, type Rango, type Tipeo } from "./pulso.js";
 import { Rng } from "./rng.js";
@@ -34,6 +35,8 @@ export interface OpcionesPartida {
   readonly semilla: number | string;
   /** La vida propia del grupo. Sin ella, el grupo solo anuncia. */
   readonly grupo?: DefinicionGrupo;
+  /** La charla con la cancha con la que arranca la campaña. Solo el primer viernes la tiene. */
+  readonly inscripcion?: DefinicionInscripcion;
 }
 
 /** El chat del grupo del equipo, donde se arma la lista. */
@@ -114,6 +117,8 @@ type Entrega =
   | { readonly tipo: "interrupcion"; readonly id: string }
   | { readonly tipo: "insistencia"; readonly id: string; readonly indice: number }
   | { readonly tipo: "baja"; readonly contacto: string }
+  /** Un mensaje suelto de alguien que no está en la agenda, como la cancha. */
+  | { readonly tipo: "texto"; readonly chat: string; readonly de: string; readonly texto: string }
   | {
       readonly tipo: "grupo";
       /** Id de quien escribe. */
@@ -169,6 +174,7 @@ export class Partida {
   private readonly estados = new Map<string, EstadoDeContacto>();
   private readonly interrupcionesPosibles: readonly DefinicionInterrupcion[];
   private readonly disparadas = new Set<string>();
+  private readonly atendidas = new Set<string>();
   private readonly rng: Rng;
   private readonly pulso: Pulso<Entrega>;
   private readonly feed: EventoFeed[] = [];
@@ -214,6 +220,7 @@ export class Partida {
       });
     }
 
+    if (opciones.inscripcion) this.inscribir(opciones.inscripcion);
     this.emitir(
       "sistema",
       `Son las ${this.reloj}. Tenés ${this.config.jugadoresNecesarios} lugares que llenar.`,
@@ -332,6 +339,11 @@ export class Partida {
 
   eventos(): readonly EventoFeed[] {
     return this.feed;
+  }
+
+  /** Si esa interrupción llegó y la atendiste. */
+  atendida(interrupcionId: string): boolean {
+    return this.atendidas.has(interrupcionId);
   }
 
   /** Si ya escuchaste ese audio del grupo. */
@@ -485,6 +497,7 @@ export class Partida {
       if (indice === -1) return this.fallo("Eso ya no está pendiente.");
       const activa = this.interrupcionesActivas[indice]!;
       this.interrupcionesActivas.splice(indice, 1);
+      this.atendidas.add(interrupcionId);
       this.pulso.descartar((e) => e.tipo === "insistencia" && e.id === interrupcionId);
       this.consumir(activa.definicion.costoAtender);
       this.aplicarEfectosGlobales(activa.definicion.efectosAtender);
@@ -566,6 +579,18 @@ export class Partida {
   }
 
   // ----------------------------------------------------------------- interno
+
+  /**
+   * La charla con la cancha que ya estaba antes de las 19:00, con lo que le
+   * contestaste, que es el perfil. La cancha contesta por el pulso, como todos.
+   */
+  private inscribir(inscripcion: DefinicionInscripcion): void {
+    const { chat, respuesta } = inscripcion;
+    const { de } = this.interrupcion(chat);
+    for (const texto of textosDeInscripcion(inscripcion, this.config)) this.emitir("mensaje", texto, de, chat);
+    this.emitir("propio", this.perfil.respuesta, "Vos", chat);
+    this.pulso.tipear(chat, de, respuesta, { tipo: "texto", chat, de, texto: respuesta });
+  }
 
   private ejecutar(accion: () => ResultadoComando): ResultadoComando {
     if (this._terminada) {
@@ -658,6 +683,9 @@ export class Partida {
         if (entrega.aviso) this.emitir("alerta", entrega.aviso, "Sistema", CHAT_GRUPO);
         return;
       }
+      case "texto":
+        this.emitir("mensaje", entrega.texto, entrega.de, entrega.chat);
+        return;
       case "baja": {
         const estado = this.estadoDe(entrega.contacto);
         if (estado.estado !== "confirmado") return;
@@ -892,7 +920,8 @@ export class Partida {
         this.disparadas.add(definicion.id);
         continue;
       }
-      if (!this.rng.ocurre(definicion.probabilidad)) continue;
+      const factor = this.perfil.probabilidadInterrupciones?.[definicion.id] ?? 1;
+      if (!this.rng.ocurre(Math.min(100, definicion.probabilidad * factor))) continue;
       this.disparadas.add(definicion.id);
       this.pulso.tipear(
         definicion.id,

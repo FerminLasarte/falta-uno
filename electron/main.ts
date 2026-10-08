@@ -172,7 +172,9 @@ if (!app.requestSingleInstanceLock()) {
   });
 
   void app.whenReady().then(async () => {
-    configurarCarpeta(app.getPath("userData"));
+    // FALTA_UNO_DATOS manda el guardado a otra carpeta: el smoke test y las
+    // capturas arrancan de cero y no pisan la partida de quien juega.
+    configurarCarpeta(process.env["FALTA_UNO_DATOS"] ?? app.getPath("userData"));
     await cargarContenidoDelJuego();
     registrarCanales();
     crearVentana();

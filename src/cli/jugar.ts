@@ -1,5 +1,6 @@
 import { crearLector } from "./entrada.js";
 import { alDia, Partida, type EventoFeed } from "../core/partida.js";
+import { agendaDe } from "../core/perfiles.js";
 import { resolver } from "../core/resolucion.js";
 import { formatearHora } from "../core/tiempo.js";
 import { cargarContenido, ErrorDeContenido } from "../datos/cargar.js";
@@ -50,7 +51,7 @@ const semilla = process.env["SEMILLA"] ?? String(Date.now());
 
 const partida = new Partida({
   perfil,
-  agenda: contenido.contactos,
+  agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
   interrupciones: contenido.interrupciones,
   grupo: contenido.grupo,
   config: contenido.config,

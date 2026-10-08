@@ -104,7 +104,14 @@ export interface DefinicionPerfil {
   readonly dineroInicial: number;
   readonly ventaja: string;
   readonly desventaja: string;
+  /** El contacto que solo tiene este perfil en la agenda. */
   readonly contactoUnico: string;
+  /** Lo que le contestás a la cancha cuando pregunta cómo van a pagar: así se elige el perfil. */
+  readonly respuesta: string;
+  /** Lo que implica, en una línea, debajo de la respuesta. */
+  readonly resumen: string;
+  /** Cuánto más (o menos) probable es cada interrupción con este perfil, por id. */
+  readonly probabilidadInterrupciones?: Readonly<Record<string, number>>;
 }
 
 export interface Config {

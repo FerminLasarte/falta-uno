@@ -1,4 +1,5 @@
 import { cargarContenido, ErrorDeContenido } from "../datos/cargar.js";
+import { agendaDe } from "../core/perfiles.js";
 import { ROLES } from "../core/tipos.js";
 import type { Rol } from "../core/tipos.js";
 
@@ -38,8 +39,11 @@ console.log(`  Grupo           ${grupo.charlas.length} charlas, ${mensajesGrupo.
 console.log(`\n  Por rol:`);
 for (const rol of ROLES) console.log(`    ${rol.padEnd(15)} ${porRol[rol]}`);
 
-const disponibles = contenido.contactos.length;
+// Cada perfil ve los contactos comunes más el suyo: el margen es por perfil.
 const necesarios = contenido.config.jugadoresNecesarios;
-console.log(
-  `\n  Margen: ${disponibles} contactos para ${necesarios} lugares (pueden fallarte ${disponibles - necesarios}).\n`,
-);
+console.log(`\n  Margen, con ${necesarios} lugares:`);
+for (const perfil of contenido.perfiles) {
+  const disponibles = agendaDe(perfil, contenido.perfiles, contenido.contactos).length;
+  console.log(`    ${perfil.nombre.padEnd(18)} ${disponibles} contactos, pueden fallarte ${disponibles - necesarios}`);
+}
+console.log("");

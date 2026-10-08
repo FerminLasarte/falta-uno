@@ -113,6 +113,7 @@ npm install
 | `FALTA_UNO_DIAGNOSTICO=1` | Imprime el diagnóstico de plataforma en JSON y sale, sin abrir ventana. |
 | `FALTA_UNO_CAPTURA=x.png` | Captura la ventana a PNG y sale. |
 | `FALTA_UNO_MORAL=15` | Fuerza un estado de moral. Para capturar la degradación sin jugar hasta ahí. |
+| `FALTA_UNO_DATOS=carpeta` | Guarda y carga la partida en esa carpeta en vez de la del usuario. Con una vacía, el juego arranca de cero. |
 | `SEMILLA` | Fija la semilla del RNG en el CLI de consola. |
 
 `SEMILLA=loquesea npm run jugar` fija la semilla del RNG: la misma semilla y las mismas acciones
@@ -225,9 +226,13 @@ bot calma los roces y no escucha los audios):
 
 | Perfil | Llega a 10 | Gana | Moral al final |
 |---|---|---|---|
-| El Acomodado | 71% | 62% | 19 |
-| El Pibe de Barrio | 71% | 67% | 24 |
-| El Oficinista | 71% | 64% | 22 |
+| El Acomodado | 83% | 56% | 19 |
+| El Pibe de Barrio | 47% | 73% | 22 |
+| El Oficinista | 47% | 68% | 19 |
+
+Cada perfil tiene en la agenda los nueve contactos comunes más el suyo: diez para diez lugares, así
+que no puede fallarte nadie sin pagar un reemplazo. Por eso el Acomodado, que puede pagar, llega a
+10 bastante más seguido que los otros dos.
 
 **Pendiente del vertical slice:** antes de la vida del grupo, un jugador competente armaba el equipo
 el 100% de las veces. Ahora el viernes se puede perder, pero por el reloj: el bot usa 119 de los 120

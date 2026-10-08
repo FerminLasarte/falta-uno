@@ -1,6 +1,7 @@
 <script lang="ts">
   import Depurador from "./Depurador.svelte";
   import Escena from "./escena/Escena.svelte";
+  import Inscripcion from "./mensajeria/Inscripcion.svelte";
   import Mensajeria from "./mensajeria/Mensajeria.svelte";
   import BarraEstado from "./telefono/BarraEstado.svelte";
   import Isla from "./telefono/Isla.svelte";
@@ -58,6 +59,9 @@
         <p class="titulo">No se pudo cargar el juego</p>
         <p class="detalle">{juego.error}</p>
       </div>
+    {:else if juego.eleccion}
+      <BarraEstado hora={juego.eleccion.hora} restante={juego.eleccion.restante} />
+      <Inscripcion eleccion={juego.eleccion} alElegir={(id) => juego.elegir(id)} />
     {:else if juego.vista && juego.contenido}
       <BarraEstado hora={juego.vista.hora} restante={juego.vista.restante} />
       <Mensajeria

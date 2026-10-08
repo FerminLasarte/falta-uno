@@ -47,14 +47,23 @@ export function sinCorchetes(texto: string): string {
 }
 
 /** Plata como se escribe acá: $15.000. */
-export function pesos(monto: number): string {
-  return `$${monto.toLocaleString("es-AR")}`;
-}
+export { formatearPesos as pesos } from "../../core/formato.js";
 
 /** Una acción grande de un chat, con lo que cuesta: escribirle, atender. */
 export interface AccionChat {
   readonly texto: string;
   readonly minutos: number;
+}
+
+/**
+ * Una respuesta de un chat. Casi siempre muestra lo que cuesta en minutos; la
+ * que elige el perfil, en cambio, dice qué implica.
+ */
+export interface RespuestaChat {
+  readonly id: string;
+  readonly texto: string;
+  readonly costoReloj?: number;
+  readonly detalle?: { readonly titulo: string; readonly texto: string };
 }
 
 /** "Fede y El Tano", "Fede, El Tano y Santi". */

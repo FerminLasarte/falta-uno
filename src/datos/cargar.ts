@@ -2,10 +2,18 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { z } from "zod";
 import type { DefinicionGrupo } from "../core/grupo.js";
+import type { DefinicionInscripcion } from "../core/inscripcion.js";
 import type { DefinicionInterrupcion } from "../core/interrupciones.js";
 import type { Config, DefinicionContacto, DefinicionPerfil } from "../core/tipos.js";
-import { configSchema, contactoSchema, grupoSchema, interrupcionSchema, perfilSchema } from "./esquema.js";
-import { revisarGrafo, revisarGrupo, type ProblemaContenido } from "./validar.js";
+import {
+  configSchema,
+  contactoSchema,
+  grupoSchema,
+  inscripcionSchema,
+  interrupcionSchema,
+  perfilSchema,
+} from "./esquema.js";
+import { revisarGrafo, revisarGrupo, revisarPerfiles, type ProblemaContenido } from "./validar.js";
 
 export interface Contenido {
   readonly config: Config;
@@ -13,6 +21,7 @@ export interface Contenido {
   readonly contactos: readonly DefinicionContacto[];
   readonly interrupciones: readonly DefinicionInterrupcion[];
   readonly grupo: DefinicionGrupo;
+  readonly inscripcion: DefinicionInscripcion;
 }
 
 export class ErrorDeContenido extends Error {
@@ -54,6 +63,7 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
   const perfiles = await leer("perfiles.json", perfilSchema.array());
   const interrupciones = await leer("interrupciones.json", interrupcionSchema.array());
   const grupo = await leer("grupo.json", grupoSchema);
+  const inscripcion = await leer("inscripcion.json", inscripcionSchema);
 
   const dirContactos = join(raiz, "contactos");
   const archivos = (await readdir(dirContactos)).filter((a) => a.endsWith(".json")).sort();
@@ -85,8 +95,13 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
   }
 
   if (grupo && config) problemas.push(...revisarGrupo(grupo as DefinicionGrupo, contactos, config));
+  if (perfiles && interrupciones && inscripcion) {
+    problemas.push(
+      ...revisarPerfiles(perfiles as DefinicionPerfil[], contactos, interrupciones as DefinicionInterrupcion[], inscripcion),
+    );
+  }
 
-  if (problemas.length > 0 || !config || !perfiles || !interrupciones || !grupo) {
+  if (problemas.length > 0 || !config || !perfiles || !interrupciones || !grupo || !inscripcion) {
     throw new ErrorDeContenido(problemas);
   }
 
@@ -96,5 +111,6 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
     contactos,
     interrupciones: interrupciones as DefinicionInterrupcion[],
     grupo: grupo as DefinicionGrupo,
+    inscripcion,
   };
 }

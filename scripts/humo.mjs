@@ -4,12 +4,18 @@
  * máquina nueva. Falla si la ventana no carga o si el renderer tira errores.
  */
 import { spawn } from "node:child_process";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import electron from "electron";
 
 const ESPERA_MS = 25_000;
 
+// Un guardado aparte, que se tira al terminar: el humo no toca la partida de nadie.
+const datos = mkdtempSync(join(tmpdir(), "falta-uno-humo-"));
+
 const proceso = spawn(electron, ["."], {
-  env: { ...process.env, FALTA_UNO_SIN_STEAM: process.env.FALTA_UNO_SIN_STEAM ?? "" },
+  env: { ...process.env, FALTA_UNO_SIN_STEAM: process.env.FALTA_UNO_SIN_STEAM ?? "", FALTA_UNO_DATOS: datos },
 });
 
 let salida = "";
@@ -36,7 +42,10 @@ const listo = new Promise((resolve) => {
 const vencimiento = new Promise((resolve) => setTimeout(() => resolve("timeout"), ESPERA_MS));
 const resultado = await Promise.race([listo, vencimiento]);
 
+const vivo = proceso.exitCode === null && proceso.signalCode === null;
 proceso.kill();
+if (vivo) await new Promise((seguir) => proceso.once("exit", seguir));
+rmSync(datos, { recursive: true, force: true });
 
 const errores = salida
   .split("\n")

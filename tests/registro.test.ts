@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cargarContenido } from "../src/datos/cargar.js";
 import { Partida, type OpcionesPartida } from "../src/core/partida.js";
+import { agendaDe } from "../src/core/perfiles.js";
 import { FORMATO_GUARDADO, huella, leerGuardado, Registro, type Guardado, type Paso } from "../src/core/registro.js";
 import { resolver } from "../src/core/resolucion.js";
 import { Rng } from "../src/core/rng.js";
@@ -8,13 +9,16 @@ import { agendaCompleta, CONFIG, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js"
 
 const contenido = await cargarContenido();
 
-function opcionesReales(semilla: string, perfil = 0): OpcionesPartida {
+/** Como arma el viernes el juego: la agenda del perfil y la charla con la cancha. */
+function opcionesReales(semilla: string, indice = 0): OpcionesPartida {
+  const perfil = contenido.perfiles[indice]!;
   return {
-    perfil: contenido.perfiles[perfil]!,
-    agenda: contenido.contactos,
+    perfil,
+    agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
     interrupciones: contenido.interrupciones,
     grupo: contenido.grupo,
     config: contenido.config,
+    inscripcion: contenido.inscripcion,
     semilla,
   };
 }
@@ -138,14 +142,14 @@ describe("retomar un viernes guardado", () => {
   it("si el contenido cambió, retoma hasta el primer paso que ya no existe", () => {
     const opciones = opcionesReales("cambio");
     const r = new Registro(new Partida(opciones));
-    const [primero, segundo] = contenido.contactos;
+    const [primero, segundo] = opciones.agenda;
     r.hacer(["escribir", primero!.id]);
     r.hacer(["t", 60_000]);
     r.hacer(["escribir", segundo!.id]);
     r.hacer(["t", 60_000]);
 
     // Una actualización saca al segundo contacto de la agenda.
-    const otraAgenda = { ...opciones, agenda: contenido.contactos.filter((c) => c.id !== segundo!.id) };
+    const otraAgenda = { ...opciones, agenda: opciones.agenda.filter((c) => c.id !== segundo!.id) };
     const { registro, aplicados } = Registro.reproducir(otraAgenda, r.pasos);
     expect(aplicados).toBe(2);
     expect(registro.pasos).toEqual(r.pasos.slice(0, 2));

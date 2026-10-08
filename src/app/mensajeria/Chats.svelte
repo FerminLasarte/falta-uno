@@ -86,7 +86,7 @@
     {#each avisos as a (a.id)}
       <ItemChat
         titulo={a.de}
-        linea={a.pendiente ? a.texto : "Atendido"}
+        linea={a.atendida ? "Atendido" : a.texto}
         minuto={a.minuto}
         sinLeer={a.sinLeer}
         escribiendo={escribiendo.has(a.id)}

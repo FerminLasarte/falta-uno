@@ -1,6 +1,8 @@
 import type { DefinicionGrupo, MensajeGrupo } from "../core/grupo.js";
+import type { DefinicionInscripcion } from "../core/inscripcion.js";
+import type { DefinicionInterrupcion } from "../core/interrupciones.js";
 import { PARES_EN_ROCE } from "../core/roster.js";
-import type { Config, DefinicionContacto } from "../core/tipos.js";
+import type { Config, DefinicionContacto, DefinicionPerfil } from "../core/tipos.js";
 
 export interface ProblemaContenido {
   readonly archivo: string;
@@ -146,5 +148,43 @@ export function revisarGrupo(
     }
   }
 
+  return problemas;
+}
+
+/**
+ * Los perfiles y la inscripción, que es donde se eligen. Cada perfil tiene que
+ * nombrar en su resumen al contacto que trae, porque eso es lo que el jugador
+ * lee para elegir; y la inscripción comparte el chat de una interrupción que
+ * existe.
+ */
+export function revisarPerfiles(
+  perfiles: readonly DefinicionPerfil[],
+  contactos: readonly DefinicionContacto[],
+  interrupciones: readonly DefinicionInterrupcion[],
+  inscripcion: DefinicionInscripcion,
+): ProblemaContenido[] {
+  const problemas: ProblemaContenido[] = [];
+  const archivo = "perfiles.json";
+  const unicos = new Set<string>();
+  for (const perfil of perfiles) {
+    const unico = contactos.find((c) => c.id === perfil.contactoUnico);
+    if (!unico) {
+      problemas.push({ archivo, detalle: `${perfil.id}: el contacto único "${perfil.contactoUnico}" no existe` });
+    } else if (!perfil.resumen.includes(unico.nombre)) {
+      problemas.push({ archivo, detalle: `${perfil.id}: el resumen no nombra a ${unico.nombre}, su contacto único` });
+    }
+    if (unicos.has(perfil.contactoUnico)) {
+      problemas.push({ archivo, detalle: `${perfil.id}: "${perfil.contactoUnico}" ya es el contacto único de otro perfil` });
+    }
+    unicos.add(perfil.contactoUnico);
+    for (const id of Object.keys(perfil.probabilidadInterrupciones ?? {})) {
+      if (!interrupciones.some((i) => i.id === id)) {
+        problemas.push({ archivo, detalle: `${perfil.id}: la interrupción "${id}" no existe` });
+      }
+    }
+  }
+  if (!interrupciones.some((i) => i.id === inscripcion.chat)) {
+    problemas.push({ archivo: "inscripcion.json", detalle: `chat "${inscripcion.chat}" no es el de ninguna interrupción` });
+  }
   return problemas;
 }

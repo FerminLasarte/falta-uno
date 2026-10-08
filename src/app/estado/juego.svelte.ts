@@ -15,6 +15,8 @@ import {
   type VistaPuesto,
   type VistaRoster,
 } from "../../core/partida.js";
+import { textosDeInscripcion } from "../../core/inscripcion.js";
+import { agendaDe } from "../../core/perfiles.js";
 import type { Tipeo } from "../../core/pulso.js";
 import { FORMATO_GUARDADO, huella, leerGuardado, Registro, type Guardado, type Paso } from "../../core/registro.js";
 import { formatearHora } from "../../core/tiempo.js";
@@ -40,12 +42,28 @@ export interface VistaInterrupcion {
   readonly costoAtender: number;
   /** Sigue drenando moral hasta que la atiendas. */
   readonly pendiente: boolean;
+  /** Llegó y la atendiste. Antes de llegar, el chat puede tener otra charla: la inscripción. */
+  readonly atendida: boolean;
   readonly sinLeer: number;
 }
 
 /** Un contacto con lo que te escribió y todavía no viste. */
 export interface ContactoEnVista extends VistaContacto {
   readonly sinLeer: number;
+}
+
+/**
+ * Antes del primer viernes: la charla con la cancha que pregunta cómo van a
+ * pagar. Cada respuesta es un perfil, y todavía no hay partida.
+ */
+export interface Eleccion {
+  /** El chat de la interrupción de la cancha, que es donde sigue la charla. */
+  readonly chat: string;
+  readonly de: string;
+  readonly hora: string;
+  readonly restante: number;
+  readonly eventos: readonly EventoFeed[];
+  readonly perfiles: readonly { readonly id: PerfilId; readonly texto: string; readonly titulo: string; readonly resumen: string }[];
 }
 
 export interface Vista {
@@ -102,6 +120,7 @@ const ARCHIVO = "partida.json";
 class Juego {
   contenido = $state<Contenido | null>(null);
   vista = $state<Vista | null>(null);
+  eleccion = $state<Eleccion | null>(null);
   error = $state<string | null>(null);
   pantalla = $state<Pantalla>({ tipo: "grupo" });
 
@@ -137,9 +156,9 @@ class Juego {
 
   /**
    * Arranca el juego. Si hay un viernes guardado, lo retoma donde quedó; si no,
-   * empieza uno nuevo con ese perfil y esa semilla.
+   * abre la charla con la cancha para elegir el perfil.
    */
-  async iniciar(perfilId: PerfilId = "pibe_de_barrio", semilla = String(Date.now())): Promise<void> {
+  async iniciar(semilla = String(Date.now())): Promise<void> {
     try {
       const contenido = await window.faltaUno.contenido();
       if (!contenido) throw new Error("el proceso principal no devolvió contenido");
@@ -147,10 +166,8 @@ class Juego {
       this.#huella = huella(JSON.stringify(contenido));
 
       if (!this.#retomar(contenido, await window.faltaUno.cargar(ARCHIVO))) {
-        const perfil = contenido.perfiles.find((p) => p.id === perfilId) ?? contenido.perfiles[0];
-        if (!perfil) throw new Error("no hay perfiles definidos");
         this.#semilla = semilla;
-        this.#registro = new Registro(new Partida(opcionesDe(contenido, perfil, semilla)));
+        this.eleccion = eleccionDe(contenido);
       }
       this.#refrescar();
       this.#ultimoLatido = performance.now();
@@ -164,6 +181,22 @@ class Juego {
     } catch (error) {
       this.error = error instanceof Error ? error.message : String(error);
     }
+  }
+
+  /**
+   * Elegiste cómo pagar la seña: ese es tu perfil. Arranca el viernes y te
+   * quedás en la charla con la cancha, que te contesta.
+   */
+  elegir(perfilId: PerfilId): void {
+    const contenido = this.contenido;
+    const perfil = contenido?.perfiles.find((p) => p.id === perfilId);
+    if (!contenido || !perfil || !this.eleccion) return;
+    this.#registro = new Registro(new Partida(opcionesDe(contenido, perfil, this.#semilla)));
+    this.pantalla = { tipo: "interrupcion", id: contenido.inscripcion.chat };
+    this.eleccion = null;
+    this.#ultimoLatido = performance.now();
+    this.#refrescar();
+    this.#guardar();
   }
 
   /** Retoma el viernes guardado, si hay uno que se pueda leer. */
@@ -334,6 +367,7 @@ class Juego {
           minuto: ultimo.minuto,
           costoAtender: def.costoAtender,
           pendiente: pendientes.has(def.id),
+          atendida: p.atendida(def.id),
           sinLeer: sinLeer(def.id),
         },
       ];
@@ -362,10 +396,34 @@ class Juego {
   }
 }
 
+function eleccionDe(contenido: Contenido): Eleccion {
+  const { inscripcion, config } = contenido;
+  const de = contenido.interrupciones.find((i) => i.id === inscripcion.chat)?.de ?? "";
+  return {
+    chat: inscripcion.chat,
+    de,
+    hora: formatearHora(config.horaInicio),
+    restante: config.horaCorte - config.horaInicio,
+    eventos: textosDeInscripcion(inscripcion, config).map((texto) => ({
+      minuto: config.horaInicio,
+      de,
+      texto,
+      clase: "mensaje",
+      chat: inscripcion.chat,
+    })),
+    perfiles: contenido.perfiles.map((p) => ({ id: p.id, texto: p.respuesta, titulo: p.nombre, resumen: p.resumen })),
+  };
+}
+
+/**
+ * Todo lo que hace falta para armar un viernes. Es lo mismo al empezarlo y al
+ * retomarlo: si cambiara, el guardado no daría la misma partida.
+ */
 function opcionesDe(contenido: Contenido, perfil: DefinicionPerfil, semilla: string): OpcionesPartida {
   return {
     perfil,
-    agenda: contenido.contactos,
+    agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
+    inscripcion: contenido.inscripcion,
     interrupciones: contenido.interrupciones,
     grupo: contenido.grupo,
     config: contenido.config,

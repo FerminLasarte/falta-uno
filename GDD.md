@@ -453,9 +453,9 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 
 Pendientes que cruzan fases:
 
-- **Perfiles.** El juego arranca siempre como Pibe de Barrio y muestra los tres contactos únicos a la
-  vez: falta elegir perfil y que cada uno desbloquee solo el suyo.
-- **Guardado en cada acción.** La plomería de Electron y Steam Cloud existe, pero el juego no la usa.
+- **Margen de la agenda.** El perfil se elige charlando con la cancha y cada uno ve solo su contacto
+  único: le quedan diez contactos para diez lugares, y no puede fallarle nadie sin pagar un reemplazo.
+  Hacen falta más contactos comunes, o que el contenido lo compense.
 - **Pasivas** de los contactos únicos (el Sindicalista, el Político): no están en la resolución.
 - **Texto por claves** (sección 1): todavía no; todo el texto está escrito en el código y el contenido.
 - **Balance:** con la vida del grupo el bot llega a 10 el 71% de las veces: el viernes ya se puede

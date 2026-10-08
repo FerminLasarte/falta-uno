@@ -4,7 +4,7 @@
       "id": "arranque",
       "cuando": { "desde": 1140, "hasta": 1145 },
       "mensajes": [
-        { "de": "el_sindicalista", "texto": "¿Hoy se juega o qué?" },
+        { "de": "el_tano", "texto": "¿Hoy se juega o qué?" },
         { "de": "juanma", "texto": "Preguntale al que arma, que está calladito." },
         { "de": "nico_el_cunado", "texto": "Yo si llueve no voy, aviso desde ahora." }
       ]
@@ -13,7 +13,7 @@
       "id": "pelota",
       "cuando": { "desde": 1150, "hasta": 1175 },
       "mensajes": [
-        { "de": "el_sindicalista", "texto": "¿El que llega último lleva la pelota?" },
+        { "de": "pablo_el_pibe", "texto": "¿El que llega último lleva la pelota?" },
         { "de": "santi_el_goleador", "texto": "Llevo la mía, pero que nadie me la patee a la autopista." }
       ]
     },

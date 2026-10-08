@@ -39,6 +39,7 @@
 
   const volver = $derived({ cuenta: sinLeerAfuera, alVolver: () => juego.volver() });
   const irAlGrupo = (): void => juego.ir({ tipo: "grupo" });
+  const franja = $derived({ roster: vista.roster, dinero: vista.dinero, sena, alVerLista: irAlGrupo });
   const abrirContacto = (id: string): void => juego.ir({ tipo: "contacto", id });
 
   const contacto = $derived(
@@ -105,13 +106,12 @@
       principal={c.estado === "sin_contactar" && !vista.terminada
         ? { texto: `Escribirle a ${c.nombre}`, minutos: COSTO.mensaje }
         : null}
-      nota={c.enCamino ? null : c.estado === "confirmado" ? `${c.nombre} está en la lista.` : ROTULO_ESTADO[c.estado]}
-      roster={vista.roster}
-      dinero={vista.dinero}
-      {sena}
+      nota={c.enCamino || c.opciones.length > 0
+        ? null
+        : c.estado === "confirmado" ? `${c.nombre} está en la lista.` : ROTULO_ESTADO[c.estado]}
+      {franja}
       alElegir={(opcionId) => juego.responder(c.id, opcionId)}
       alPrincipal={() => juego.escribir(c.id)}
-      alVerLista={irAlGrupo}
     >
       {#snippet cabecera()}
         <Cabecera titulo={c.nombre} subtitulo={tipea ? "escribiendo…" : `${c.rol} · ${ROTULO_ESTADO[c.estado]}`} {volver}>
@@ -138,11 +138,8 @@
       eventos={delChat}
       escribiendo={tipea ? i.de : null}
       principal={i.pendiente && !vista.terminada ? { texto: "Atender", minutos: i.costoAtender } : null}
-      roster={vista.roster}
-      dinero={vista.dinero}
-      {sena}
+      {franja}
       alPrincipal={() => juego.atender(i.id)}
-      alVerLista={irAlGrupo}
     >
       {#snippet cabecera()}
         <Cabecera titulo={i.de} subtitulo={tipea ? "escribiendo…" : i.pendiente ? "esperando que contestes" : "en línea"} {volver}>

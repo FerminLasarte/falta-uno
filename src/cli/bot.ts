@@ -6,6 +6,7 @@
  *   npm run bot -- 2000
  */
 import { alDia, Partida } from "../core/partida.js";
+import { agendaDe } from "../core/perfiles.js";
 import { Rng } from "../core/rng.js";
 import { resolver } from "../core/resolucion.js";
 import { cargarContenido } from "../datos/cargar.js";
@@ -46,7 +47,7 @@ function atenderAlGrupo(partida: Partida): void {
 function jugar(perfil: DefinicionPerfil, semilla: string, contenido: Contenido): Resultado {
   const partida = new Partida({
     perfil,
-    agenda: contenido.contactos,
+    agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
     interrupciones: contenido.interrupciones,
     grupo: contenido.grupo,
     config: contenido.config,

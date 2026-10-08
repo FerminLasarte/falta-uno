@@ -26,6 +26,8 @@ export const PERFIL: DefinicionPerfil = {
   ventaja: "-",
   desventaja: "-",
   contactoUnico: "el_sindicalista",
+  respuesta: "Te la transfiero cuando salga del laburo.",
+  resumen: "-",
 };
 
 interface OpcionesContacto {

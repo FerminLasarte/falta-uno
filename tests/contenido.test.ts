@@ -4,6 +4,7 @@ import { revisarGrafo, revisarGrupo } from "../src/datos/validar.js";
 import { contactoSchema, grupoSchema } from "../src/datos/esquema.js";
 import type { DefinicionGrupo } from "../src/core/grupo.js";
 import { alDia, Partida } from "../src/core/partida.js";
+import { agendaDe } from "../src/core/perfiles.js";
 import { resolver } from "../src/core/resolucion.js";
 import type { DefinicionContacto } from "../src/core/tipos.js";
 
@@ -139,7 +140,7 @@ describe("un viernes completo con el contenido real", () => {
     const perfil = contenido.perfiles[1]!; // el pibe de barrio: el caso apretado
     const partida = new Partida({
       perfil,
-      agenda: contenido.contactos,
+      agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
       interrupciones: contenido.interrupciones,
       grupo: contenido.grupo,
       config: contenido.config,
@@ -171,10 +172,10 @@ describe("un viernes completo con el contenido real", () => {
     }
   });
 
-  it("el contenido real permite efectivamente llegar a diez", () => {
+  it.each(contenido.perfiles.map((p) => [p.nombre, p] as const))("%s puede llegar a diez", (_, perfil) => {
     const partida = new Partida({
-      perfil: contenido.perfiles[0]!,
-      agenda: contenido.contactos,
+      perfil,
+      agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
       interrupciones: [],
       config: contenido.config,
       semilla: "optimo",

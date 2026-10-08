@@ -63,6 +63,17 @@ export const perfilSchema = z
     ventaja: z.string().min(1),
     desventaja: z.string().min(1),
     contactoUnico: z.string().min(1),
+    respuesta: z.string().min(1),
+    resumen: z.string().min(1),
+    probabilidadInterrupciones: z.record(z.string(), z.number().positive()).optional(),
+  })
+  .strict();
+
+export const inscripcionSchema = z
+  .object({
+    chat: z.string().min(1),
+    mensajes: z.array(z.string().min(1)).min(1),
+    respuesta: z.string().min(1),
   })
   .strict();
 
