@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { cargarContenido } from "../src/datos/cargar.js";
-import { revisarGrafo } from "../src/datos/validar.js";
-import { contactoSchema } from "../src/datos/esquema.js";
-import { Partida } from "../src/core/partida.js";
+import { revisarGrafo, revisarGrupo } from "../src/datos/validar.js";
+import { contactoSchema, grupoSchema } from "../src/datos/esquema.js";
+import type { DefinicionGrupo } from "../src/core/grupo.js";
+import { alDia, Partida } from "../src/core/partida.js";
 import { resolver } from "../src/core/resolucion.js";
 import type { DefinicionContacto } from "../src/core/tipos.js";
 
@@ -140,6 +141,7 @@ describe("un viernes completo con el contenido real", () => {
       perfil,
       agenda: contenido.contactos,
       interrupciones: contenido.interrupciones,
+      grupo: contenido.grupo,
       config: contenido.config,
       semilla: "viernes-real",
     });
@@ -148,6 +150,7 @@ describe("un viernes completo con el contenido real", () => {
     for (const c of partida.contactos()) {
       if (partida.terminada) break;
       partida.escribir(c.id);
+      alDia(partida);
       for (let paso = 0; paso < 4 && !partida.terminada; paso++) {
         const opciones = partida.opcionesDisponibles(c.id);
         if (opciones.length === 0) break;
@@ -155,6 +158,7 @@ describe("un viernes completo con el contenido real", () => {
         const avanza = opciones.find((o) => o.siguiente !== null && o.efectos.estado === undefined);
         const elegida = confirma ?? avanza ?? opciones[0]!;
         partida.responder(c.id, elegida.id);
+        alDia(partida);
       }
     }
 
@@ -178,6 +182,7 @@ describe("un viernes completo con el contenido real", () => {
     for (const c of partida.contactos()) {
       if (partida.terminada) break;
       partida.escribir(c.id);
+      alDia(partida);
       for (let paso = 0; paso < 4 && !partida.terminada; paso++) {
         const opciones = partida.opcionesDisponibles(c.id);
         if (opciones.length === 0) break;
@@ -185,8 +190,59 @@ describe("un viernes completo con el contenido real", () => {
         const avanza = opciones.find((o) => o.siguiente !== null && o.efectos.estado === undefined);
         if (!confirma && !avanza) break;
         partida.responder(c.id, (confirma ?? avanza)!.id);
+        alDia(partida);
       }
     }
     expect(partida.roster().confirmados).toBeGreaterThanOrEqual(contenido.config.jugadoresNecesarios);
+  });
+});
+
+describe("el validador atrapa un grupo mal escrito", () => {
+  const sano = contenido.grupo;
+  const problemas = (grupo: DefinicionGrupo): string[] =>
+    revisarGrupo(grupo, contenido.contactos, contenido.config).map((p) => p.detalle);
+  const charla = (de: string, extra: Partial<DefinicionGrupo["charlas"][number]> = {}) => ({
+    id: "prueba",
+    cuando: { desde: 1150, hasta: 1160 },
+    mensajes: [{ de, texto: "Hola" }],
+    ...extra,
+  });
+
+  it("el grupo real no tiene problemas", () => {
+    expect(problemas(sano)).toEqual([]);
+  });
+
+  it("detecta a alguien que habla y no está en la agenda", () => {
+    expect(problemas({ ...sano, charlas: [charla("el_fantasma")] }).join()).toContain("el_fantasma");
+  });
+
+  it("detecta un audio con id repetido", () => {
+    const audio = { id: "repetido", segundos: 10, transcripcion: "Hola" };
+    const conAudio = (id: string) => ({ ...charla("juanma"), id, mensajes: [{ de: "juanma", audio }] });
+    expect(problemas({ ...sano, charlas: [conAudio("uno"), conAudio("dos")] }).join()).toContain("repetido");
+  });
+
+  it("detecta una franja que cae fuera del viernes", () => {
+    expect(problemas({ ...sano, charlas: [charla("juanma", { cuando: { desde: 1300, hasta: 1310 } })] }).join()).toContain(
+      "fuera del viernes",
+    );
+  });
+
+  it("detecta un roce entre rasgos que nunca se pelean", () => {
+    const roce = { entre: ["capitan", "habilidoso"] as const, mensajes: [{ de: "a", texto: "Hola" }] };
+    expect(problemas({ ...sano, roces: [roce] }).join()).toContain("no se pelean nunca");
+  });
+
+  it("detecta una respuesta que pide escuchar un audio que no existe", () => {
+    const sinAudios = { ...sano, charlas: sano.charlas.filter((c) => c.mensajes.every((m) => !m.audio)) };
+    expect(problemas(sinAudios).join()).toContain("zenon_rodilla");
+  });
+
+  it("el schema no deja un mensaje con texto y audio a la vez, ni un roce con alguien que no es a o b", () => {
+    const audio = { id: "x", segundos: 10, transcripcion: "Hola" };
+    const doble = { ...sano, charlas: [{ ...charla("juanma"), mensajes: [{ de: "juanma", texto: "Hola", audio }] }] };
+    expect(grupoSchema.safeParse(doble).success).toBe(false);
+    const tercero = { ...sano, roces: [{ entre: ["rustico", "habilidoso"], mensajes: [{ de: "c", texto: "Hola" }] }] };
+    expect(grupoSchema.safeParse(tercero).success).toBe(false);
   });
 });

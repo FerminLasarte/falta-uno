@@ -152,6 +152,14 @@ function narrar(
     }
   };
 
+  // Un roce que calmaste a tiempo no se narra como pelea: se narra que lo calmaste.
+  const calmados = new Set(
+    partida.bitacora
+      .todas()
+      .filter((e) => e.tipo === "roce_calmado")
+      .map((e) => e.contactoId),
+  );
+
   for (const entrada of partida.bitacora.todas()) {
     const id = entrada.contactoId;
     const hora = formatearHora(entrada.minuto);
@@ -178,9 +186,18 @@ function narrar(
         }
         break;
       case "roce":
+        if (calmados.has(id)) break;
         candidatos.push({
           texto: `${entrada.detalle ?? "Se arma lío en la cancha"}. Los pusiste juntos igual y ahora se gritan todo.`,
           signo: 0,
+          peso: 3,
+          clave: entrada.tipo,
+        });
+        break;
+      case "roce_calmado":
+        candidatos.push({
+          texto: `${entrada.detalle ?? "Los que se peleaban"} se cruzan en la primera pelota dividida y se dan la mano. Valió calmarlos a las ${hora}.`,
+          signo: 1,
           peso: 3,
           clave: entrada.tipo,
         });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Partida } from "../src/core/partida.js";
+import { alDia, Partida } from "../src/core/partida.js";
 import { resolver } from "../src/core/resolucion.js";
 import { agendaCompleta, CONFIG, contacto, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js";
 import type { DefinicionContacto } from "../src/core/tipos.js";
@@ -18,6 +18,7 @@ function partida(agenda: DefinicionContacto[], dineroInicial = PERFIL.dineroInic
 function confirmar(p: Partida, cuantos: number, opcion = "si"): void {
   for (const c of p.contactos().slice(0, cuantos)) {
     p.escribir(c.id);
+    alDia(p);
     p.responder(c.id, opcion);
   }
 }
@@ -35,6 +36,7 @@ describe("cuándo no hay partido", () => {
     const agenda = Array.from({ length: 12 }, (_, i) => contacto(`x${i}`, { alConfirmar: { moral: -100 } }));
     const p = partida(agenda);
     p.escribir("x0");
+    alDia(p);
     p.responder("x0", "si");
     expect(p.motivoFin).toBe("moral_agotada");
     expect(resolver(p).hayPartido).toBe(false);
@@ -91,6 +93,7 @@ describe("la matemática", () => {
     const p = partida(agendaCompleta());
     confirmar(p, 11, "apurar"); // todos quedan calientes
     p.esperar(Math.max(1, CONFIG.minutoRevision - p.reloj.minutos));
+    alDia(p);
     const r = resolver(p);
     expect(p.bitacora.contar("baja_tardia")).toBeGreaterThan(0);
     if (r.hayPartido) {
@@ -124,6 +127,7 @@ describe("narración atribuida", () => {
   it("apurar a alguien aparece narrado con su nombre", () => {
     const p = partida(agendaCompleta());
     p.escribir("c0");
+    alDia(p);
     p.responder("c0", "apurar");
     p.llamar("c0"); // lo baja del umbral para que llegue a jugar
     confirmar(p, 11);

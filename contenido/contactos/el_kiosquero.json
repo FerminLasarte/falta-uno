@@ -7,6 +7,7 @@
     "capitan"
   ],
   "probabilidadBajaInicial": 15,
+  "voz": 96,
   "nodoInicial": "abre",
   "nodos": {
     "abre": {
@@ -26,6 +27,19 @@
             "registrar": "favor"
           },
           "siguiente": "trae"
+        },
+        {
+          "id": "cuidar_rodilla",
+          "texto": "Quedate tranquilo, Don Zenón: vos de cinco, al arco ni loco.",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": -15,
+            "moral": 1
+          },
+          "siguiente": "cierra",
+          "requiere": {
+            "escuchado": "zenon_rodilla"
+          }
         },
         {
           "id": "solo_el",

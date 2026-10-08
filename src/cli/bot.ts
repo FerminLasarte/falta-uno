@@ -5,7 +5,7 @@
  *
  *   npm run bot -- 2000
  */
-import { Partida } from "../core/partida.js";
+import { alDia, Partida } from "../core/partida.js";
 import { Rng } from "../core/rng.js";
 import { resolver } from "../core/resolucion.js";
 import { cargarContenido } from "../datos/cargar.js";
@@ -30,6 +30,16 @@ interface Resultado {
 }
 
 /**
+ * Lo que hace con el grupo: calma las peleas apenas empiezan. Los audios no los
+ * escucha: con el reloj tan justo, escucharlos todos le cuesta el viernes.
+ */
+function atenderAlGrupo(partida: Partida): void {
+  if (partida.terminada || !partida.accionCalmar) return;
+  partida.calmar();
+  alDia(partida);
+}
+
+/**
  * Un jugador razonable, no óptimo: escribe a todos, prefiere confirmar, cuida
  * la moral cuando se le está acabando y para cuando ya tiene el plantel.
  */
@@ -38,6 +48,7 @@ function jugar(perfil: DefinicionPerfil, semilla: string, contenido: Contenido):
     perfil,
     agenda: contenido.contactos,
     interrupciones: contenido.interrupciones,
+    grupo: contenido.grupo,
     config: contenido.config,
     semilla,
   });
@@ -52,13 +63,20 @@ function jugar(perfil: DefinicionPerfil, semilla: string, contenido: Contenido):
     if (partida.terminada) break;
     if (partida.roster().confirmados >= contenido.config.jugadoresNecesarios) break;
 
+    atenderAlGrupo(partida);
+
     // Atender lo pendiente cuando el drenaje ya duele más que el reloj.
     for (const pendiente of [...partida.interrupcionesActivas]) {
-      if (partida.moral < 45) partida.atender(pendiente.definicion.id);
+      if (partida.moral < 45) {
+        partida.atender(pendiente.definicion.id);
+        alDia(partida);
+      }
     }
 
     partida.escribir(contacto.id);
     usados.push(contacto.id);
+    // El bot no lee: deja llegar todo antes de decidir. Para él el tiempo real no existe.
+    alDia(partida);
 
     for (let paso = 0; paso < 5 && !partida.terminada; paso++) {
       const opciones = partida.opcionesDisponibles(contacto.id);
@@ -76,6 +94,8 @@ function jugar(perfil: DefinicionPerfil, semilla: string, contenido: Contenido):
       const elegida = confirma ?? avanza;
       if (!elegida) break;
       partida.responder(contacto.id, elegida.id);
+      alDia(partida);
+      atenderAlGrupo(partida);
     }
   }
 

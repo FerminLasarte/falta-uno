@@ -101,7 +101,11 @@ export function agendaCompleta(): DefinicionContacto[] {
 
 export const SIN_INTERRUPCIONES: DefinicionInterrupcion[] = [];
 
-export function interrupcionSegura(id: string, minuto: number): DefinicionInterrupcion {
+export function interrupcionSegura(
+  id: string,
+  minuto: number,
+  insistencias: DefinicionInterrupcion["insistencias"] = [],
+): DefinicionInterrupcion {
   return {
     id,
     de: "Sofi",
@@ -113,5 +117,7 @@ export function interrupcionSegura(id: string, minuto: number): DefinicionInterr
     costoAtender: 15,
     efectosAtender: { moral: 5 },
     registrarSiIgnorada: "pareja_ignorada",
+    insistencias,
   };
 }
+

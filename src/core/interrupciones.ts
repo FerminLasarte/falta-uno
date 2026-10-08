@@ -1,5 +1,11 @@
 import type { Efectos, TipoEvento } from "./tipos.js";
 
+/** Un mensaje más mientras no la atiendas. Los segundos son reales y cuentan desde el anterior. */
+export interface Insistencia {
+  readonly texto: string;
+  readonly segundos: number;
+}
+
 export interface DefinicionInterrupcion {
   readonly id: string;
   readonly de: string;
@@ -13,6 +19,8 @@ export interface DefinicionInterrupcion {
   readonly costoAtender: number;
   readonly efectosAtender: Efectos;
   readonly registrarSiIgnorada: TipoEvento;
+  /** Lo que vuelve a escribir si la dejás esperando. No cuesta nada: solo se apila. */
+  readonly insistencias?: readonly Insistencia[];
 }
 
 export interface InterrupcionActiva {

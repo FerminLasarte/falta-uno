@@ -174,6 +174,34 @@ de comprometerse) y el balance deja de depender de la velocidad de lectura de ca
 **La ansiedad viene de las notificaciones, no del cronómetro.** Los mensajes entrantes sí llegan con
 timers reales cortos, se apilan y suenan. Esa es la fuente del agobio.
 
+### Dos relojes (decidido en octubre de 2026)
+
+El reloj del viernes y el tiempo real conviven sin pisarse:
+
+- **El reloj del viernes** sigue avanzando solo por acción. Las 21:00, la revisión de las 20:30 y las
+  ventanas de las interrupciones viven en él.
+- **El pulso** es tiempo real: la cola de lo que está en camino. Las respuestas llegan después de un
+  "escribiendo…" que dura según el largo, las interrupciones caen unos segundos después del toque que
+  las disparó y, si no las atendés, vuelven a escribir. Entra al núcleo como un comando más,
+  `transcurrir(ms)`, que la ventana manda mientras está visible.
+
+Dos reglas lo acotan:
+
+1. **Lo que no llegó no existe para el juego.** No se le contesta a quien todavía está escribiendo,
+   una interrupción no drena hasta que llega y leer cuesta cuando el mensaje llega.
+2. **El tiempo real nunca toca recursos.** No mueve el reloj ni la moral: cambia lo que hay en
+   pantalla. Lo que cuesta es lo que hacés con ese ruido.
+3. **El ruido llega por segundo; lo que cuesta se cobra por acción.** Ninguna consecuencia se mide
+   en segundos reales, así el que lee lento no pierde jugadores. Si hace falta que ignorar duela,
+   la palanca es que dejar a alguien esperando lo enfríe por cada acción que hacés en otro chat,
+   como ya drenan las interrupciones.
+
+El pulso tiene su propio RNG, derivado de la semilla, así que lo rápido que juegue cada uno no cambia
+lo que pasa en sus decisiones. La misma semilla con los mismos comandos, `transcurrir` incluido, da la
+misma partida. Se descartó que el tiempo real empuje el reloj (vuelve el cronómetro de la v1) y quedó
+en reserva que una pila de no leídos drene moral: se evalúa en el vertical slice si la gente aprende a
+ignorar las notificaciones.
+
 ### B. El Sistema de Conversación (Dirigido por Datos)
 
 - **Árboles de Diálogo.** Los NPCs no usan IA en tiempo de ejecución (ver sección 7). Se navegan
@@ -191,6 +219,17 @@ timers reales cortos, se apilan y suenan. Esa es la fuente del agobio.
   hoy, pero te desbloquea un contacto random vital para el próximo partido.
 - **Interrupciones del Viernes.** Tu pareja reclamando atención o el trabajo exigiendo una tarea.
   Ignorarlos consume Moral pasiva masiva; atenderlos consume reloj.
+- **La vida propia del grupo** (agregado en octubre de 2026). El grupo habla aunque vos no hagas
+  nada, y todo sale de `contenido/grupo.json`, validado como los contactos:
+  - **Charla.** Arranca en una franja del reloj, cuando confirma alguien en particular o cuando la
+    lista llega a tanto. Llega en tiempo real, con su "escribiendo…", y no cuesta nada: es ruido.
+  - **Audios.** Escucharlos cuesta un minuto de reloj por cada medio minuto de audio. Mientras
+    suenan se oye un murmullo que no se entiende; al terminar queda escrito lo que dijeron. Algunos
+    traen información que solo está ahí y que habilita respuestas en el chat privado ("vos de cinco,
+    al arco ni loco"). Otros enfrían a quien lo mandó por cada acción tuya mientras no lo escuches.
+  - **Roces.** Cuando entra alguien que se cruza con otro de la lista, se pelean en el grupo
+    citándose. Mientras nadie los calme, los dos se enfrían con cada acción tuya; calmarlos cuesta
+    reloj. Un roce calmado se narra en el partido como que lo calmaste, no como una pelea.
 
 ### D. HUD de Roster (agregado en v2, resuelto en v3)
 
@@ -276,6 +315,20 @@ legibilidad del texto que el jugador necesita leer.**
   elegirla; lo que provoca en el otro queda oculto. Los gestos (cerrar el chat, no contestar) van
   aparte, apagados.
 - **Las interrupciones son chats.** Sofi, el jefe, la cancha: llegan a la bandeja y se atienden ahí.
+- **Los audios** se ven como en cualquier app: la forma de onda, lo que duran y, antes de tocar, lo
+  que cuesta escucharlos. La forma de onda sale del murmullo de verdad. Ya escuchado, la onda se
+  apaga y lo que importa es lo que dijo, escrito abajo.
+- **Los roces** se ven como gente contestándose con citas. Mientras dura la pelea, una franja arriba
+  de las acciones dice quiénes se pelean y deja calmarlos, aunque la pelea ya haya quedado arriba en
+  el chat.
+- **Lo que llega a otro chat** crece desde la cámara frontal del render, como una isla. Abierta
+  muestra lo último que llegó y tapa la cabecera, nunca la lista; cerrada abraza la cámara y dice
+  cuántos te esperan. Al mismo tiempo el celular vibra en la mano y suena. Lo que llega al chat que
+  estás mirando no vibra ni suena: ya lo estás viendo. El grupo está silenciado, como todo grupo de
+  fútbol: su charla aparece en la isla pero no vibra ni suena; los audios y las peleas, sí.
+- **El sonido es nuestro.** Los tonos se sintetizan en el código, sin archivos ni licencias de
+  terceros, y se degradan con el deterioro como todo lo demás: se desafinan y se opacan, sin dejar de
+  oírse nunca.
 - **La bandeja** pone arriba lo que reclama atención y separa a la gente por en qué está con vos. Los
   que todavía no escribiste van en una grilla compacta.
 - **El color es información.** La app es acromática; lo único con color es el estado de cada jugador
@@ -387,8 +440,8 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 |---|---|
 | 1 — Motor y datos | ✅ Completa. Núcleo con tests, 12 contactos, 4 interrupciones, bot de balance. |
 | 2 — Empaquetado y Steam | 🟡 Completa en macOS. Falta verificar Windows y una Deck real, y lo que necesita la cuenta de Steamworks. |
-| 3 — Interfaz y audio | 🟡 La escena y la app están hechas. **Falta el audio** y el gamepad. |
-| 4 — Integración | 🟡 Un viernes se juega de punta a punta adentro del teléfono. Faltan los mensajes que llegan solos y la vida del grupo. |
+| 3 — Interfaz y audio | 🟡 La escena, la app, la vibración y el sonido de las notificaciones están hechos. Falta el ambiente del living y el gamepad. |
+| 4 — Integración | ✅ Un viernes se juega de punta a punta adentro del teléfono, con los mensajes llegando solos y el grupo con vida propia. |
 | 5 — El simulador | 🟡 Resolución y narración atribuida en el núcleo; sin pantalla. |
 | 6 — Contenido | ⬜ No empezó. |
 | 7 — Pulido | ⬜ No empezó. |
@@ -400,7 +453,9 @@ Pendientes que cruzan fases:
 - **Guardado en cada acción.** La plomería de Electron y Steam Cloud existe, pero el juego no la usa.
 - **Pasivas** de los contactos únicos (el Sindicalista, el Político): no están en la resolución.
 - **Texto por claves** (sección 1): todavía no; todo el texto está escrito en el código y el contenido.
-- **Balance:** el bot completa la lista el 100% de las veces. Hoy no se puede perder un viernes.
+- **Balance:** con la vida del grupo el bot llega a 10 el 71% de las veces: el viernes ya se puede
+  perder. El reloj es el límite (el bot usa 119 de los 120 minutos), así que cada cosa nueva que
+  cueste minutos lo mueve mucho. Se afina en el vertical slice.
 
 ### Plan para cerrar un viernes
 

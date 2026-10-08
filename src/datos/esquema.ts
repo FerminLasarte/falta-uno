@@ -26,6 +26,7 @@ export const opcionSchema = z
         moralMin: z.number().optional(),
         horaDesde: z.number().optional(),
         horaHasta: z.number().optional(),
+        escuchado: z.string().min(1).optional(),
       })
       .strict()
       .optional(),
@@ -47,6 +48,7 @@ export const contactoSchema = z
     habilidad: z.number().int().min(0).max(100),
     rasgos: z.array(z.enum(RASGOS)),
     probabilidadBajaInicial: z.number().min(0).max(100),
+    voz: z.number().min(60).max(260).optional(),
     nodoInicial: z.string().min(1),
     nodos: z.record(z.string(), nodoSchema),
   })
@@ -76,6 +78,9 @@ export const interrupcionSchema = z
     costoAtender: z.number().int().min(0),
     efectosAtender: efectosSchema,
     registrarSiIgnorada: z.enum(TIPOS_EVENTO),
+    insistencias: z
+      .array(z.object({ texto: z.string().min(1), segundos: z.number().min(1) }).strict())
+      .optional(),
   })
   .strict()
   .refine((i) => i.minutoHasta >= i.minutoDesde, {
@@ -97,3 +102,74 @@ export const configSchema = z
   .refine((c) => c.minutoRevision > c.horaInicio && c.minutoRevision < c.horaCorte, {
     message: "minutoRevision tiene que caer dentro del viernes",
   });
+
+// ------------------------------------------------------------------ el grupo
+
+const idSnake = z.string().regex(/^[a-z0-9_]+$/, "el id va en snake_case");
+
+export const audioSchema = z
+  .object({
+    id: idSnake,
+    segundos: z.number().int().min(1).max(300),
+    transcripcion: z.string().min(1),
+    alEscuchar: efectosSchema.optional(),
+    enfriaPorAccion: z.number().min(0).max(20).optional(),
+  })
+  .strict();
+
+export const mensajeGrupoSchema = z
+  .object({
+    de: z.string().min(1),
+    texto: z.string().min(1).optional(),
+    audio: audioSchema.optional(),
+    cita: z.boolean().optional(),
+  })
+  .strict()
+  .refine((m) => (m.texto === undefined) !== (m.audio === undefined), {
+    message: "un mensaje lleva texto o audio, uno de los dos",
+  });
+
+/** En un roce y al calmarlo, los que hablan son "a" y "b": todavía no se sabe quiénes van a ser. */
+const mensajeDeParSchema = mensajeGrupoSchema.refine((m) => m.de === "a" || m.de === "b", {
+  message: 'en un roce, "de" es "a" o "b"',
+});
+
+export const disparadorSchema = z.union([
+  z
+    .object({ desde: z.number().int(), hasta: z.number().int() })
+    .strict()
+    .refine((d) => d.hasta >= d.desde, { message: "hasta tiene que ser >= desde" }),
+  z.object({ alConfirmar: z.string().min(1) }).strict(),
+  z.object({ conConfirmados: z.number().int().min(1) }).strict(),
+]);
+
+export const grupoSchema = z
+  .object({
+    charlas: z.array(
+      z
+        .object({
+          id: idSnake,
+          cuando: disparadorSchema,
+          mensajes: z.array(mensajeGrupoSchema).min(1),
+        })
+        .strict(),
+    ),
+    roces: z.array(
+      z
+        .object({
+          entre: z.tuple([z.enum(RASGOS), z.enum(RASGOS)]),
+          mensajes: z.array(mensajeDeParSchema).min(1),
+        })
+        .strict(),
+    ),
+    calmar: z
+      .object({
+        texto: z.string().min(1),
+        costoReloj: z.number().int().min(0).max(60),
+        mensaje: z.string().min(1),
+        respuestas: z.array(mensajeDeParSchema),
+        calientaPorAccion: z.number().min(0).max(20),
+      })
+      .strict(),
+  })
+  .strict();

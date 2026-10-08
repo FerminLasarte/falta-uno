@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { CHAT_GRUPO, costoDeLeer, Partida } from "../src/core/partida.js";
+import { alDia, CHAT_GRUPO, costoDeLeer, Partida } from "../src/core/partida.js";
 import type { EstadoDeContacto } from "../src/core/tipos.js";
 import {
   agendaCompleta,
@@ -40,6 +40,7 @@ describe("el reloj avanza por acción", () => {
     const p = nueva();
     const antes = p.reloj.minutos;
     p.escribir("c0");
+    alDia(p);
     expect(p.reloj.minutos).toBeGreaterThan(antes);
   });
 
@@ -54,10 +55,12 @@ describe("el reloj avanza por acción", () => {
   it("llamar cuesta más reloj que escribir", () => {
     const a = nueva();
     a.escribir("c0");
+    alDia(a);
     const costoEscribir = a.reloj.minutos - 1140;
 
     const b = nueva();
     b.escribir("c0");
+    alDia(b);
     const antes = b.reloj.minutos;
     b.llamar("c0");
     expect(b.reloj.minutos - antes).toBeGreaterThan(costoEscribir);
@@ -69,6 +72,7 @@ describe("conversación", () => {
   beforeEach(() => {
     p = nueva();
     p.escribir("c0");
+    alDia(p);
   });
 
   it("abrir la charla entrega los mensajes del NPC", () => {
@@ -134,18 +138,21 @@ describe("lo que cuesta leer", () => {
   it("un mensaje largo sí desgasta", () => {
     const p = nueva([contacto("largo", { mensajes: [LARGO] }), ...agendaCompleta()]);
     p.escribir("largo");
+    alDia(p);
     expect(p.moral).toBeLessThan(PERFIL.moralInicial);
   });
 
   it("el mismo mensaje largo desgasta más si el que escribe es quejoso", () => {
     const neutral = nueva([contacto("n", { mensajes: [LARGO] }), ...agendaCompleta()]);
     neutral.escribir("n");
+    alDia(neutral);
 
     const quejoso = nueva([
       contacto("q", { mensajes: [LARGO], rasgos: ["quejoso"] }),
       ...agendaCompleta(),
     ]);
     quejoso.escribir("q");
+    alDia(quejoso);
 
     expect(quejoso.moral).toBeLessThan(neutral.moral);
   });
@@ -180,6 +187,7 @@ describe("la lista de chats", () => {
 
   it("los mensajes recibidos cuentan como no leídos y traen su hora", () => {
     p.escribir("c0");
+    alDia(p);
     const c = p.contactos().find((x) => x.id === "c0")!;
     expect(c.sinLeer).toBeGreaterThan(0);
     expect(c.ultimoMensaje).toBe("¿A qué hora?");
@@ -188,6 +196,7 @@ describe("la lista de chats", () => {
 
   it("abrir el chat los marca como vistos y no cuesta reloj", () => {
     p.escribir("c0");
+    alDia(p);
     const antes = p.reloj.minutos;
     p.marcarLeido("c0");
     expect(p.contactos().find((x) => x.id === "c0")!.sinLeer).toBe(0);
@@ -196,6 +205,7 @@ describe("la lista de chats", () => {
 
   it("un mensaje nuevo después de leer vuelve a marcar sin leer", () => {
     p.escribir("c0");
+    alDia(p);
     p.marcarLeido("c0");
     p.responder("c0", "si");
     const c = p.contactos().find((x) => x.id === "c0")!;
@@ -208,8 +218,10 @@ describe("la lista del grupo", () => {
   it("guarda el orden en que se anotaron, no el de la agenda", () => {
     const p = nueva();
     p.escribir("c5");
+    alDia(p);
     p.responder("c5", "si");
     p.escribir("c0");
+    alDia(p);
     p.responder("c0", "si");
     p.pagarVacante("delantero");
     expect(p.lista().map((l) => l.id)).toEqual(["c5", "c0", "relleno_1"]);
@@ -219,10 +231,13 @@ describe("la lista del grupo", () => {
   it("el que se baja deja su lugar", () => {
     const p = nueva();
     p.escribir("c0");
+    alDia(p);
     p.responder("c0", "apurar");
     p.escribir("c1");
+    alDia(p);
     p.responder("c1", "si");
     p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    alDia(p);
     expect(p.lista().map((l) => l.id)).toEqual(["c1"]);
   });
 });
@@ -231,6 +246,7 @@ describe("cada evento sabe a qué chat pertenece", () => {
   it("lo que se habla con un contacto queda en su chat", () => {
     const p = nueva();
     p.escribir("c0");
+    alDia(p);
     const delChat = p.eventos().filter((e) => e.chat === "c0");
     expect(delChat.map((e) => e.clase)).toEqual(["propio", "mensaje"]);
   });
@@ -238,6 +254,7 @@ describe("cada evento sabe a qué chat pertenece", () => {
   it("las confirmaciones se anuncian en el grupo", () => {
     const p = nueva();
     p.escribir("c0");
+    alDia(p);
     p.responder("c0", "si");
     expect(p.eventos().some((e) => e.chat === CHAT_GRUPO && e.texto.includes("confirmó"))).toBe(true);
   });
@@ -245,6 +262,7 @@ describe("cada evento sabe a qué chat pertenece", () => {
   it("una interrupción llega en su propio chat", () => {
     const p = nueva(agendaCompleta(), [interrupcionSegura("sofi", 1142)]);
     p.escribir("c0");
+    alDia(p);
     expect(p.eventos().filter((e) => e.chat === "sofi").map((e) => e.de)).toEqual(["Sofi"]);
   });
 });
@@ -253,12 +271,16 @@ describe("la revisión de las 20:30", () => {
   it("baja a los que quedaron calientes y deja a los demás", () => {
     const p = nueva();
     p.escribir("c0");
+    alDia(p);
     p.responder("c0", "apurar"); // probabilidadBaja 90 > umbral 80
     p.escribir("c1");
+    alDia(p);
     p.responder("c1", "si"); // tranquilo
     expect(p.roster().confirmados).toBe(2);
 
     p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+
+    alDia(p);
 
     expect(p.estadoDe("c0").estado).toBe("bajado");
     expect(p.estadoDe("c1").estado).toBe("confirmado");
@@ -269,8 +291,10 @@ describe("la revisión de las 20:30", () => {
   it("solo corre una vez", () => {
     const p = nueva();
     p.escribir("c0");
+    alDia(p);
     p.responder("c0", "apurar");
     p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    alDia(p);
     const bajas = p.bitacora.contar("baja_tardia");
     p.esperar(5);
     expect(p.bitacora.contar("baja_tardia")).toBe(bajas);
@@ -279,9 +303,11 @@ describe("la revisión de las 20:30", () => {
   it("llamar a alguien caliente lo salva de la baja", () => {
     const p = nueva();
     p.escribir("c0");
+    alDia(p);
     p.responder("c0", "apurar");
     p.llamar("c0"); // −30 de probabilidadBaja
     p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    alDia(p);
     expect(p.estadoDe("c0").estado).toBe("confirmado");
   });
 });
@@ -290,6 +316,7 @@ describe("interrupciones", () => {
   it("aparecen dentro de su ventana y drenan moral por acción", () => {
     const p = nueva(agendaCompleta(), [interrupcionSegura("sofi", 1142)]);
     p.escribir("c0");
+    alDia(p);
     expect(p.interrupcionesActivas).toHaveLength(1);
 
     const moralAntes = p.moral;
@@ -300,6 +327,7 @@ describe("interrupciones", () => {
   it("atenderlas cuesta reloj pero frena el drenaje", () => {
     const p = nueva(agendaCompleta(), [interrupcionSegura("sofi", 1142)]);
     p.escribir("c0");
+    alDia(p);
     const relojAntes = p.reloj.minutos;
     p.atender("sofi");
     expect(p.reloj.minutos - relojAntes).toBeGreaterThanOrEqual(15);
@@ -313,6 +341,7 @@ describe("interrupciones", () => {
   it("ignorarlas queda registrado para la narración", () => {
     const p = nueva(agendaCompleta(), [interrupcionSegura("sofi", 1142)]);
     p.escribir("c0");
+    alDia(p);
     for (let i = 0; i < 5; i++) p.esperar(3);
     expect(p.bitacora.contar("pareja_ignorada")).toBeGreaterThan(0);
   });
@@ -348,6 +377,7 @@ describe("condiciones de fin", () => {
     );
     const p = nueva(agenda);
     p.escribir("x0");
+    alDia(p);
     p.responder("x0", "si");
     expect(p.moral).toBe(0);
     expect(p.terminada).toBe(true);
@@ -360,6 +390,7 @@ describe("condiciones de fin", () => {
     );
     const p = nueva(agenda);
     p.escribir("x0");
+    alDia(p);
     p.responder("x0", "si");
     expect(p.escribir("x1").ok).toBe(false);
   });
@@ -383,8 +414,10 @@ describe("determinismo", () => {
         semilla: "determinismo",
       });
       p.escribir("c0");
+      alDia(p);
       p.responder("c0", "si");
       p.escribir("c1");
+      alDia(p);
       p.responder("c1", "apurar");
       p.esperar(20);
       return p;

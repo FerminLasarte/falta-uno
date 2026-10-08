@@ -1,4 +1,6 @@
-import type { DefinicionContacto } from "../core/tipos.js";
+import type { DefinicionGrupo, MensajeGrupo } from "../core/grupo.js";
+import { PARES_EN_ROCE } from "../core/roster.js";
+import type { Config, DefinicionContacto } from "../core/tipos.js";
 
 export interface ProblemaContenido {
   readonly archivo: string;
@@ -69,6 +71,79 @@ export function revisarGrafo(contacto: DefinicionContacto, archivo: string): Pro
   );
   if (!puedeConfirmar) {
     problemas.push({ archivo, detalle: `no hay ninguna rama que lleve a "confirmado"` });
+  }
+
+  return problemas;
+}
+
+/**
+ * Lo que el schema del grupo no puede ver solo: que quien habla exista en la
+ * agenda, que cada roce sea un cruce que de verdad puede pasar, que los ids de
+ * los audios no se repitan y que una respuesta que pide haber escuchado un
+ * audio apunte a uno que existe.
+ */
+export function revisarGrupo(
+  grupo: DefinicionGrupo,
+  contactos: readonly DefinicionContacto[],
+  config: Config,
+): ProblemaContenido[] {
+  const archivo = "grupo.json";
+  const problemas: ProblemaContenido[] = [];
+  const ids = new Set(contactos.map((c) => c.id));
+  const audios = new Set<string>();
+
+  /* Una cita muestra lo que dijo el otro, y lo que dice un audio no se sabe hasta escucharlo. */
+  const revisarCitas = (mensajes: readonly MensajeGrupo[], donde: string): void => {
+    mensajes.forEach((m, i) => {
+      if (m.cita && mensajes[i - 1]?.audio) problemas.push({ archivo, detalle: `${donde}: no se puede citar un audio` });
+      if (m.cita && i === 0) problemas.push({ archivo, detalle: `${donde}: el primer mensaje no tiene a quién citar` });
+    });
+  };
+
+  const revisarAudio = (m: MensajeGrupo, donde: string): void => {
+    if (!m.audio) return;
+    if (audios.has(m.audio.id)) problemas.push({ archivo, detalle: `${donde}: el audio "${m.audio.id}" está repetido` });
+    audios.add(m.audio.id);
+  };
+
+  for (const charla of grupo.charlas) {
+    const donde = `charla "${charla.id}"`;
+    revisarCitas(charla.mensajes, donde);
+    for (const m of charla.mensajes) {
+      if (!ids.has(m.de)) problemas.push({ archivo, detalle: `${donde}: "${m.de}" no está en la agenda` });
+      revisarAudio(m, donde);
+    }
+    const { cuando } = charla;
+    if ("alConfirmar" in cuando && !ids.has(cuando.alConfirmar)) {
+      problemas.push({ archivo, detalle: `${donde}: alConfirmar "${cuando.alConfirmar}" no está en la agenda` });
+    }
+    if ("desde" in cuando && (cuando.hasta < config.horaInicio || cuando.desde >= config.horaCorte)) {
+      problemas.push({ archivo, detalle: `${donde}: la franja cae fuera del viernes, nunca arranca` });
+    }
+  }
+
+  grupo.roces.forEach((roce, i) => {
+    const [x, y] = roce.entre;
+    const existe = PARES_EN_ROCE.some(([p, q]) => (p === x && q === y) || (p === y && q === x));
+    if (!existe) problemas.push({ archivo, detalle: `roce ${i + 1}: ${x} y ${y} no se pelean nunca, no va a aparecer` });
+    revisarCitas(roce.mensajes, `roce ${i + 1}`);
+    for (const m of roce.mensajes) revisarAudio(m, `roce ${i + 1}`);
+  });
+  revisarCitas(grupo.calmar.respuestas, "calmar");
+  for (const m of grupo.calmar.respuestas) revisarAudio(m, "calmar");
+
+  for (const contacto of contactos) {
+    for (const [nodoId, nodo] of Object.entries(contacto.nodos)) {
+      for (const opcion of nodo.opciones) {
+        const pedido = opcion.requiere?.escuchado;
+        if (pedido !== undefined && !audios.has(pedido)) {
+          problemas.push({
+            archivo: `${contacto.id}.json`,
+            detalle: `nodo "${nodoId}", opción "${opcion.id}": pide escuchar "${pedido}", y ese audio no existe`,
+          });
+        }
+      }
+    }
   }
 
   return problemas;

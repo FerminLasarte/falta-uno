@@ -22,6 +22,16 @@ const esProduccion = app.isPackaged;
 // antes de que Electron quede listo. Después ya no tienen efecto.
 prepararOverlay();
 
+// Si el proceso que nos lanzó ya no está (se cerró la terminal, o el script que
+// nos levantó terminó sin matarnos), el próximo log tira EPIPE. Sin esto,
+// Electron se lo muestra al jugador como un diálogo de error del proceso
+// principal. Los logs son diagnóstico: si nadie los lee, se pierden y listo.
+for (const salida of [process.stdout, process.stderr]) {
+  salida.on("error", (error: NodeJS.ErrnoException) => {
+    if (error.code !== "EPIPE") throw error;
+  });
+}
+
 // Si Steam tiene que relanzarnos, este proceso sobra.
 if (relanzarPorSteamSiHaceFalta(esProduccion)) app.quit();
 
@@ -99,8 +109,9 @@ function crearVentana(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
-      // El juego corre en un reloj propio y sigue recibiendo mensajes con la
-      // ventana en segundo plano: Chromium no puede frenarle los timers.
+      // El latido que le pasa el tiempo real al núcleo tiene que ser parejo
+      // aunque la ventana no tenga el foco: Chromium no puede frenarle los
+      // timers. Con la ventana oculta, es el juego el que frena el tiempo real.
       backgroundThrottling: false,
     },
   });

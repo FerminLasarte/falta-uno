@@ -3,9 +3,12 @@
   import Escena from "./escena/Escena.svelte";
   import Mensajeria from "./mensajeria/Mensajeria.svelte";
   import BarraEstado from "./telefono/BarraEstado.svelte";
+  import Isla from "./telefono/Isla.svelte";
   import Pantalla from "./telefono/Pantalla.svelte";
   import { calcularDeterioro } from "./estado/deterioro.js";
   import { juego } from "./estado/juego.svelte.js";
+  import { sonido } from "./sonido/sonido.js";
+  import { SEPARACION_MS, VIBRACION } from "./telefono/vibracion.js";
 
   /** Override para capturas y revisión de diseño (?moral=15). */
   const moralDeLaUrl = (() => {
@@ -17,19 +20,38 @@
   let moralForzada = $state<number | null>(moralDeLaUrl);
 
   const moralEfectiva = $derived(moralForzada ?? juego.vista?.moral ?? 100);
+  const deterioro = $derived(calcularDeterioro(moralEfectiva));
 
-  /* El ÚNICO lugar de todo el juego donde el deterioro llega al documento. */
+  /* El ÚNICO lugar de todo el juego donde el deterioro llega al documento y al sonido. */
   $effect(() => {
-    document.documentElement.style.setProperty(
-      "--deterioro",
-      String(calcularDeterioro(moralEfectiva)),
-    );
+    document.documentElement.style.setProperty("--deterioro", String(deterioro));
+    sonido.deterioro = deterioro;
   });
+
+  let escena = $state<Escena>();
+
+  /*
+    Lo que llega a otro chat hace vibrar y sonar el celular. Lo que llega al que
+    estás mirando ya lo estás viendo: ni vibra ni suena. La charla del grupo
+    tampoco, que está silenciado.
+  */
+  let ultimoAviso = -Infinity;
+  $effect(() =>
+    juego.alLlegar((llegada) => {
+      if (llegada.aLaVista || llegada.silenciada) return;
+      const ahora = performance.now();
+      if (ahora - ultimoAviso < SEPARACION_MS) return;
+      ultimoAviso = ahora;
+      const tramos = llegada.reclamo ? VIBRACION.reclamo : VIBRACION.mensaje;
+      escena?.vibrar(tramos);
+      sonido.avisar(llegada.reclamo, tramos);
+    }),
+  );
 
   void juego.iniciar();
 </script>
 
-<Escena>
+<Escena bind:this={escena}>
   <Pantalla>
     {#if juego.error}
       <div class="falla">
@@ -43,6 +65,7 @@
         sena={juego.contenido.config.senaCancha}
         costoReemplazo={juego.contenido.config.costoVacante}
       />
+      <Isla />
     {:else}
       <div class="cargando"><span></span></div>
     {/if}

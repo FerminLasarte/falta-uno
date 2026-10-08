@@ -2,6 +2,7 @@
  * Cómo se nombra y se colorea cada cosa adentro de la app. Vive en un solo lugar
  * porque la lista, la franja, la bandeja y los chats tienen que decir lo mismo.
  */
+import type { EventoFeed } from "../../core/partida.js";
 import type { EstadoContacto, Rol } from "../../core/tipos.js";
 
 // TODO(contenido): el grupo y la cancha son de la campaña, no de la interfaz.
@@ -54,4 +55,23 @@ export function pesos(monto: number): string {
 export interface AccionChat {
   readonly texto: string;
   readonly minutos: number;
+}
+
+/** "Fede y El Tano", "Fede, El Tano y Santi". */
+export function enumerar(nombres: readonly string[]): string {
+  if (nombres.length <= 1) return nombres.join("");
+  return `${nombres.slice(0, -1).join(", ")} y ${nombres.at(-1)}`;
+}
+
+/** Lo que dura un audio, como lo escribe el teléfono: 0:47. */
+export function duracionAudio(segundos: number): string {
+  return `${Math.floor(segundos / 60)}:${String(Math.floor(segundos % 60)).padStart(2, "0")}`;
+}
+
+/**
+ * Lo que se ve de un mensaje en una vista previa: la bandeja, la isla. De un
+ * audio, que es un audio y cuánto dura; lo que dice se sabe escuchándolo.
+ */
+export function vistaPrevia(evento: Pick<EventoFeed, "texto" | "audio">): string {
+  return evento.audio ? `Audio · ${duracionAudio(evento.audio.segundos)}` : evento.texto;
 }

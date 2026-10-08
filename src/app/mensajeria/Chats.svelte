@@ -5,18 +5,19 @@
   grilla compacta: doce filas iguales se leen como un error, no como una agenda.
 -->
 <script lang="ts">
-  import type { EventoFeed, VistaContacto, VistaRoster } from "../../core/partida.js";
+  import { CHAT_GRUPO, type EventoFeed, type VistaContacto, type VistaRoster } from "../../core/partida.js";
   import type { EstadoContacto } from "../../core/tipos.js";
   import type { VistaInterrupcion } from "../estado/juego.svelte.js";
   import Avatar from "./Avatar.svelte";
   import Cabecera from "./Cabecera.svelte";
   import Franja from "./Franja.svelte";
   import ItemChat from "./ItemChat.svelte";
-  import { NOMBRE_GRUPO, ROL_CORTO, ROTULO_ESTADO } from "./rotulos.js";
+  import { NOMBRE_GRUPO, ROL_CORTO, ROTULO_ESTADO, vistaPrevia } from "./rotulos.js";
 
   let {
     contactos,
     interrupciones,
+    escribiendo,
     ultimoDelGrupo,
     grupoSinLeer,
     roster,
@@ -28,6 +29,8 @@
   }: {
     contactos: readonly VistaContacto[];
     interrupciones: readonly VistaInterrupcion[];
+    /** Los chats donde alguien está escribiendo. */
+    escribiendo: ReadonlySet<string>;
     ultimoDelGrupo: EventoFeed | null;
     grupoSinLeer: number;
     roster: VistaRoster;
@@ -71,9 +74,10 @@
   <div class="bandeja">
     <ItemChat
       titulo={NOMBRE_GRUPO}
-      linea={ultimoDelGrupo?.texto ?? "La lista está vacía"}
+      linea={ultimoDelGrupo ? vistaPrevia(ultimoDelGrupo) : "La lista está vacía"}
       minuto={ultimoDelGrupo?.minuto ?? null}
       sinLeer={grupoSinLeer}
+      escribiendo={escribiendo.has(CHAT_GRUPO)}
       alAbrir={alAbrirGrupo}
     >
       {#snippet avatar()}<Avatar nombre={NOMBRE_GRUPO} id="grupo" grupo />{/snippet}
@@ -84,7 +88,8 @@
         titulo={a.de}
         linea={a.pendiente ? a.texto : "Atendido"}
         minuto={a.minuto}
-        sinLeer={a.sinLeer ? 1 : 0}
+        sinLeer={a.sinLeer}
+        escribiendo={escribiendo.has(a.id)}
         alAbrir={() => alAbrirInterrupcion(a.id)}
       >
         {#snippet avatar()}<Avatar nombre={a.de} id={a.id} />{/snippet}
@@ -99,6 +104,7 @@
           linea={lineaDe(c)}
           minuto={c.minutoUltimo}
           sinLeer={c.sinLeer}
+          escribiendo={escribiendo.has(c.id)}
           alAbrir={() => alAbrirContacto(c.id)}
         >
           {#snippet avatar()}<Avatar nombre={c.nombre} id={c.id} estado={c.estado} />{/snippet}

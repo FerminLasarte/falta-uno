@@ -28,6 +28,41 @@
 
   /** Fracciones del cuadro a porcentajes para `style`. */
   const pct = (fraccion: number): string => `${fraccion * 100}%`;
+
+  /** Un cuadro de la sacudida, en ms. A 60 fps cada cuadro alterna de lado. */
+  const PASO_MS = 17;
+  /** Amplitud en ancho del cuadro: cerca de un píxel y medio en una ventana común. */
+  const AMPLITUD_CQW = 0.13;
+
+  let vibra = $state<HTMLDivElement>();
+
+  /**
+   * El celular vibra en la mano: el teléfono y las manos se sacuden apenas, más
+   * rápido que la respiración. Los tramos son de motor prendido y apagado, en ms.
+   */
+  export function vibrar(tramos: readonly number[]): void {
+    if (!vibra || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const total = tramos.reduce((t, ms) => t + ms, 0);
+    const cuadros: Keyframe[] = [];
+    let desde = 0;
+    tramos.forEach((ms, i) => {
+      const prendido = i % 2 === 0;
+      for (let t = 0; t < ms; t += PASO_MS) {
+        // El motor arranca y frena con una rampa corta: sin eso se ve como un salto.
+        const envolvente = prendido ? Math.min(1, t / 40, (ms - t) / 50) : 0;
+        const lado = Math.round(t / PASO_MS) % 2 === 0 ? 1 : -1;
+        const a = AMPLITUD_CQW * envolvente;
+        cuadros.push({
+          offset: (desde + t) / total,
+          translate: `${lado * a}cqw ${-lado * a * 0.45}cqw`,
+          rotate: `${lado * a * 0.35}deg`,
+        });
+      }
+      desde += ms;
+    });
+    cuadros.push({ offset: 1, translate: "0 0", rotate: "0deg" });
+    vibra.animate(cuadros, { duration: total, easing: "linear" });
+  }
 </script>
 
 <div class="escena">
@@ -44,26 +79,28 @@
     </div>
 
     <div class="manos">
-      <div class="pulso">
-        <div
-          class="hueco"
-          style:left={pct(pantalla.izquierda)}
-          style:top={pct(pantalla.arriba)}
-          style:width={pct(pantalla.ancho)}
-          style:height={pct(pantalla.alto)}
-        >
+      <div class="vibra" bind:this={vibra}>
+        <div class="pulso">
           <div
-            class="vidrio"
-            style:width="{ANCHO_LOGICO}px"
-            style:height="{altoLogico}px"
-            style:transform="scale({escala})"
-            style:--radio-pantalla="{pantalla.radio * ANCHO_LOGICO}px"
-            style:--camara-centro="{camaraFrontal.centroY * altoLogico}px"
+            class="hueco"
+            style:left={pct(pantalla.izquierda)}
+            style:top={pct(pantalla.arriba)}
+            style:width={pct(pantalla.ancho)}
+            style:height={pct(pantalla.alto)}
           >
-            {@render children?.()}
+            <div
+              class="vidrio"
+              style:width="{ANCHO_LOGICO}px"
+              style:height="{altoLogico}px"
+              style:transform="scale({escala})"
+              style:--radio-pantalla="{pantalla.radio * ANCHO_LOGICO}px"
+              style:--camara-centro="{camaraFrontal.centroY * altoLogico}px"
+            >
+              {@render children?.()}
+            </div>
           </div>
+          <img class="frente" src={primerPlano} alt="" />
         </div>
-        <img class="frente" src={primerPlano} alt="" />
       </div>
     </div>
   </div>
@@ -95,6 +132,7 @@
 
   .mundo,
   .manos,
+  .vibra,
   .pulso {
     position: absolute;
     inset: 0;

@@ -20,6 +20,8 @@
   let { vista, sena, costoReemplazo }: { vista: Vista; sena: number; costoReemplazo: number } = $props();
 
   const pantalla = $derived(juego.pantalla);
+  /** Quién escribe en cada chat ahora mismo. */
+  const tipeoPorChat = $derived(new Map(vista.escribiendo.map((t) => [t.chat, t.de])));
   const delGrupo = $derived(vista.eventos.filter((e) => e.chat === CHAT_GRUPO));
 
   /** Todo lo que te espera sin leer fuera de la pantalla actual: va en el botón de volver. */
@@ -28,9 +30,9 @@
     const contactos = vista.contactos
       .filter((c) => !(p.tipo === "contacto" && p.id === c.id))
       .reduce((t, c) => t + c.sinLeer, 0);
-    const avisos = vista.interrupciones.filter(
-      (i) => i.sinLeer && !(p.tipo === "interrupcion" && p.id === i.id),
-    ).length;
+    const avisos = vista.interrupciones
+      .filter((i) => !(p.tipo === "interrupcion" && p.id === i.id))
+      .reduce((t, i) => t + i.sinLeer, 0);
     const grupo = p.tipo === "grupo" ? 0 : vista.grupoSinLeer;
     return contactos + avisos + grupo;
   });
@@ -62,6 +64,7 @@
   {#if pantalla.tipo === "grupo"}
     <Grupo
       eventos={delGrupo}
+      escribiendo={tipeoPorChat.get(CHAT_GRUPO) ?? null}
       lista={vista.lista}
       contactos={vista.contactos}
       roster={vista.roster}
@@ -73,11 +76,16 @@
       alAbrir={abrirContacto}
       alEscribirAAlguien={() => juego.ir({ tipo: "chats" })}
       alPagar={(rol) => juego.pagarReemplazo(rol)}
+      calmar={vista.calmar && !vista.terminada ? vista.calmar : null}
+      alCalmar={() => juego.calmar()}
+      escuchados={new Set(vista.audiosEscuchados)}
+      alEscuchar={(id) => juego.escuchar(id)}
     />
   {:else if pantalla.tipo === "chats"}
     <Chats
       contactos={vista.contactos}
       interrupciones={vista.interrupciones}
+      escribiendo={new Set(tipeoPorChat.keys())}
       ultimoDelGrupo={delGrupo.at(-1) ?? null}
       grupoSinLeer={vista.grupoSinLeer}
       roster={vista.roster}
@@ -89,13 +97,15 @@
     />
   {:else if contacto}
     {@const c = contacto}
+    {@const tipea = tipeoPorChat.has(c.id)}
     <Chat
       eventos={delChat}
+      escribiendo={tipea ? c.nombre : null}
       opciones={c.opciones}
       principal={c.estado === "sin_contactar" && !vista.terminada
         ? { texto: `Escribirle a ${c.nombre}`, minutos: COSTO.mensaje }
         : null}
-      nota={c.estado === "confirmado" ? `${c.nombre} está en la lista.` : ROTULO_ESTADO[c.estado]}
+      nota={c.enCamino ? null : c.estado === "confirmado" ? `${c.nombre} está en la lista.` : ROTULO_ESTADO[c.estado]}
       roster={vista.roster}
       dinero={vista.dinero}
       {sena}
@@ -104,7 +114,7 @@
       alVerLista={irAlGrupo}
     >
       {#snippet cabecera()}
-        <Cabecera titulo={c.nombre} subtitulo="{c.rol} · {ROTULO_ESTADO[c.estado]}" {volver}>
+        <Cabecera titulo={c.nombre} subtitulo={tipea ? "escribiendo…" : `${c.rol} · ${ROTULO_ESTADO[c.estado]}`} {volver}>
           {#snippet avatar()}
             <Avatar nombre={c.nombre} id={c.id} estado={c.estado} tam={38} fondo="var(--app-cromo)" />
           {/snippet}
@@ -123,8 +133,10 @@
     </Chat>
   {:else if interrupcion}
     {@const i = interrupcion}
+    {@const tipea = tipeoPorChat.has(i.id)}
     <Chat
       eventos={delChat}
+      escribiendo={tipea ? i.de : null}
       principal={i.pendiente && !vista.terminada ? { texto: "Atender", minutos: i.costoAtender } : null}
       roster={vista.roster}
       dinero={vista.dinero}
@@ -133,7 +145,7 @@
       alVerLista={irAlGrupo}
     >
       {#snippet cabecera()}
-        <Cabecera titulo={i.de} subtitulo={i.pendiente ? "esperando que contestes" : "en línea"} {volver}>
+        <Cabecera titulo={i.de} subtitulo={tipea ? "escribiendo…" : i.pendiente ? "esperando que contestes" : "en línea"} {volver}>
           {#snippet avatar()}
             <Avatar nombre={i.de} id={i.id} tam={38} />
           {/snippet}

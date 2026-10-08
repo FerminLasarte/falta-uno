@@ -14,6 +14,7 @@
 
   let {
     eventos,
+    escribiendo = null,
     opciones = [],
     principal = null,
     nota = null,
@@ -26,6 +27,7 @@
     alVerLista,
   }: {
     eventos: readonly EventoFeed[];
+    escribiendo?: string | null;
     /** Respuestas del árbol de diálogo. */
     opciones?: readonly VistaOpcion[];
     /** Una sola acción grande en vez de respuestas: escribirle, atender. */
@@ -48,7 +50,7 @@
 <div class="pantalla-app">
   {@render cabecera()}
   <Franja {roster} {dinero} {sena} alTocar={alVerLista} />
-  <Charla {eventos} />
+  <Charla {eventos} {escribiendo} />
 
   <div class="pie">
     {#if respuestas.length > 0}

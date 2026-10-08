@@ -9,7 +9,12 @@
     "drenajePorAccion": 1.5,
     "costoAtender": 15,
     "efectosAtender": { "moral": 6 },
-    "registrarSiIgnorada": "pareja_ignorada"
+    "registrarSiIgnorada": "pareja_ignorada",
+    "insistencias": [
+      { "texto": "¿Hola?", "segundos": 25 },
+      { "texto": "Bueno, veo que no.", "segundos": 40 },
+      { "texto": "Arranco el capítulo sola.", "segundos": 60 }
+    ]
   },
   {
     "id": "jefe_planilla",
@@ -21,7 +26,11 @@
     "drenajePorAccion": 1.2,
     "costoAtender": 20,
     "efectosAtender": { "moral": 2, "dinero": 2000 },
-    "registrarSiIgnorada": "trabajo_ignorado"
+    "registrarSiIgnorada": "trabajo_ignorado",
+    "insistencias": [
+      { "texto": "¿Lo viste?", "segundos": 35 },
+      { "texto": "Es importante, eh.", "segundos": 60 }
+    ]
   },
   {
     "id": "cancha_confirma",
@@ -33,7 +42,12 @@
     "drenajePorAccion": 2.0,
     "costoAtender": 5,
     "efectosAtender": { "moral": 3 },
-    "registrarSiIgnorada": "ignorado"
+    "registrarSiIgnorada": "ignorado",
+    "insistencias": [
+      { "texto": "¿Confirman?", "segundos": 20 },
+      { "texto": "Tenemos otro equipo preguntando por el turno de las 21.", "segundos": 35 },
+      { "texto": "Si en un rato no confirman, la largamos.", "segundos": 50 }
+    ]
   },
   {
     "id": "grupo_incendiado",

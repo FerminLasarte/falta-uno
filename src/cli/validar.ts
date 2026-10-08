@@ -32,6 +32,9 @@ console.log(`  Opciones        ${opciones}`);
 console.log(`  Palabras        ~${palabras}`);
 console.log(`  Perfiles        ${contenido.perfiles.length}`);
 console.log(`  Interrupciones  ${contenido.interrupciones.length}`);
+const { grupo } = contenido;
+const mensajesGrupo = [...grupo.charlas, ...grupo.roces].flatMap((c) => c.mensajes);
+console.log(`  Grupo           ${grupo.charlas.length} charlas, ${mensajesGrupo.filter((m) => m.audio).length} audios, ${grupo.roces.length} roces`);
 console.log(`\n  Por rol:`);
 for (const rol of ROLES) console.log(`    ${rol.padEnd(15)} ${porRol[rol]}`);
 

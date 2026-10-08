@@ -51,6 +51,7 @@ export const TIPOS_EVENTO = [
   "trabajo_ignorado",
   "confirmacion_limpia",
   "baja_tardia",
+  "roce_calmado", // calmaste a dos que se estaban peleando en el grupo
 ] as const;
 export type TipoEvento = (typeof TIPOS_EVENTO)[number];
 
@@ -73,6 +74,8 @@ export interface OpcionDialogo {
     readonly moralMin?: number;
     readonly horaDesde?: number;
     readonly horaHasta?: number;
+    /** Solo si escuchaste ese audio del grupo: lo que dijo es lo que te deja contestar esto. */
+    readonly escuchado?: string;
   };
 }
 
@@ -88,6 +91,8 @@ export interface DefinicionContacto {
   readonly habilidad: number;
   readonly rasgos: readonly Rasgo[];
   readonly probabilidadBajaInicial: number;
+  /** Su voz en Hz: la del murmullo de sus audios. Más bajo, más grave. */
+  readonly voz?: number;
   readonly nodoInicial: string;
   readonly nodos: Readonly<Record<string, NodoDialogo>>;
 }

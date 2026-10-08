@@ -8,6 +8,7 @@
     "impuntual"
   ],
   "probabilidadBajaInicial": 30,
+  "voz": 124,
   "nodoInicial": "abre",
   "nodos": {
     "abre": {

@@ -1,0 +1,142 @@
+{
+  "charlas": [
+    {
+      "id": "arranque",
+      "cuando": { "desde": 1140, "hasta": 1145 },
+      "mensajes": [
+        { "de": "el_sindicalista", "texto": "¿Hoy se juega o qué?" },
+        { "de": "juanma", "texto": "Preguntale al que arma, que está calladito." },
+        { "de": "nico_el_cunado", "texto": "Yo si llueve no voy, aviso desde ahora." }
+      ]
+    },
+    {
+      "id": "pelota",
+      "cuando": { "desde": 1150, "hasta": 1175 },
+      "mensajes": [
+        { "de": "el_sindicalista", "texto": "¿El que llega último lleva la pelota?" },
+        { "de": "santi_el_goleador", "texto": "Llevo la mía, pero que nadie me la patee a la autopista." }
+      ]
+    },
+    {
+      "id": "zenon_rodilla",
+      "cuando": { "desde": 1160, "hasta": 1190 },
+      "mensajes": [
+        {
+          "de": "el_kiosquero",
+          "audio": {
+            "id": "zenon_rodilla",
+            "segundos": 47,
+            "transcripcion": "Muchachos, buenas noches. Hoy cierro el kiosco a las ocho y media, así que llego justo. Y por favor no me pongan de arquero, que tengo la rodilla a la miseria.",
+            "enfriaPorAccion": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "guantes",
+      "cuando": { "desde": 1180, "hasta": 1210 },
+      "mensajes": [
+        {
+          "de": "el_gordo_ruben",
+          "audio": {
+            "id": "ruben_guantes",
+            "segundos": 31,
+            "transcripcion": "Che, ¿alguien tiene guantes? Los míos los mordió el perro. Si no consigo, atajo con los de lavar los platos, eh. Después no me digan nada.",
+            "alEscuchar": { "moral": 1 }
+          }
+        }
+      ]
+    },
+    {
+      "id": "carlos_condicion",
+      "cuando": { "alConfirmar": "carlos_el_quejoso" },
+      "mensajes": [
+        {
+          "de": "carlos_el_quejoso",
+          "audio": {
+            "id": "carlos_condicion",
+            "segundos": 23,
+            "transcripcion": "Yo voy, ¿eh? Pero si a las nueve y diez no hay diez, me vuelvo. Ya me pasó dos veces y no me pasa más.",
+            "alEscuchar": { "probabilidadBaja": -5 },
+            "enfriaPorAccion": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "mitad",
+      "cuando": { "conConfirmados": 5 },
+      "mensajes": [
+        { "de": "pablo_el_pibe", "texto": "Vamos que se arma." },
+        { "de": "matias_el_arquero", "texto": "Cinco ya. ¿Los otros cinco los inventamos?" }
+      ]
+    },
+    {
+      "id": "casi",
+      "cuando": { "conConfirmados": 8 },
+      "mensajes": [
+        { "de": "fede_el_habilidoso", "texto": "Ocho. Si llegamos a diez pago la coca." },
+        { "de": "el_tano", "texto": "La coca la pagás igual.", "cita": true }
+      ]
+    },
+    {
+      "id": "juanma_tarde",
+      "cuando": { "desde": 1215, "hasta": 1240 },
+      "mensajes": [
+        {
+          "de": "juanma",
+          "audio": {
+            "id": "juanma_tarde",
+            "segundos": 19,
+            "transcripcion": "Estoy saliendo del laburo recién. Llego nueve y cinco seguro, arranquen sin mí si quieren, pero guárdenme el lugar."
+          }
+        }
+      ]
+    },
+    {
+      "id": "refresca",
+      "cuando": { "desde": 1245, "hasta": 1255 },
+      "mensajes": [
+        { "de": "nico_el_cunado", "texto": "¿Al final se juega? Porque está refrescando." },
+        { "de": "el_sindicalista", "texto": "Nico, son las nueve menos diez.", "cita": true }
+      ]
+    }
+  ],
+  "roces": [
+    {
+      "entre": ["rustico", "habilidoso"],
+      "mensajes": [
+        { "de": "a", "texto": "Si viene {b} yo me pongo de 9, que ese no la pasa ni a palos." },
+        { "de": "b", "texto": "Dijo el que la última vez la tiró a la autopista.", "cita": true },
+        { "de": "a", "texto": "Vení a decírmelo a la cancha, nene.", "cita": true },
+        { "de": "b", "texto": "Jajaja dale, te espero." }
+      ]
+    },
+    {
+      "entre": ["quejoso", "capitan"],
+      "mensajes": [
+        { "de": "a", "texto": "¿Otra vez {b} armando los equipos? Siempre se queda con los mejores." },
+        { "de": "b", "texto": "Si llegaras a horario elegirías vos, {a}.", "cita": true },
+        { "de": "a", "texto": "Ah, ahora el problema soy yo." }
+      ]
+    },
+    {
+      "entre": ["cagon", "aguantador"],
+      "mensajes": [
+        { "de": "a", "texto": "Che, ¿viene {b}? La última me dejó la pierna violeta." },
+        { "de": "b", "texto": "Fue una caricia, {a}. Si no aguantás, quedate en tu casa.", "cita": true },
+        { "de": "a", "texto": "Juego lejos tuyo, avisame de qué lado vas." }
+      ]
+    }
+  ],
+  "calmar": {
+    "texto": "Calmar a los muchachos",
+    "costoReloj": 2,
+    "mensaje": "Muchachos, bajen un cambio. Es un picado, no la final del mundo.",
+    "respuestas": [
+      { "de": "a", "texto": "Está bien, está bien. Era joda." },
+      { "de": "b", "texto": "Todo bien. Nos vemos en la cancha." }
+    ],
+    "calientaPorAccion": 2
+  }
+}

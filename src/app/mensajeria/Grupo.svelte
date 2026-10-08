@@ -11,10 +11,11 @@
   import Cabecera from "./Cabecera.svelte";
   import Charla from "./Charla.svelte";
   import ListaGrupo from "./ListaGrupo.svelte";
-  import { COLOR_ESTADO, NOMBRE_GRUPO, pesos, ROL_CORTO, TITULO_LISTA } from "./rotulos.js";
+  import { COLOR_ESTADO, enumerar, NOMBRE_GRUPO, pesos, ROL_CORTO, TITULO_LISTA } from "./rotulos.js";
 
   let {
     eventos,
+    escribiendo,
     lista,
     contactos,
     roster,
@@ -26,8 +27,14 @@
     alAbrir,
     alEscribirAAlguien,
     alPagar,
+    calmar,
+    alCalmar,
+    escuchados,
+    alEscuchar,
   }: {
     eventos: readonly EventoFeed[];
+    /** Quién escribe en el grupo ahora mismo. */
+    escribiendo: string | null;
     lista: readonly VistaPuesto[];
     contactos: readonly VistaContacto[];
     roster: VistaRoster;
@@ -39,6 +46,11 @@
     alAbrir: (id: string) => void;
     alEscribirAAlguien: () => void;
     alPagar: (rol: Rol) => void;
+    /** Calmar a los que se están peleando: quiénes son y lo que cuesta. Null si nadie se pelea. */
+    calmar: { readonly texto: string; readonly costoReloj: number; readonly entre: readonly string[] } | null;
+    alCalmar: () => void;
+    escuchados: ReadonlySet<string>;
+    alEscuchar: (audioId: string) => void;
   } = $props();
 
   /* El subtítulo de un grupo de WhatsApp: los integrantes por orden alfabético. */
@@ -68,7 +80,7 @@
 </script>
 
 <div class="pantalla-app">
-  <Cabecera titulo={NOMBRE_GRUPO} subtitulo={integrantes} volver={{ cuenta: sinLeerAfuera, alVolver }}>
+  <Cabecera titulo={NOMBRE_GRUPO} subtitulo={escribiendo ? `${escribiendo} está escribiendo…` : integrantes} volver={{ cuenta: sinLeerAfuera, alVolver }}>
     {#snippet avatar()}
       <Avatar nombre={NOMBRE_GRUPO} id="grupo" grupo tam={38} />
     {/snippet}
@@ -76,7 +88,20 @@
 
   <ListaGrupo {lista} {enDuda} {roster} {dinero} {sena} titulo={TITULO_LISTA} {alAbrir} />
 
-  <Charla {eventos} mostrarNombres {colorDe} />
+  <Charla {eventos} {escribiendo} mostrarNombres {colorDe} {escuchados} {alEscuchar} />
+
+  <!--
+    Mientras alguien se pelea, queda a la vista arriba de las acciones, aunque la
+    pelea ya haya quedado arriba en el chat: cada acción tuya los calienta más.
+  -->
+  {#if calmar}
+    <div class="roce" role="status">
+      <span class="quienes">{enumerar(calmar.entre)} se están peleando</span>
+      <button class="accion" onclick={alCalmar}>
+        {calmar.texto} <span class="costo">{calmar.costoReloj} min</span>
+      </button>
+    </div>
+  {/if}
 
   <div class="acciones">
     {#if eligiendoPuesto}
@@ -102,6 +127,18 @@
 
 <style>
   .pantalla-app { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+  .roce {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px 0;
+    background: var(--app-papel);
+    border-top: 1px solid var(--app-linea);
+  }
+  .quienes { font-size: var(--t-micro); font-weight: 600; color: var(--est-rechazado); }
 
   .acciones {
     flex: none;

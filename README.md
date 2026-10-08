@@ -20,8 +20,10 @@ el juego empaqueta y corre en Electron con Steam cableado. La escena en primera 
 terminada y el viernes se juega de punta a punta adentro del teléfono: el grupo con la lista, los
 chats privados con sus respuestas y costos, las interrupciones como chats y la bandeja.
 
-Falta el sonido y las notificaciones que llegan solas, la vida propia del grupo, la pantalla de las
-21:00 y la elección de perfil.
+Los mensajes llegan solos en tiempo real: se los ve escribiendo, aparecen en una isla que crece
+desde la cámara del celular, que vibra en la mano y suena. El grupo tiene vida propia: charla,
+audios que cuesta reloj escuchar y roces que hay que calmar. Falta la pantalla de las 21:00 y la
+elección de perfil.
 
 ## Documentación
 
@@ -73,7 +75,8 @@ posible para descubrirlo.
 ## Decisiones de diseño que conviene conocer antes de tocar el código
 
 - **El reloj avanza por acción, no en tiempo real.** Un cronómetro real castigaría al jugador por
-  leer, que es justo lo que el juego le pide hacer. La ansiedad la generan las notificaciones.
+  leer, que es justo lo que el juego le pide hacer. La ansiedad la generan las notificaciones, que
+  sí llegan en tiempo real por un segundo reloj, el pulso, que nunca toca recursos. Ver GDD §4.
 - **Perder un partido no termina la campaña.** Las únicas derrotas reales son de recursos: Moral en
   0, bancarrota, disolución del equipo.
 - **Los NPCs no usan LLM en tiempo de ejecución.** Costo recurrente sobre venta única, dependencia de
@@ -125,19 +128,22 @@ src/app/         La ventana. El único lugar del proyecto que ve el DOM.
   estilos/       Tokens y base. Todo el sistema de diseño vive acá.
   escena/        El living en primera persona: capas renderizadas y su movimiento.
     capas/       Lo que exporta arte/exportar_capas.py. No se edita a mano.
-  telefono/      El vidrio de la pantalla y la barra de estado.
+  telefono/      El vidrio de la pantalla, la barra de estado, la isla de avisos y la vibración.
+  sonido/        Los tonos y el motor de vibración, sintetizados en el código. Sin archivos de audio.
   mensajeria/    La app de adentro: el grupo con la lista, los chats privados y la bandeja.
   estado/        El puente al núcleo y la curva de deterioro.
 src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
   rng.ts         RNG determinista y serializable.
   tiempo.ts      El reloj que avanza por acción.
+  pulso.ts       El tiempo real: la cola de lo que está en camino y cuándo llega.
+  grupo.ts       La vida propia del grupo: charla, audios y roces.
   partida.ts     El agregado: estado, comandos, triggers.
   roster.ts      Composición del plantel, química y roces.
   resolucion.ts  El algoritmo del partido y la narración atribuida.
   bitacora.ts    Registro de por qué pasó cada cosa.
 src/datos/       Schema, validador de grafo y carga de contenido.
 src/cli/         Herramientas de consola: jugar, validar, bot.
-contenido/       Los datos del juego. Un archivo por contacto.
+contenido/       Los datos del juego. Un archivo por contacto, más el grupo (grupo.json).
 arte/            La escena en Blender, el script que la exporta y los créditos de assets.
 tests/           Tests sobre el núcleo y el contenido.
 ```
@@ -213,18 +219,19 @@ que sí. Un error de contenido rompe la validación, nunca la partida.
 
 ### Balance
 
-El bot juega miles de viernes contra el núcleo headless. Estado actual (300 viernes por perfil):
+El bot juega miles de viernes contra el núcleo headless. Estado actual (300 viernes por perfil; el
+bot calma los roces y no escucha los audios):
 
 | Perfil | Llega a 10 | Gana | Moral al final |
 |---|---|---|---|
-| El Acomodado | 100% | 62% | 21 |
-| El Pibe de Barrio | 100% | 66% | 29 |
-| El Oficinista | 100% | 63% | 24 |
+| El Acomodado | 71% | 62% | 19 |
+| El Pibe de Barrio | 71% | 67% | 24 |
+| El Oficinista | 71% | 64% | 22 |
 
-**Pendiente de la Fase 6:** un jugador competente arma el equipo el 100% de las veces. La presión de
-moral y de reloj funciona (se termina con ~20 de moral y usando 112 de los 120 minutos), pero con 12
-contactos para 10 lugares y todos convencibles, no hay forma real de fracasar. La dificultad tiene
-que salir del contenido: menos margen, más contactos que dicen que no, más interrupciones.
+**Pendiente del vertical slice:** antes de la vida del grupo, un jugador competente armaba el equipo
+el 100% de las veces. Ahora el viernes se puede perder, pero por el reloj: el bot usa 119 de los 120
+minutos, y escuchar todos los audios además de calmar cada roce lo deja en 18%. El margen de reloj
+es la perilla más sensible del juego.
 
 ## Steam
 

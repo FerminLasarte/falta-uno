@@ -11,6 +11,7 @@
     linea,
     minuto = null,
     sinLeer = 0,
+    escribiendo = false,
     avatar,
     alAbrir,
   }: {
@@ -18,6 +19,8 @@
     linea: string;
     minuto?: number | null;
     sinLeer?: number;
+    /** En vez de lo último que dijo, que está escribiendo. */
+    escribiendo?: boolean;
     avatar: Snippet;
     alAbrir: () => void;
   } = $props();
@@ -31,7 +34,7 @@
       {#if minuto !== null}<span class="hora">{formatearHora(minuto)}</span>{/if}
     </span>
     <span class="renglon">
-      <span class="linea">{linea}</span>
+      <span class="linea" class:tipeando={escribiendo}>{escribiendo ? "escribiendo…" : linea}</span>
       {#if sinLeer > 0}<span class="badge">{sinLeer}</span>{/if}
     </span>
   </span>
@@ -78,6 +81,7 @@
     text-overflow: ellipsis;
   }
   .sinleer .linea { color: var(--app-tinta); }
+  .linea.tipeando { color: var(--app-tinta-3); font-style: italic; }
 
   .badge {
     flex: none;

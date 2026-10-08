@@ -7,6 +7,7 @@
     "quejoso"
   ],
   "probabilidadBajaInicial": 15,
+  "voz": 108,
   "nodoInicial": "abre",
   "nodos": {
     "abre": {

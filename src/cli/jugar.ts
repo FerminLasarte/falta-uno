@@ -1,5 +1,5 @@
 import { crearLector } from "./entrada.js";
-import { Partida, type EventoFeed } from "../core/partida.js";
+import { alDia, Partida, type EventoFeed } from "../core/partida.js";
 import { resolver } from "../core/resolucion.js";
 import { formatearHora } from "../core/tiempo.js";
 import { cargarContenido, ErrorDeContenido } from "../datos/cargar.js";
@@ -52,6 +52,7 @@ const partida = new Partida({
   perfil,
   agenda: contenido.contactos,
   interrupciones: contenido.interrupciones,
+  grupo: contenido.grupo,
   config: contenido.config,
   semilla,
 });
@@ -73,6 +74,15 @@ function pintarEvento(e: EventoFeed): void {
       console.log(`  ${hora} ${C.cian}vos →${C.reset} ${e.texto}`);
       break;
     case "mensaje":
+      if (e.audio) {
+        // Lo que dice un audio recién se sabe escuchándolo.
+        console.log(
+          `  ${hora} ${C.bold}${e.de}:${C.reset} ${C.cian}▶ audio ${duracion(e.audio.segundos)}${C.reset}` +
+            `${C.gris} — [o] para escucharlo (${e.audio.costo}′)${C.reset}`,
+        );
+        break;
+      }
+      if (e.cita) console.log(`        ${C.gris}↪ ${e.cita.de}: ${e.cita.texto}${C.reset}`);
       console.log(`  ${hora} ${C.bold}${e.de}:${C.reset} ${e.texto}`);
       break;
     case "alerta":
@@ -81,6 +91,10 @@ function pintarEvento(e: EventoFeed): void {
     default:
       console.log(`  ${hora} ${C.gris}${e.texto}${C.reset}`);
   }
+}
+
+function duracion(segundos: number): string {
+  return `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, "0")}`;
 }
 
 function hud(): void {
@@ -101,6 +115,7 @@ function hud(): void {
   for (const i of partida.interrupcionesActivas) {
     console.log(`  ${C.rojo}● ${i.definicion.de} sigue esperando respuesta${C.reset}`);
   }
+  if (partida.accionCalmar) console.log(`  ${C.rojo}● Hay pelea en el grupo${C.reset}`);
   console.log(`${C.gris}${"─".repeat(64)}${C.reset}`);
 }
 
@@ -115,6 +130,8 @@ const ETIQUETA: Record<string, string> = {
 
 // --------------------------------------------------------------- bucle
 
+// El grupo ya está hablando cuando abrís el teléfono.
+alDia(partida);
 for (const e of partida.eventos()) pintarEvento(e);
 
 try {
@@ -143,6 +160,15 @@ while (!partida.terminada) {
       `${C.gris}[p]${C.reset} pagar vacante ($${contenido.config.costoVacante})   ` +
       `${C.gris}[e]${C.reset} esperar 10′   ${C.gris}[q]${C.reset} cortar`,
   );
+  const calmar = partida.accionCalmar;
+  const audios = partida.audiosSinEscuchar();
+  if (calmar || audios.length > 0) {
+    console.log(
+      `  ${C.gris}grupo:${C.reset}` +
+        (audios.length > 0 ? `   ${C.gris}[o]${C.reset} escuchar audios (${audios.length})` : "") +
+        (calmar ? `   ${C.gris}[c]${C.reset} ${calmar.texto} (${calmar.costoReloj}′)` : ""),
+    );
+  }
 
   const entrada = (await preguntar("\n> ")).trim().toLowerCase();
   console.log("");
@@ -169,6 +195,29 @@ while (!partida.terminada) {
     const cual = Number(await preguntar("  ¿Qué rol comprás? ")) - 1;
     const rol = ROLES[cual] as Rol | undefined;
     if (rol) mostrar(partida.pagarVacante(rol));
+    continue;
+  }
+
+  if (entrada === "c") {
+    mostrar(partida.calmar());
+    continue;
+  }
+
+  if (entrada === "o") {
+    const audios = partida.audiosSinEscuchar();
+    if (audios.length === 0) {
+      console.log(`  ${C.gris}No hay audios sin escuchar.${C.reset}`);
+      continue;
+    }
+    audios.forEach((a, n) =>
+      console.log(`  ${n + 1}. ${a.de} ${C.gris}${duracion(a.segundos)} (${a.costo}′)${C.reset}`),
+    );
+    const elegido = audios[Number(await preguntar("  ¿Cuál? ")) - 1];
+    if (!elegido) continue;
+    const resultado = partida.escuchar(elegido.id);
+    const dicho = partida.eventos().find((e) => e.audio?.id === elegido.id);
+    if (resultado.ok && dicho) console.log(`  ${C.bold}${dicho.de}:${C.reset} «${dicho.texto}»`);
+    mostrar(resultado);
     continue;
   }
 
@@ -218,6 +267,10 @@ function mostrar(resultado: { ok: boolean; error?: string; nuevos: readonly Even
     return;
   }
   for (const e of resultado.nuevos) pintarEvento(e);
+  // En la consola no hay tiempo real: después de cada acción llega todo lo que estaba en camino.
+  const desde = partida.eventos().length;
+  alDia(partida);
+  for (const e of partida.eventos().slice(desde)) pintarEvento(e);
 }
 
 // ------------------------------------------------------------- resolución
