@@ -8,12 +8,13 @@ import type { EntradaBitacora, TipoEvento } from "./tipos.js";
 export class Bitacora {
   private readonly entradas: EntradaBitacora[] = [];
 
-  registrar(tipo: TipoEvento, minuto: number, contactoId?: string, detalle?: string): void {
+  registrar(tipo: TipoEvento, minuto: number, contactoId?: string, detalle?: string, otroId?: string): void {
     this.entradas.push({
       tipo,
       minuto,
       ...(contactoId !== undefined ? { contactoId } : {}),
       ...(detalle !== undefined ? { detalle } : {}),
+      ...(otroId !== undefined ? { otroId } : {}),
     });
   }
 

@@ -3,7 +3,7 @@ import type { Partida } from "./partida.js";
 import { Rng } from "./rng.js";
 import { habilidadPromedio, quimica, todosLosRoces } from "./roster.js";
 import { formatearHora } from "./tiempo.js";
-import type { Desglose, DefinicionContacto } from "./tipos.js";
+import type { Desglose, DefinicionContacto, EntradaBitacora } from "./tipos.js";
 
 export interface Beat {
   readonly minuto: number;
@@ -280,6 +280,10 @@ function narrar(
       .map((e) => e.contactoId),
   );
 
+  /** Un roce entre dos de la agenda solo se cuenta si los dos están en la cancha. */
+  const vinieronLosDos = (entrada: EntradaBitacora): boolean =>
+    enPlantel.has(entrada.contactoId ?? "") && enPlantel.has(entrada.otroId ?? "");
+
   for (const entrada of partida.bitacora.todas()) {
     const id = entrada.contactoId;
     const hora = formatearHora(entrada.minuto);
@@ -324,6 +328,7 @@ function narrar(
           });
           break;
         }
+        if (!vinieronLosDos(entrada)) break;
         candidatos.push({
           texto: `${entrada.detalle ?? "Dos de los tuyos"} se gritan todo el partido.`,
           porque: `Se cruzaron en el grupo a las ${hora} y no los calmaste`,
@@ -333,8 +338,9 @@ function narrar(
         });
         break;
       case "roce_calmado":
+        if (!vinieronLosDos(entrada)) break;
         candidatos.push({
-          texto: `${entrada.detalle ?? "Los que se peleaban"} se cruzan en la primera dividida y se dan la mano.`,
+          texto: `${entrada.detalle ?? "Los que se peleaban"} se cruzan en una dividida y se dan la mano.`,
           porque: `Los calmaste en el grupo a las ${hora}`,
           signo: 1,
           peso: 3,

@@ -592,6 +592,7 @@ export class Partida {
           this.reloj.minutos,
           roce.b,
           `${this.definicion(roce.a).nombre} y ${this.definicion(roce.b).nombre}`,
+          roce.a,
         );
       }
       this.programarEnGrupo(calmar.respuestas, { a, b });
@@ -877,6 +878,7 @@ export class Partida {
         this.reloj.minutos,
         id,
         `${otro.nombre} y ${definicion.nombre}`,
+        roce.a,
       );
     }
     const primero = roces[0];

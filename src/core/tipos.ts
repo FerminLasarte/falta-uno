@@ -79,6 +79,8 @@ export interface EntradaBitacora {
   readonly minuto: number;
   readonly contactoId?: string;
   readonly detalle?: string;
+  /** El otro de un par, cuando la entrada es de dos: los que se cruzaron en el grupo. */
+  readonly otroId?: string;
 }
 
 /**

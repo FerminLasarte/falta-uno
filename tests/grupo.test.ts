@@ -255,6 +255,29 @@ describe("los roces en el grupo", () => {
     expect(textos).toContain("Los calmaste en el grupo");
   });
 
+  it.each([
+    ["calmado", true],
+    ["sin calmar", false],
+  ])("si uno de los dos se bajó, el roce %s no se narra", (_, calmarlos) => {
+    const p = nueva(agenda());
+    p.escribir("fede");
+    alDia(p);
+    p.responder("fede", "apurar"); // se baja en la revisión de las 20:30
+    confirmar(p, "tano");
+    if (calmarlos) p.calmar();
+    // De más, por si sin calmarlos el Tano también se calienta y se baja.
+    for (let i = 0; i < 10; i++) confirmar(p, `c${i}`);
+    p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    alDia(p);
+    expect(p.estadoDe("fede").estado).toBe("bajado");
+
+    const resultado = resolver(p);
+    expect(resultado.hayPartido).toBe(true);
+    const textos = resultado.narracion.map((b) => b.texto).join("\n");
+    expect(textos).not.toContain("se dan la mano");
+    expect(textos).not.toContain("se gritan todo");
+  });
+
   it("sin plantilla para ese cruce, el aviso sale igual, en el momento", () => {
     const p = nueva(agenda(), GRUPO_QUIETO);
     confirmar(p, "fede");
