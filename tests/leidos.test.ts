@@ -9,6 +9,8 @@ describe("lo que ya viste", () => {
     expect(l.sinLeer("carlos", 3)).toBe(0);
     expect(l.sinLeer("carlos", 5)).toBe(2);
     expect(l.sinLeer("beto", 1)).toBe(1);
+    expect(l.visto("carlos")).toBe(3);
+    expect(l.visto("beto")).toBe(0);
   });
 
   it("se guarda y se recupera", () => {

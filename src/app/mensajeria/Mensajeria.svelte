@@ -15,7 +15,8 @@
   import Chat from "./Chat.svelte";
   import Chats from "./Chats.svelte";
   import Grupo from "./Grupo.svelte";
-  import { ROTULO_ESTADO } from "./rotulos.js";
+  import Partido from "./Partido.svelte";
+  import { COLOR_ESTADO, ROTULO_ESTADO, type AccionChat } from "./rotulos.js";
 
   let { vista, sena, costoReemplazo }: { vista: Vista; sena: number; costoReemplazo: number } = $props();
 
@@ -40,6 +41,15 @@
   const volver = $derived({ cuenta: sinLeerAfuera, alVolver: () => juego.volver() });
   const irAlGrupo = (): void => juego.ir({ tipo: "grupo" });
   const franja = $derived({ roster: vista.roster, dinero: vista.dinero, sena, alVerLista: irAlGrupo });
+
+  /* A las 21:00 se corta todo: lo único que queda por hacer, en cualquier chat, es ir a la cancha. */
+  const irALaCancha = $derived<AccionChat | null>(vista.terminada ? { texto: "Ir a la cancha" } : null);
+  const alIrALaCancha = (): void => juego.ir({ tipo: "partido" });
+
+  /* En el relato, los nombres con el color de cómo terminó cada uno. */
+  const colores = $derived(
+    new Map(vista.contactos.filter((c) => c.estado !== "sin_contactar").map((c) => [c.nombre, COLOR_ESTADO[c.estado]])),
+  );
   const abrirContacto = (id: string): void => juego.ir({ tipo: "contacto", id });
 
   const contacto = $derived(
@@ -78,6 +88,7 @@
       alEscribirAAlguien={() => juego.ir({ tipo: "chats" })}
       alPagar={(rol) => juego.pagarReemplazo(rol)}
       calmar={vista.calmar && !vista.terminada ? vista.calmar : null}
+      alIrALaCancha={vista.terminada ? alIrALaCancha : null}
       alCalmar={() => juego.calmar()}
       escuchados={new Set(vista.audiosEscuchados)}
       alEscuchar={(id) => juego.escuchar(id)}
@@ -96,6 +107,15 @@
       alAbrirContacto={abrirContacto}
       alAbrirInterrupcion={(id) => juego.ir({ tipo: "interrupcion", id })}
     />
+  {:else if pantalla.tipo === "partido" && vista.resolucion}
+    <Partido
+      resolucion={vista.resolucion}
+      {colores}
+      visto={vista.relatoVisto}
+      {volver}
+      alVer={(n) => juego.verRelato(n)}
+      alVolverAlGrupo={irAlGrupo}
+    />
   {:else if contacto}
     {@const c = contacto}
     {@const tipea = tipeoPorChat.has(c.id)}
@@ -103,15 +123,14 @@
       eventos={delChat}
       escribiendo={tipea ? c.nombre : null}
       opciones={c.opciones}
-      principal={c.estado === "sin_contactar" && !vista.terminada
-        ? { texto: `Escribirle a ${c.nombre}`, minutos: COSTO.mensaje }
-        : null}
+      principal={irALaCancha ??
+        (c.estado === "sin_contactar" ? { texto: `Escribirle a ${c.nombre}`, minutos: COSTO.mensaje } : null)}
       nota={c.enCamino || c.opciones.length > 0
         ? null
         : c.estado === "confirmado" ? `${c.nombre} está en la lista.` : ROTULO_ESTADO[c.estado]}
       {franja}
       alElegir={(opcionId) => juego.responder(c.id, opcionId)}
-      alPrincipal={() => juego.escribir(c.id)}
+      alPrincipal={() => (vista.terminada ? alIrALaCancha() : juego.escribir(c.id))}
     >
       {#snippet cabecera()}
         <Cabecera titulo={c.nombre} subtitulo={tipea ? "escribiendo…" : `${c.rol} · ${ROTULO_ESTADO[c.estado]}`} {volver}>
@@ -137,9 +156,9 @@
     <Chat
       eventos={delChat}
       escribiendo={tipea ? i.de : null}
-      principal={i.pendiente && !vista.terminada ? { texto: "Atender", minutos: i.costoAtender } : null}
+      principal={irALaCancha ?? (i.pendiente ? { texto: "Atender", minutos: i.costoAtender } : null)}
       {franja}
-      alPrincipal={() => juego.atender(i.id)}
+      alPrincipal={() => (vista.terminada ? alIrALaCancha() : juego.atender(i.id))}
     >
       {#snippet cabecera()}
         <Cabecera titulo={i.de} subtitulo={tipea ? "escribiendo…" : i.pendiente ? "esperando que contestes" : "en línea"} {volver}>

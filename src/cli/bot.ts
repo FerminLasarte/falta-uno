@@ -125,6 +125,7 @@ function jugar(perfil: DefinicionPerfil, semilla: string, contenido: Contenido):
       console.log(`  ${"Probabilidad de victoria".padEnd(44)}  ${r.probabilidad}%\n`);
       for (const beat of r.narracion) {
         console.log(`  ${String(beat.minuto).padStart(2)}′ │ ${beat.texto}`);
+        if (beat.porque) console.log(`      │ ↳ ${beat.porque}`);
       }
       console.log(`\n  ${r.gano ? "GANARON" : "PERDIERON"} ${r.golesFavor}-${r.golesContra}\n`);
     }

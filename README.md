@@ -22,8 +22,10 @@ chats privados con sus respuestas y costos, las interrupciones como chats y la b
 
 Los mensajes llegan solos en tiempo real: se los ve escribiendo, aparecen en una isla que crece
 desde la cámara del celular, que vibra en la mano y suena. El grupo tiene vida propia: charla,
-audios que cuesta reloj escuchar y roces que hay que calmar. Falta la pantalla de las 21:00 y la
-elección de perfil.
+audios que cuesta reloj escuchar y roces que hay que calmar. El perfil se elige charlando con la
+cancha, el viernes se guarda en cada acción (también en Steam Cloud) y a las 21:00 se corta el chat y
+el partido se cuenta momento a momento, cada uno con la decisión tuya que lo explica. Falta la
+campaña: que el resultado pase a la fecha siguiente.
 
 ## Documentación
 
@@ -226,13 +228,12 @@ bot calma los roces y no escucha los audios):
 
 | Perfil | Llega a 10 | Gana | Moral al final |
 |---|---|---|---|
-| El Acomodado | 83% | 56% | 19 |
-| El Pibe de Barrio | 47% | 73% | 22 |
-| El Oficinista | 47% | 68% | 19 |
+| El Acomodado | 92% | 59% | 20 |
+| El Pibe de Barrio | 84% | 68% | 24 |
+| El Oficinista | 84% | 64% | 21 |
 
-Cada perfil tiene en la agenda los nueve contactos comunes más el suyo: diez para diez lugares, así
-que no puede fallarte nadie sin pagar un reemplazo. Por eso el Acomodado, que puede pagar, llega a
-10 bastante más seguido que los otros dos.
+Cada perfil tiene en la agenda los doce contactos comunes más el suyo: trece para diez lugares. El
+Acomodado llega a 10 más seguido porque puede pagar reemplazos.
 
 **Pendiente del vertical slice:** antes de la vida del grupo, un jugador competente armaba el equipo
 el 100% de las veces. Ahora el viernes se puede perder, pero por el reloj: el bot usa 119 de los 120

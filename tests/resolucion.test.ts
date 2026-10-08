@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { alDia, Partida } from "../src/core/partida.js";
 import { resolver } from "../src/core/resolucion.js";
-import { agendaCompleta, CONFIG, contacto, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js";
+import { agendaCompleta, CONFIG, contacto, interrupcionSegura, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js";
 import type { DefinicionContacto } from "../src/core/tipos.js";
 
 function partida(agenda: DefinicionContacto[], dineroInicial = PERFIL.dineroInicial, semilla = "res"): Partida {
@@ -160,6 +160,58 @@ describe("narración atribuida", () => {
     confirmar(p, 10);
     const textos = resolver(p).narracion.map((b) => b.texto);
     expect(new Set(textos).size).toBe(textos.length);
+  });
+});
+
+describe("el relato del partido", () => {
+  it("los goles cuadran con el resultado y cuentan cómo va", () => {
+    for (const semilla of ["a", "b", "c", "d", "e", "f"]) {
+      const p = partida(agendaCompleta(), PERFIL.dineroInicial, semilla);
+      confirmar(p, 10);
+      const r = resolver(p);
+      if (!r.hayPartido) continue;
+      const goles = r.narracion.filter((b) => b.gol);
+      expect(goles.filter((b) => b.gol === "favor")).toHaveLength(r.golesFavor);
+      expect(goles.filter((b) => b.gol === "contra")).toHaveLength(r.golesContra);
+      const ultimo = goles.at(-1);
+      if (ultimo) expect(ultimo.texto).toContain(`${r.golesFavor} a ${r.golesContra}.`);
+    }
+  });
+
+  it("la decisión que explica cada momento va aparte, no adentro del texto", () => {
+    const p = partida(agendaCompleta());
+    p.escribir("c0");
+    alDia(p);
+    p.responder("c0", "apurar");
+    p.llamar("c0");
+    confirmar(p, 11);
+    const apuro = resolver(p).narracion.find((b) => b.texto.includes("mala gana"));
+    expect(apuro?.porque).toMatch(/a las \d\d:\d\d$/);
+    expect(apuro?.texto).not.toContain("a las");
+  });
+
+  it("una interrupción ignorada no se narra como alguien ni como una pelea", () => {
+    // Drenan poco: tienen que quedar ignoradas sin que la moral llegue a cero.
+    const cancha = { ...interrupcionSegura("cancha", 1140), de: "Complejo", drenajePorAccion: 0.5, registrarSiIgnorada: "ignorado" as const };
+    const grupo = { ...interrupcionSegura("incendio", 1140), de: "El grupo", drenajePorAccion: 0.5, registrarSiIgnorada: "roce" as const };
+    const p = new Partida({
+      perfil: PERFIL,
+      agenda: agendaCompleta(),
+      interrupciones: [cancha, grupo],
+      config: CONFIG,
+      semilla: "ignorar",
+    });
+    p.esperar(1);
+    alDia(p);
+    for (let i = 0; i < 4; i++) p.esperar(1);
+    confirmar(p, 10);
+    const r = resolver(p);
+    expect(p.bitacora.contar("ignorado")).toBe(1);
+    expect(p.bitacora.contar("roce")).toBeGreaterThan(0);
+    const todo = r.narracion.map((b) => `${b.texto} ${b.porque ?? ""}`).join("\n");
+    expect(todo).not.toContain("alguien");
+    expect(todo).not.toContain("se gritan");
+    expect(todo).toContain("No le contestaste a Complejo");
   });
 });
 

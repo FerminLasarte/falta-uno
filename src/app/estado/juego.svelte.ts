@@ -19,9 +19,10 @@ import { textosDeInscripcion } from "../../core/inscripcion.js";
 import { agendaDe } from "../../core/perfiles.js";
 import type { Tipeo } from "../../core/pulso.js";
 import { FORMATO_GUARDADO, huella, leerGuardado, Registro, type Guardado, type Paso } from "../../core/registro.js";
+import { resolver, type Resolucion } from "../../core/resolucion.js";
 import { formatearHora } from "../../core/tiempo.js";
 import type { Contenido } from "../../datos/cargar.js";
-import type { DefinicionPerfil, PerfilId, Rol } from "../../core/tipos.js";
+import type { DefinicionPerfil, MotivoFin, PerfilId, Rol } from "../../core/tipos.js";
 import { vistaPrevia } from "../mensajeria/rotulos.js";
 import { Leidos } from "./leidos.js";
 
@@ -30,7 +31,9 @@ export type Pantalla =
   | { readonly tipo: "grupo" }
   | { readonly tipo: "chats" }
   | { readonly tipo: "contacto"; readonly id: string }
-  | { readonly tipo: "interrupcion"; readonly id: string };
+  | { readonly tipo: "interrupcion"; readonly id: string }
+  /** Después de las 21:00: el partido, contado. */
+  | { readonly tipo: "partido" };
 
 /** Una interrupción que ya llegó: Sofi, el jefe, la cancha. Es un chat más. */
 export interface VistaInterrupcion {
@@ -85,6 +88,12 @@ export interface Vista {
   /** Calmar al grupo, si alguien se está peleando. */
   readonly calmar: { readonly texto: string; readonly costoReloj: number; readonly entre: readonly string[] } | null;
   readonly terminada: boolean;
+  /** Por qué terminó el viernes, si terminó. */
+  readonly motivoFin: MotivoFin | null;
+  /** El partido, cuando el viernes ya terminó. */
+  readonly resolucion: Resolucion | null;
+  /** Cuántos momentos del relato ya viste: al volver, no se repiten. */
+  readonly relatoVisto: number;
 }
 
 /**
@@ -114,6 +123,13 @@ const LATIDO_MS = 100;
  */
 const TOPE_LATIDO_MS = 250;
 
+/** Lo que tardan en arrancar después de las 21:00, y lo que dura el partido más volver a mirar el teléfono. */
+const MINUTOS_HASTA_ARRANCAR = 5;
+const MINUTOS_DE_PARTIDO = 45;
+
+/** Cuánto del relato ya viste. Se guarda con lo leído, como si fuera un chat más. */
+const RELATO = "partido";
+
 /** El único archivo de guardado. Viaja por Steam Cloud. */
 const ARCHIVO = "partida.json";
 
@@ -133,6 +149,10 @@ class Juego {
   #ultimoLatido = 0;
   /** Lo que sobró de milisegundo en el último latido: el tiempo se le pasa al núcleo entero. */
   #resto = 0;
+  /** El partido, resuelto una sola vez cuando termina el viernes. */
+  #resolucion: Resolucion | null = null;
+  /** Ya fuiste a la cancha: la hora no vuelve a las 21:00 aunque vuelvas al grupo. */
+  #fuisteALaCancha = false;
   /** Quién estaba escribiendo en el último refresco, para no redibujar de más. */
   #firmaTipeo = "";
   #oyentes = new Set<(llegada: Llegada) => void>();
@@ -192,6 +212,8 @@ class Juego {
     const perfil = contenido?.perfiles.find((p) => p.id === perfilId);
     if (!contenido || !perfil || !this.eleccion) return;
     this.#registro = new Registro(new Partida(opcionesDe(contenido, perfil, this.#semilla)));
+    this.#resolucion = null;
+    this.#fuisteALaCancha = false;
     this.pantalla = { tipo: "interrupcion", id: contenido.inscripcion.chat };
     this.eleccion = null;
     this.#ultimoLatido = performance.now();
@@ -215,6 +237,7 @@ class Juego {
       );
     }
     this.#registro = registro;
+    this.#resolucion = null;
     this.#semilla = viernes.semilla;
     this.#restaurarVista(guardado.vista, contenido);
     return true;
@@ -222,11 +245,12 @@ class Juego {
 
   #restaurarVista(crudo: unknown, contenido: Contenido): void {
     if (typeof crudo !== "object" || crudo === null) return;
-    const { pantalla, leidos } = crudo as Record<string, unknown>;
+    const { pantalla, leidos, cancha } = crudo as Record<string, unknown>;
     this.#leidos = Leidos.desde(leidos);
+    this.#fuisteALaCancha = cancha === true;
     if (typeof pantalla !== "object" || pantalla === null) return;
     const { tipo, id } = pantalla as Record<string, unknown>;
-    if (tipo === "grupo" || tipo === "chats") this.pantalla = { tipo };
+    if (tipo === "grupo" || tipo === "chats" || tipo === "partido") this.pantalla = { tipo };
     else if (tipo === "contacto" && contenido.contactos.some((c) => c.id === id)) this.pantalla = { tipo, id: id as string };
     else if (tipo === "interrupcion" && contenido.interrupciones.some((i) => i.id === id)) this.pantalla = { tipo, id: id as string };
   }
@@ -239,7 +263,7 @@ class Juego {
     const guardado: Guardado = {
       formato: FORMATO_GUARDADO,
       viernes: { perfil: p.perfil.id, semilla: this.#semilla, contenido: this.#huella, pasos: registro.pasos },
-      vista: { pantalla: this.pantalla, leidos: this.#leidos.serializar() },
+      vista: { pantalla: this.pantalla, leidos: this.#leidos.serializar(), cancha: this.#fuisteALaCancha },
     };
     const texto = JSON.stringify(guardado);
     if (ya) window.faltaUno.guardarYa(ARCHIVO, texto);
@@ -249,6 +273,7 @@ class Juego {
   // ------------------------------------------------------------ navegación
 
   ir(destino: Pantalla): void {
+    if (destino.tipo === "partido") this.#fuisteALaCancha = true;
     this.#anterior = this.pantalla;
     this.pantalla = destino;
     this.#refrescar();
@@ -264,6 +289,13 @@ class Juego {
     this.pantalla = destino;
     this.#anterior = { tipo: "grupo" };
     this.#refrescar();
+  }
+
+  /** Ya viste hasta ese momento del relato. Se guarda: al retomar no se vuelve a contar. */
+  verRelato(cuantos: number): void {
+    this.#leidos.ver(RELATO, cuantos);
+    this.#refrescar();
+    this.#guardar();
   }
 
   // -------------------------------------------------------------- comandos
@@ -373,11 +405,17 @@ class Juego {
       ];
     });
 
+    if (p.terminada && !this.#resolucion) this.#resolucion = resolver(p);
     const escribiendo = p.escribiendo();
     this.#firmaTipeo = firma(escribiendo);
 
+    // Desde que fuiste a la cancha, la hora va con el relato: arranca un rato después
+    // de las 21 y avanza con cada minuto contado. Volver al grupo no la atrasa.
+    const minutos = this.#fuisteALaCancha
+      ? horaDelPartido(contenido, this.#resolucion, this.#leidos.visto(RELATO))
+      : p.reloj.minutos;
     this.vista = {
-      hora: formatearHora(p.reloj.minutos),
+      hora: formatearHora(minutos),
       minutos: p.reloj.minutos,
       restante: p.reloj.restante,
       moral: p.moral,
@@ -392,6 +430,9 @@ class Juego {
       audiosEscuchados: eventos.flatMap((e) => (e.audio && p.escuchado(e.audio.id) ? [e.audio.id] : [])),
       calmar: p.accionCalmar,
       terminada: p.terminada,
+      motivoFin: p.motivoFin,
+      resolucion: this.#resolucion,
+      relatoVisto: this.#leidos.visto(RELATO),
     };
   }
 }
@@ -431,10 +472,18 @@ function opcionesDe(contenido: Contenido, perfil: DefinicionPerfil, semilla: str
   };
 }
 
-/** El chat que se está leyendo en esa pantalla. La bandeja no es ninguno. */
+/** La hora mientras se cuenta el partido: la del último minuto que viste, o la del final. */
+function horaDelPartido(contenido: Contenido, resolucion: Resolucion | null, visto: number): number {
+  const { horaCorte } = contenido.config;
+  const narracion = resolucion?.hayPartido ? resolucion.narracion : [];
+  if (visto >= narracion.length) return horaCorte + MINUTOS_DE_PARTIDO;
+  return horaCorte + MINUTOS_HASTA_ARRANCAR + (narracion[visto - 1]?.minuto ?? 0);
+}
+
+/** El chat que se está leyendo en esa pantalla. La bandeja y el partido no son ninguno. */
 function chatDe(pantalla: Pantalla): string | null {
   if (pantalla.tipo === "grupo") return CHAT_GRUPO;
-  if (pantalla.tipo === "chats") return null;
+  if (pantalla.tipo === "chats" || pantalla.tipo === "partido") return null;
   return pantalla.id;
 }
 

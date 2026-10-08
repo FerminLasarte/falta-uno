@@ -240,7 +240,7 @@ describe("los roces en el grupo", () => {
     alDia(p);
     const resultado = resolver(p);
     expect(resultado.hayPartido).toBe(true);
-    return resultado.narracion.map((b) => b.texto).join("\n");
+    return resultado.narracion.map((b) => `${b.texto} ${b.porque ?? ""}`).join("\n");
   }
 
   it("un roce que nadie calmó se narra como pelea", () => {
@@ -250,7 +250,8 @@ describe("los roces en el grupo", () => {
   it("un roce calmado se narra como que lo calmaste, no como pelea", () => {
     const textos = narracion(true);
     expect(textos).not.toContain("se gritan todo");
-    expect(textos).toContain("Valió calmarlos");
+    expect(textos).toContain("se dan la mano");
+    expect(textos).toContain("Los calmaste en el grupo");
   });
 
   it("sin plantilla para ese cruce, el aviso sale igual, en el momento", () => {

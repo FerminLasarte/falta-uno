@@ -1,0 +1,89 @@
+{
+  "id": "lucho",
+  "nombre": "Lucho",
+  "rol": "mediocampista",
+  "habilidad": 57,
+  "rasgos": [],
+  "probabilidadBajaInicial": 20,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "¡Obvio que juego!",
+        "El tema es cómo llego, que vivo lejísimos y hoy no tengo el auto."
+      ],
+      "opciones": [
+        {
+          "id": "remis",
+          "texto": "Te pago el remis, vení.",
+          "costoReloj": 2,
+          "requiere": {
+            "dineroMin": 2500
+          },
+          "efectos": {
+            "dinero": -2500,
+            "estado": "confirmado",
+            "probabilidadBaja": -20,
+            "registrar": "plata"
+          },
+          "siguiente": null
+        },
+        {
+          "id": "colectivo",
+          "texto": "Tomate el 60, te deja en la puerta.",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 15,
+            "enojo": 10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "alguien",
+          "texto": "Preguntá en el grupo si alguien te alcanza.",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 5
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Dejarlo para otra]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Bueno, me arreglo. Salgo ya así llego."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Grande. Los 1500 cuando llegues.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Anotado. La plata la vemos.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 10
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

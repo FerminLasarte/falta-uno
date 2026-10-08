@@ -46,7 +46,7 @@
         audio: EventoFeed["audio"];
         cita: EventoFeed["cita"];
       }
-    | { tipo: "aviso"; alerta: boolean; texto: string };
+    | { tipo: "aviso"; alerta: boolean; cierre: boolean; texto: string };
 
   const items = $derived.by((): Item[] => {
     const salida: Item[] = [];
@@ -55,7 +55,7 @@
       const propio = e.clase === "propio";
       const deAlguien = propio || e.clase === "mensaje" || e.de !== "Sistema";
       if (!deAlguien) {
-        salida.push({ tipo: "aviso", alerta: e.clase === "alerta", texto: e.texto });
+        salida.push({ tipo: "aviso", alerta: e.clase === "alerta", cierre: e.cierre === true, texto: e.texto });
         anterior = null;
         continue;
       }
@@ -152,7 +152,7 @@
     <span class="dia">HOY</span>
     {#each items as item, i (i)}
       {#if item.tipo === "aviso"}
-        <span class="aviso" class:alerta={item.alerta}>{item.texto}</span>
+        <span class="aviso" class:alerta={item.alerta} class:cierre={item.cierre}>{item.texto}</span>
       {:else}
         <div class="msj" class:propio={item.propio} class:sigue={item.sigue} class:es-audio={item.audio} data-audio={item.audio?.id}>
           {#if mostrarNombres && !item.propio && !item.sigue}
@@ -229,6 +229,14 @@
   }
   .dia { padding: 3px 10px; font-weight: 600; letter-spacing: 0.06em; font-size: var(--t-micro); }
   .aviso.alerta { color: var(--est-rechazado); font-weight: 600; }
+  /* Las 21:00: el último aviso del viernes, que se lea como un sello y no como uno más. */
+  .aviso.cierre {
+    margin-top: 8px;
+    font-weight: 700;
+    color: var(--app-tinta);
+    background: var(--app-superficie);
+    box-shadow: 0 1px 0 rgb(21 24 27 / 6%);
+  }
 
   .msj {
     align-self: flex-start;

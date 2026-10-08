@@ -6,8 +6,13 @@ import type { Desglose, DefinicionContacto } from "./tipos.js";
 
 export interface Beat {
   readonly minuto: number;
+  /** Lo que pasa en la cancha. */
   readonly texto: string;
+  /** La decisión tuya que lo explica, si hay una. Va aparte para que se vea de dónde sale. */
+  readonly porque?: string;
   readonly signo: -1 | 0 | 1;
+  /** Un gol, nuestro o de ellos. El texto ya trae cómo va el partido. */
+  readonly gol?: "favor" | "contra";
 }
 
 export interface Resolucion {
@@ -26,6 +31,7 @@ export interface Resolucion {
 /** Candidato a beat, todavía sin minuto asignado. */
 interface Candidato {
   readonly texto: string;
+  readonly porque?: string;
   readonly signo: -1 | 0 | 1;
   readonly peso: number;
   /** Familia del beat: se usa para no narrar cinco veces lo mismo. */
@@ -128,9 +134,26 @@ function sinPartido(plantel: readonly DefinicionContacto[], motivo: string): Res
   };
 }
 
+/** "lo llamaste por teléfono" → "Lo llamaste por teléfono". */
+function capitalizar(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+/** Cuánto pesa cada puesto a la hora de elegir quién hace un gol. */
+const OLFATO: Record<DefinicionContacto["rol"], number> = {
+  arquero: 0,
+  defensor: 1,
+  mediocampista: 2,
+  delantero: 4,
+};
+
+const GOL_FAVOR = ["{x} la empuja abajo del arco.", "{x} le pega de lejos y entra.", "{x} define cruzado."];
+const GOL_CONTRA = ["Gol de ellos.", "Se la meten por arriba.", "Contra, y gol de ellos."];
+
 /**
- * Cada beat referencia algo que el jugador hizo. Si no hay nada que atribuir,
- * mejor menos beats que beats genéricos.
+ * Cada beat referencia algo que el jugador hizo, con la decisión aparte. Si no
+ * hay nada que atribuir, mejor menos beats que beats genéricos. Los goles van
+ * entre medio, con cómo va el partido, y el último beat cuenta el resultado.
  */
 function narrar(
   partida: Partida,
@@ -142,13 +165,24 @@ function narrar(
 ): Beat[] {
   const candidatos: Candidato[] = [];
   const enPlantel = new Set(plantel.map((c) => c.id));
-  const nombre = (id: string): string => {
+  /** El nombre de alguien de la agenda, o lo que la bitácora anotó de quien no lo es. */
+  const nombre = (id: string | undefined, detalle?: string): string => {
     const enAgenda = plantel.find((c) => c.id === id);
     if (enAgenda) return enAgenda.nombre;
     try {
-      return partida.definicion(id).nombre;
+      return partida.definicion(id ?? "").nombre;
     } catch {
-      return "alguien";
+      return detalle ?? "alguien";
+    }
+  };
+
+  /** Si es alguien de la agenda. Una interrupción ignorada también deja su marca, con su id. */
+  const esContacto = (id: string | undefined): boolean => {
+    try {
+      partida.definicion(id ?? "");
+      return true;
+    } catch {
+      return false;
     }
   };
 
@@ -163,99 +197,132 @@ function narrar(
   for (const entrada of partida.bitacora.todas()) {
     const id = entrada.contactoId;
     const hora = formatearHora(entrada.minuto);
+    const clave = entrada.tipo;
 
     switch (entrada.tipo) {
       case "apuro":
         if (id && enPlantel.has(id)) {
           candidatos.push({
-            texto: `${nombre(id)}, que vino de mala gana porque lo apuraste a las ${hora}, erra un gol hecho.`,
+            texto: `${nombre(id)} vino de mala gana y erra un gol hecho.`,
+            porque: `${capitalizar(entrada.detalle ?? "lo apuraste")} a las ${hora}`,
             signo: -1,
             peso: 3,
-            clave: entrada.tipo,
+            clave,
           });
         }
         break;
       case "plata":
         if (id && enPlantel.has(id)) {
+          const comprado = id.startsWith("relleno_");
           candidatos.push({
-            texto: `El que conseguiste pagando a las ${hora} corre como si le fuera la vida. Valió cada peso.`,
+            texto: `${comprado ? "El que conseguiste pagando" : nombre(id)} corre como si le fuera la vida.`,
+            porque: comprado
+              ? `${capitalizar(entrada.detalle ?? "pagaste un reemplazo")} a las ${hora}`
+              : `Le pusiste plata para que venga, a las ${hora}`,
             signo: 1,
             peso: 2,
-            clave: entrada.tipo,
+            clave,
           });
         }
         break;
       case "roce":
         if (calmados.has(id)) break;
+        if (!esContacto(id)) {
+          // El grupo que se prendió fuego y nadie apagó: llegan todos calientes.
+          candidatos.push({
+            texto: "Llegan todos calientes de lo que se dijo en el grupo, y en la cancha se nota.",
+            porque: "Dejaste que el grupo se incendiara",
+            signo: -1,
+            peso: 2,
+            clave,
+          });
+          break;
+        }
         candidatos.push({
-          texto: `${entrada.detalle ?? "Se arma lío en la cancha"}. Los pusiste juntos igual y ahora se gritan todo.`,
+          texto: `${entrada.detalle ?? "Dos de los tuyos"} se gritan todo el partido.`,
+          porque: `Se cruzaron en el grupo a las ${hora} y no los calmaste`,
           signo: 0,
           peso: 3,
-          clave: entrada.tipo,
+          clave,
         });
         break;
       case "roce_calmado":
         candidatos.push({
-          texto: `${entrada.detalle ?? "Los que se peleaban"} se cruzan en la primera pelota dividida y se dan la mano. Valió calmarlos a las ${hora}.`,
+          texto: `${entrada.detalle ?? "Los que se peleaban"} se cruzan en la primera dividida y se dan la mano.`,
+          porque: `Los calmaste en el grupo a las ${hora}`,
           signo: 1,
           peso: 3,
-          clave: entrada.tipo,
+          clave,
         });
         break;
       case "baja_tardia":
         if (id) {
           candidatos.push({
-            texto: `Se nota el hueco de ${nombre(id)}, que se bajó a las ${hora}. Juegan corriendo de atrás.`,
+            texto: `Se nota el hueco de ${nombre(id)}. Juegan corriendo de atrás.`,
+            porque: `Se bajó a las ${hora}`,
             signo: -1,
             peso: 3,
-            clave: entrada.tipo,
+            clave,
           });
         }
         break;
       case "favor":
         if (id && enPlantel.has(id)) {
           candidatos.push({
-            texto: `${nombre(id)} te devuelve el favor adentro de la cancha: deja todo.`,
+            texto: `${nombre(id)} deja todo adentro de la cancha.`,
+            porque: `Le hiciste un favor a las ${hora}`,
             signo: 1,
             peso: 2,
-            clave: entrada.tipo,
+            clave,
           });
         }
         break;
       case "confirmacion_limpia":
         if (id && enPlantel.has(id)) {
           candidatos.push({
-            texto: `${nombre(id)}, que dijo que sí a la primera, la descose por la banda.`,
+            texto: `${nombre(id)} la descose por la banda.`,
+            porque: `Dijo que sí a la primera, a las ${hora}`,
             signo: 1,
             peso: 1,
-            clave: entrada.tipo,
+            clave,
           });
         }
         break;
       case "ignorado":
-        if (id) {
+        if (id && esContacto(id)) {
           candidatos.push({
-            texto: `${nombre(id)} te lo recuerda todo el partido: lo dejaste en visto a las ${hora}.`,
+            texto: `${nombre(id)} te lo recuerda toda la noche.`,
+            porque: `Lo dejaste en visto a las ${hora}`,
             signo: -1,
             peso: 2,
-            clave: entrada.tipo,
+            clave,
+          });
+        } else if (id) {
+          candidatos.push({
+            texto: "Llegás y en la entrada te miran torcido. Arrancan con la cancha a medio preparar.",
+            porque: `No le contestaste a ${entrada.detalle ?? "la cancha"}`,
+            signo: -1,
+            peso: 2,
+            clave,
           });
         }
         break;
       case "pareja_ignorada":
         candidatos.push({
-          texto: `No podés dejar de mirar el teléfono. Te comés un caño mirando la pantalla.`,
+          texto: "No podés dejar de mirar el teléfono. Te comés un caño mirando la pantalla.",
+          porque: `Dejaste a ${entrada.detalle ?? "tu pareja"} esperando`,
           signo: -1,
           peso: 2,
-          clave: entrada.tipo,
+          clave,
         });
         break;
       case "trabajo_ignorado":
         candidatos.push({
-          texto: `Suena el teléfono desde el laburo en pleno partido. Salís a atender y entra el gol.`,
+          texto: "Suena el teléfono del laburo en pleno partido y salís a atender.",
+          porque: `No le contestaste al ${entrada.detalle ?? "jefe"}`,
           signo: -1,
           peso: 2,
-          clave: entrada.tipo,
+          clave,
         });
         break;
     }
@@ -266,6 +333,7 @@ function narrar(
     const voluntario = rng.elegir(plantel);
     candidatos.push({
       texto: `Nadie quiere ir al arco. Se pone ${voluntario.nombre}, que no ataja ni un centro.`,
+      porque: "No conseguiste arquero",
       signo: -1,
       peso: 4,
       clave: "sin_arquero",
@@ -275,7 +343,8 @@ function narrar(
   const roces = todosLosRoces(plantel);
   if (roces.length >= 2) {
     candidatos.push({
-      texto: `El partido se pica en serio. Nadie afloja, y eso también es jugar.`,
+      texto: "El partido se pica en serio. Nadie afloja, y eso también es jugar.",
+      porque: "Armaste un equipo de gente que se cruza",
       signo: 1,
       peso: 2,
       clave: "picado",
@@ -286,17 +355,14 @@ function narrar(
   if (cracks.length > 0) {
     const crack = rng.elegir(cracks);
     candidatos.push({
-      texto: `${crack.nombre} agarra la pelota en la mitad y se lleva a tres puestos.`,
+      texto: `${crack.nombre} agarra la pelota en la mitad y se lleva a tres.`,
+      porque: `Lo trajiste`,
       signo: 1,
       peso: 2,
       clave: "crack",
     });
   }
 
-  // Se ordena por cuánto pesó cada cosa, con un poco de ruido para que dos
-  // partidos iguales no se narren idéntico. El ruido desempata entre pares,
-  // nunca tapa un beat importante con relleno: lo que definió el partido tiene
-  // que aparecer sí o sí.
   // El peso manda: lo que definió el partido se narra sí o sí. La coherencia con
   // el resultado y el ruido solo desempatan entre beats del mismo peso, nunca
   // alcanzan para que un relleno tape algo importante.
@@ -322,15 +388,38 @@ function narrar(
     if (elegidos.length === 5) break;
   }
 
-  const minutos = elegidos
-    .map(() => rng.entero(2, 38))
-    .sort((a, b) => a - b);
+  // Los goles se reparten entre los momentos. Quién hace los nuestros depende
+  // del puesto y de cuánto juega cada uno.
+  const goles: ("favor" | "contra")[] = [
+    ...Array<"favor">(golesFavor).fill("favor"),
+    ...Array<"contra">(golesContra).fill("contra"),
+  ];
+  const momentos: ({ tipo: "beat"; candidato: Candidato } | { tipo: "gol"; de: "favor" | "contra" })[] = [
+    ...elegidos.map((candidato) => ({ tipo: "beat" as const, candidato })),
+    ...goles.map((de) => ({ tipo: "gol" as const, de })),
+  ];
+  const minutos = momentos.map(() => rng.entero(2, 38));
+  const enOrden = rng
+    .mezclar(momentos.map((m, i) => ({ m, minuto: minutos[i]! })))
+    .sort((a, b) => a.minuto - b.minuto);
 
-  const beats: Beat[] = elegidos.map((c, i) => ({
-    minuto: minutos[i] ?? 20,
-    texto: c.texto,
-    signo: c.signo,
-  }));
+  const pateadores = plantel.flatMap((c) => Array<DefinicionContacto>(OLFATO[c.rol] * Math.max(1, Math.round(c.habilidad / 20))).fill(c));
+  let nuestros = 0;
+  let suyos = 0;
+  const beats: Beat[] = enOrden.map(({ m, minuto }): Beat => {
+    if (m.tipo === "beat") {
+      const { texto, porque, signo } = m.candidato;
+      return { minuto, texto, signo, ...(porque !== undefined ? { porque } : {}) };
+    }
+    if (m.de === "favor") {
+      nuestros++;
+      const autor = pateadores.length > 0 ? rng.elegir(pateadores) : rng.elegir(plantel);
+      const texto = `${rng.elegir(GOL_FAVOR).replace("{x}", autor.nombre)} ${nuestros} a ${suyos}.`;
+      return { minuto, texto, signo: 1, gol: "favor" };
+    }
+    suyos++;
+    return { minuto, texto: `${rng.elegir(GOL_CONTRA)} ${nuestros} a ${suyos}.`, signo: -1, gol: "contra" };
+  });
 
   beats.push({
     minuto: 40,

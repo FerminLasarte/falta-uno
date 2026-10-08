@@ -55,7 +55,7 @@
     <span class="n">{roster.confirmados}<small>/{roster.necesarios}</small></span>
   </div>
 
-  <ol class="puestos">
+  <ol class="puestos" style:--filas={Math.ceil(renglones.length / 2)}>
     {#each renglones as r, i (i)}
       <li class={r.tipo}>
         <span class="num">{i + 1}.</span>
@@ -123,14 +123,14 @@
   }
   .n small { font-size: calc(12px * var(--escala-ui)); font-weight: 600; color: var(--app-tinta-3); }
 
-  /* Dos columnas que se llenan de arriba abajo: 1 a 5, después 6 a 10. */
+  /* Dos columnas que se llenan de arriba abajo: 1 a 5, después 6 a 10. Si se anotan de más, crecen las dos. */
   .puestos {
     margin: 7px 0 0;
     padding: 0;
     list-style: none;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: repeat(5, auto);
+    grid-template-rows: repeat(var(--filas), auto);
     grid-auto-flow: column;
     column-gap: 14px;
     row-gap: 1px;

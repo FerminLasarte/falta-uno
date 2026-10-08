@@ -17,8 +17,13 @@ export class Leidos {
     this.#vistos.set(chat, llegados);
   }
 
+  /** Cuánto de ese chat ya viste. */
+  visto(chat: string): number {
+    return this.#vistos.get(chat) ?? 0;
+  }
+
   sinLeer(chat: string, llegados: number): number {
-    return Math.max(0, llegados - (this.#vistos.get(chat) ?? 0));
+    return Math.max(0, llegados - this.visto(chat));
   }
 
   serializar(): Record<string, number> {

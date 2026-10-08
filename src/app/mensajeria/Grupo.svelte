@@ -8,6 +8,7 @@
   import { COSTO } from "../../core/tiempo.js";
   import type { Rol } from "../../core/tipos.js";
   import Avatar from "./Avatar.svelte";
+  import BotonPrincipal from "./BotonPrincipal.svelte";
   import Cabecera from "./Cabecera.svelte";
   import Charla from "./Charla.svelte";
   import ListaGrupo from "./ListaGrupo.svelte";
@@ -29,6 +30,7 @@
     alPagar,
     calmar,
     alCalmar,
+    alIrALaCancha,
     escuchados,
     alEscuchar,
   }: {
@@ -49,6 +51,8 @@
     /** Calmar a los que se están peleando: quiénes son y lo que cuesta. Null si nadie se pelea. */
     calmar: { readonly texto: string; readonly costoReloj: number; readonly entre: readonly string[] } | null;
     alCalmar: () => void;
+    /** Ya son las 21:00: lo único que queda es ir a la cancha. Null mientras se juega el viernes. */
+    alIrALaCancha: (() => void) | null;
     escuchados: ReadonlySet<string>;
     alEscuchar: (audioId: string) => void;
   } = $props();
@@ -80,7 +84,12 @@
 </script>
 
 <div class="pantalla-app">
-  <Cabecera titulo={NOMBRE_GRUPO} subtitulo={escribiendo ? `${escribiendo} está escribiendo…` : integrantes} volver={{ cuenta: sinLeerAfuera, alVolver }}>
+  <!-- Cerrada la lista, el grupo queda como uno de solo administradores: ya nadie escribe. -->
+  <Cabecera
+    titulo={NOMBRE_GRUPO}
+    subtitulo={alIrALaCancha ? "Solo los administradores pueden enviar mensajes" : escribiendo ? `${escribiendo} está escribiendo…` : integrantes}
+    volver={{ cuenta: sinLeerAfuera, alVolver }}
+  >
     {#snippet avatar()}
       <Avatar nombre={NOMBRE_GRUPO} id="grupo" grupo tam={38} />
     {/snippet}
@@ -104,7 +113,9 @@
   {/if}
 
   <div class="acciones">
-    {#if eligiendoPuesto}
+    {#if alIrALaCancha}
+      <BotonPrincipal accion={{ texto: "Ir a la cancha" }} alTocar={alIrALaCancha} />
+    {:else if eligiendoPuesto}
       <span class="pregunta">¿Qué puesto pagás?</span>
       <div class="fila">
         {#each roster.faltantes as f (f.rol)}

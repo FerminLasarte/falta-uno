@@ -1,0 +1,78 @@
+{
+  "id": "gonza_el_enfermero",
+  "nombre": "Gonza",
+  "rol": "arquero",
+  "habilidad": 66,
+  "rasgos": [
+    "aguantador"
+  ],
+  "probabilidadBajaInicial": 25,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Estoy de guardia hasta las 20:30.",
+        "Si no entra nadie descompuesto, voy. Pero no te prometo nada."
+      ],
+      "opciones": [
+        {
+          "id": "bancar",
+          "texto": "Te esperamos. Sin vos no hay arquero.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "apurar",
+          "texto": "Pedí salir antes, dale. Es un partido nomás.",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 20,
+            "enojo": 20,
+            "registrar": "apuro"
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Buscar otro arquero]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Listo. Si me llaman de la guardia salgo corriendo, eh."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Hecho. Pasame los 1500 cuando puedas.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Vení directo de la guardia, la plata después.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 10
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

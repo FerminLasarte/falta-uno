@@ -447,15 +447,15 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 | 2 — Empaquetado y Steam | 🟡 Completa en macOS. Falta verificar Windows y una Deck real, y lo que necesita la cuenta de Steamworks. |
 | 3 — Interfaz y audio | 🟡 La escena, la app, la vibración y el sonido de las notificaciones están hechos. Falta el ambiente del living y el gamepad. |
 | 4 — Integración | ✅ Un viernes se juega de punta a punta adentro del teléfono, con los mensajes llegando solos y el grupo con vida propia. |
-| 5 — El simulador | 🟡 Resolución y narración atribuida en el núcleo; sin pantalla. |
+| 5 — El simulador | 🟡 La pantalla de las 21:00: el chat se corta, el partido se cuenta con la causa de cada momento aparte. Falta la campaña. |
 | 6 — Contenido | ⬜ No empezó. |
 | 7 — Pulido | ⬜ No empezó. |
 
 Pendientes que cruzan fases:
 
-- **Margen de la agenda.** El perfil se elige charlando con la cancha y cada uno ve solo su contacto
-  único: le quedan diez contactos para diez lugares, y no puede fallarle nadie sin pagar un reemplazo.
-  Hacen falta más contactos comunes, o que el contenido lo compense.
+- **Margen de la agenda.** Cada perfil ve los contactos comunes más su contacto único: trece para
+  diez lugares. Con eso el bot llega a 10 entre el 84% y el 92% de las veces, más fácil que antes; se
+  ajusta en el vertical slice.
 - **Pasivas** de los contactos únicos (el Sindicalista, el Político): no están en la resolución.
 - **Texto por claves** (sección 1): todavía no; todo el texto está escrito en el código y el contenido.
 - **Balance:** con la vida del grupo el bot llega a 10 el 71% de las veces: el viernes ya se puede

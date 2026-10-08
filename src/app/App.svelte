@@ -4,6 +4,7 @@
   import Inscripcion from "./mensajeria/Inscripcion.svelte";
   import Mensajeria from "./mensajeria/Mensajeria.svelte";
   import BarraEstado from "./telefono/BarraEstado.svelte";
+  import Apagado from "./telefono/Apagado.svelte";
   import Isla from "./telefono/Isla.svelte";
   import Pantalla from "./telefono/Pantalla.svelte";
   import { calcularDeterioro } from "./estado/deterioro.js";
@@ -70,6 +71,9 @@
         costoReemplazo={juego.contenido.config.costoVacante}
       />
       <Isla />
+      {#if juego.vista.motivoFin === "moral_agotada" && juego.pantalla.tipo !== "partido"}
+        <Apagado alPrender={() => juego.ir({ tipo: "partido" })} />
+      {/if}
     {:else}
       <div class="cargando"><span></span></div>
     {/if}

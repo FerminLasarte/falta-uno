@@ -65,6 +65,8 @@ export interface EventoFeed {
   readonly cita?: { readonly de: string; readonly texto: string };
   /** Es parte de una pelea en el grupo. */
   readonly roce?: true;
+  /** Las 21:00: se cerró la lista y el chat no se mueve más. */
+  readonly cierre?: true;
 }
 
 export interface ResultadoComando {
@@ -317,7 +319,7 @@ export class Partida {
         estado: e.estado,
         ultimoMensaje: ultimo?.texto ?? null,
         minutoUltimo: ultimo?.minuto ?? null,
-        enCamino: this.pulso.enCamino(d.id),
+        enCamino: this.enCamino(d.id),
         opciones: this.opcionesDisponibles(d.id).map((o) => ({
           id: o.id,
           texto: o.texto,
@@ -374,14 +376,14 @@ export class Partida {
     };
   }
 
-  /** Quién se ve escribiendo ahora, un renglón por chat. */
+  /** Quién se ve escribiendo ahora, un renglón por chat. Terminado el viernes, ya nadie. */
   escribiendo(): Tipeo[] {
-    return this.pulso.escribiendo();
+    return this._terminada ? [] : this.pulso.escribiendo();
   }
 
-  /** Si hay algo de ese chat que todavía no llegó. */
+  /** Si hay algo de ese chat que todavía no llegó. Terminado el viernes, ya no va a llegar. */
   enCamino(chat: string): boolean {
-    return this.pulso.enCamino(chat);
+    return !this._terminada && this.pulso.enCamino(chat);
   }
 
   /** Cuántos ms reales faltan para que llegue algo. Null si no hay nada en camino. */
@@ -761,7 +763,7 @@ export class Partida {
         "roce",
         this.reloj.minutos,
         id,
-        `${otro.nombre} y ${definicion.nombre} se cruzaron en el grupo`,
+        `${otro.nombre} y ${definicion.nombre}`,
       );
     }
     const primero = roces[0];
@@ -977,7 +979,7 @@ export class Partida {
     if (this.reloj.agotado) {
       this._terminada = true;
       this._motivoFin = "corte_horario";
-      this.emitir("sistema", "21:00. Se corta el chat.");
+      this.emitir("sistema", `${this.reloj} · Se cerró la lista`, "Sistema", CHAT_GRUPO, { cierre: true });
     }
   }
 
@@ -986,7 +988,7 @@ export class Partida {
     texto: string,
     de = "Sistema",
     chat?: string,
-    extra: Pick<EventoFeed, "audio" | "cita" | "roce"> = {},
+    extra: Pick<EventoFeed, "audio" | "cita" | "roce" | "cierre"> = {},
   ): void {
     const evento: EventoFeed = { minuto: this.reloj.minutos, de, texto, clase, ...extra };
     this.feed.push(chat === undefined ? evento : { ...evento, chat });

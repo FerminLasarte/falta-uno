@@ -17,8 +17,11 @@ describe("el contenido real carga y valida", () => {
     expect(contenido.interrupciones.length).toBeGreaterThan(0);
   });
 
-  it("hay más contactos que lugares: el jugador puede fallar y seguir", () => {
-    expect(contenido.contactos.length).toBeGreaterThan(contenido.config.jugadoresNecesarios);
+  it("cada perfil tiene más contactos que lugares: le pueden fallar y seguir", () => {
+    for (const perfil of contenido.perfiles) {
+      const agenda = agendaDe(perfil, contenido.perfiles, contenido.contactos);
+      expect(agenda.length, perfil.id).toBeGreaterThan(contenido.config.jugadoresNecesarios);
+    }
   });
 
   it("hay al menos un arquero en la agenda", () => {

@@ -1,0 +1,78 @@
+{
+  "id": "dario_el_profe",
+  "nombre": "Darío",
+  "rol": "defensor",
+  "habilidad": 52,
+  "rasgos": [
+    "capitan"
+  ],
+  "probabilidadBajaInicial": 20,
+  "nodoInicial": "abre",
+  "nodos": {
+    "abre": {
+      "mensajes": [
+        "Voy, pero esta vez hacemos entrada en calor como la gente.",
+        "Diez minutos. No es negociable."
+      ],
+      "opciones": [
+        {
+          "id": "aceptar",
+          "texto": "Lo que digas, profe. Vos ordenás atrás.",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "chicanear",
+          "texto": "Venís a jugar, no a dar la clase.",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 15,
+            "enojo": 20
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[No contestarle]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "Perfecto. Llevo conos y silbato."
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "Dale. Pasame los 1500 y traé el silbato.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "Anotado, profe. La plata después.",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": 10
+          },
+          "siguiente": null
+        }
+      ]
+    }
+  }
+}

@@ -11,6 +11,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import type { EventoFeed, VistaRoster } from "../../core/partida.js";
+  import BotonPrincipal from "./BotonPrincipal.svelte";
   import Charla from "./Charla.svelte";
   import Franja from "./Franja.svelte";
   import { esGesto, sinCorchetes, type AccionChat, type RespuestaChat } from "./rotulos.js";
@@ -68,9 +69,7 @@
 
     <div class="zona-pulgares">
       {#if principal}
-        <button class="principal" onclick={alPrincipal}>
-          {principal.texto} <span class="costo">{principal.minutos} min</span>
-        </button>
+        <BotonPrincipal accion={principal} alTocar={() => alPrincipal?.()} />
       {/if}
       {#each gestos as g (g.id)}
         <button class="gesto" onclick={() => alElegir?.(g.id)}>{sinCorchetes(g.texto)} · {g.costoReloj} min</button>
@@ -131,18 +130,6 @@
     gap: 6px;
     padding-top: 10px;
   }
-  .principal {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: var(--radio-chip);
-    background: var(--app-cromo);
-    color: #FFFFFF;
-    font-size: var(--t-meta);
-    font-weight: 600;
-  }
-  .principal .costo { color: rgb(255 255 255 / 60%); }
   .gesto { font-size: calc(12.5px * var(--escala-ui)); font-weight: 600; color: var(--app-tinta-3); }
   .nota { font-size: var(--t-meta); color: var(--app-tinta-3); text-align: center; max-width: 74%; }
 </style>

@@ -296,6 +296,7 @@ if (!r.hayPartido) {
   for (const beat of r.narracion) {
     const color = beat.signo > 0 ? C.verde : beat.signo < 0 ? C.rojo : C.ambar;
     console.log(`  ${C.gris}${String(beat.minuto).padStart(2)}′${C.reset} ${color}│${C.reset} ${beat.texto}`);
+    if (beat.porque) console.log(`      ${color}│${C.reset} ${C.gris}↳ ${beat.porque}${C.reset}`);
   }
 
   console.log(

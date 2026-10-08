@@ -9,6 +9,10 @@ import type { EstadoContacto, Rol } from "../../core/tipos.js";
 // Cuando exista la gestión semanal tienen que venir de los datos.
 export const NOMBRE_GRUPO = "Los Pibes F5";
 export const TITULO_LISTA = "Viernes 21 h · Los Álamos";
+export const NOMBRE_TORNEO = "Torneo Relámpago";
+export const FECHA = "Fecha 1";
+export const CANCHA = "Los Álamos · cancha 3";
+export const RIVAL = "La Vieja Guardia";
 
 /** Abreviado: entra en un renglón y es como se escribe en cualquier lista de fútbol. */
 export const ROL_CORTO: Record<Rol, string> = {
@@ -49,10 +53,31 @@ export function sinCorchetes(texto: string): string {
 /** Plata como se escribe acá: $15.000. */
 export { formatearPesos as pesos } from "../../core/formato.js";
 
-/** Una acción grande de un chat, con lo que cuesta: escribirle, atender. */
+/** Una acción grande de un chat, con lo que cuesta si cuesta: escribirle, atender, ir a la cancha. */
 export interface AccionChat {
   readonly texto: string;
-  readonly minutos: number;
+  readonly minutos?: number;
+}
+
+/** Un pedazo de texto, con el color de quien nombra si nombra a alguien. */
+export interface Tramo {
+  readonly texto: string;
+  readonly color: string | null;
+}
+
+/**
+ * Parte un texto donde aparecen nombres, para pintarlos con el color del estado
+ * de cada uno: en el relato del partido se lee igual que en la lista y el grupo.
+ */
+export function resaltarNombres(texto: string, colores: ReadonlyMap<string, string>): Tramo[] {
+  const nombres = [...colores.keys()].sort((a, b) => b.length - a.length);
+  if (nombres.length === 0) return [{ texto, color: null }];
+  const escapar = (n: string): string => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const patron = new RegExp(`(${nombres.map(escapar).join("|")})`, "g");
+  return texto
+    .split(patron)
+    .filter((t) => t !== "")
+    .map((t) => ({ texto: t, color: colores.get(t) ?? null }));
 }
 
 /**
