@@ -42,6 +42,8 @@ export type Pantalla =
   | { readonly tipo: "interrupcion"; readonly id: string }
   /** Después de las 21:00: el partido, contado. */
   | { readonly tipo: "partido" }
+  /** Entre una fecha y otra: el teléfono bloqueado el viernes siguiente, un momento antes de las 19. */
+  | { readonly tipo: "semana" }
   /** La campaña terminó: por moral, por deuda o porque el equipo se disolvió. */
   | { readonly tipo: "fin" };
 
@@ -80,7 +82,10 @@ export interface Eleccion {
 }
 
 export interface Vista {
+  /** La hora de la barra de estado. */
   readonly hora: string;
+  /** La misma, en minutos del día: después del partido no es la del reloj del viernes. */
+  readonly minutosEnBarra: number;
   readonly minutos: number;
   readonly restante: number;
   readonly moral: number;
@@ -104,7 +109,15 @@ export interface Vista {
   readonly resolucion: Resolucion | null;
   /** Cuántos momentos del relato ya viste: al volver, no se repiten. */
   readonly relatoVisto: number;
+  /** Ya fuiste a la cancha esta fecha: lo que pasó a las 21:00 ya se vio. */
+  readonly fuisteALaCancha: boolean;
+  /** Si ya viste cómo terminó la campaña: al volver, se va directo al resumen. */
+  readonly finVisto: boolean;
+  /** Terminado el viernes, cómo cerraría la fecha: lo que se paga, lo que se gana y cómo queda la campaña. */
+  readonly cierre: CierreFecha | null;
   readonly campana: Campana;
+  /** El chat con la cancha y quién escribe en él: el de la inscripción y el de "¿confirman la 21?". */
+  readonly cancha: { readonly chat: string; readonly de: string };
   /** El torneo que se juega, con el rival de esta fecha. */
   readonly torneo: { readonly nombre: string; readonly fecha: string; readonly cancha: string; readonly complejo: string; readonly rival: string };
 }
@@ -140,8 +153,9 @@ const TOPE_LATIDO_MS = 250;
 const MINUTOS_HASTA_ARRANCAR = 5;
 const MINUTOS_DE_PARTIDO = 45;
 
-/** Cuánto del relato ya viste. Se guarda con lo leído, como si fuera un chat más. */
+/** Cuánto del relato ya viste, y si viste cómo terminó la campaña. Se guarda con lo leído, como un chat más. */
 const RELATO = "partido";
+const FIN = "fin";
 
 /** El único archivo de guardado. Viaja por Steam Cloud. */
 const ARCHIVO = "partida.json";
@@ -150,8 +164,8 @@ class Juego {
   contenido = $state<Contenido | null>(null);
   vista = $state<Vista | null>(null);
   eleccion = $state<Eleccion | null>(null);
-  /** Cómo cerró la última fecha: lo que se pagó y lo que se ganó. Solo vive hasta que cerrás el juego. */
-  cierre = $state<CierreFecha | null>(null);
+  /** El menú está abierto: el tiempo real no corre. */
+  pausado = $state(false);
   error = $state<string | null>(null);
   pantalla = $state<Pantalla>({ tipo: "grupo" });
 
@@ -249,13 +263,12 @@ class Juego {
     const resolucion = this.#resolucion;
     if (!contenido || !campana || !p?.terminada || !resolucion || campana.fin) return;
     const cierre = cerrarFecha(campana, p, resolucion, contenido.config);
-    this.cierre = cierre;
     if (cierre.campana.fin) {
       this.#campana = cierre.campana;
       this.pantalla = { tipo: "fin" };
     } else {
       this.#arrancar(contenido, cierre.campana);
-      this.pantalla = { tipo: "grupo" };
+      this.pantalla = { tipo: "semana" };
     }
     this.#refrescar();
     this.#guardar();
@@ -272,7 +285,7 @@ class Juego {
     this.#campana = null;
     this.#viernes = null;
     this.vista = null;
-    this.cierre = null;
+    this.pausado = false;
     this.#semillaNueva = String(Date.now());
     this.eleccion = eleccionDe(contenido);
   }
@@ -323,6 +336,8 @@ class Juego {
     if (typeof pantalla !== "object" || pantalla === null) return;
     const { tipo, id } = pantalla as Record<string, unknown>;
     if (tipo === "grupo" || tipo === "chats" || tipo === "partido") this.pantalla = { tipo };
+    // Si se cerró con el teléfono bloqueado entre fechas, se abre ya desbloqueado.
+    else if (tipo === "semana") this.pantalla = { tipo: "grupo" };
     else if (tipo === "contacto" && contenido.contactos.some((c) => c.id === id)) this.pantalla = { tipo, id: id as string };
     else if (tipo === "interrupcion" && contenido.interrupciones.some((i) => i.id === id)) this.pantalla = { tipo, id: id as string };
   }
@@ -365,9 +380,21 @@ class Juego {
     this.#refrescar();
   }
 
-  /** Ya viste hasta ese momento del relato. Se guarda: al retomar no se vuelve a contar. */
-  verRelato(cuantos: number): void {
-    this.#leidos.ver(RELATO, cuantos);
+  /** Pasó la semana: el teléfono se desbloquea en el grupo, a las 19. */
+  desbloquear(): void {
+    this.#anterior = { tipo: "grupo" };
+    this.pantalla = { tipo: "grupo" };
+    this.#ultimoLatido = performance.now();
+    this.#refrescar();
+    this.#guardar();
+  }
+
+  /**
+   * Ya viste hasta ese momento del relato, o cómo terminó la campaña. Se guarda:
+   * al retomar no se vuelve a contar.
+   */
+  marcarVisto(que: "relato" | "fin", cuantos = 1): void {
+    this.#leidos.ver(que === "relato" ? RELATO : FIN, cuantos);
     this.#refrescar();
     this.#guardar();
   }
@@ -419,7 +446,8 @@ class Juego {
     this.#ultimoLatido = ahora;
     const registro = this.#registro;
     const p = this.#partida;
-    if (!registro || !p || p.terminada || document.hidden) return;
+    // Con el menú abierto o el teléfono bloqueado entre fechas, el tiempo real espera.
+    if (!registro || !p || p.terminada || document.hidden || this.pausado || this.pantalla.tipo === "semana") return;
     // Milisegundos enteros: así se pueden sumar en el registro sin que el redondeo cambie nada.
     const ms = Math.floor(delta + this.#resto);
     this.#resto = delta + this.#resto - ms;
@@ -491,6 +519,7 @@ class Juego {
       : p.reloj.minutos;
     this.vista = {
       hora: formatearHora(minutos),
+      minutosEnBarra: minutos,
       minutos: p.reloj.minutos,
       restante: p.reloj.restante,
       moral: p.moral,
@@ -508,7 +537,11 @@ class Juego {
       motivoFin: p.motivoFin,
       resolucion: this.#resolucion,
       relatoVisto: this.#leidos.visto(RELATO),
+      finVisto: this.#leidos.visto(FIN) > 0,
+      fuisteALaCancha: this.#fuisteALaCancha,
+      cierre: this.#resolucion ? cerrarFecha(campana, p, this.#resolucion, contenido.config) : null,
       campana,
+      cancha: canchaDe(contenido),
       torneo: torneoDe(contenido, campana.fecha),
     };
   }
@@ -516,7 +549,7 @@ class Juego {
 
 function eleccionDe(contenido: Contenido): Eleccion {
   const { inscripcion, config } = contenido;
-  const de = contenido.interrupciones.find((i) => i.id === inscripcion.chat)?.de ?? "";
+  const { de } = canchaDe(contenido);
   return {
     chat: inscripcion.chat,
     de,
@@ -556,6 +589,12 @@ function opcionesDe(
   };
 }
 
+/** El chat con la cancha: la inscripción y la interrupción comparten el mismo. */
+function canchaDe(contenido: Contenido): Vista["cancha"] {
+  const { chat } = contenido.inscripcion;
+  return { chat, de: contenido.interrupciones.find((i) => i.id === chat)?.de ?? "" };
+}
+
 /** El torneo como se lo ve en la app: su nombre, la fecha que se juega y contra quién. */
 function torneoDe(contenido: Contenido, fecha: number): Vista["torneo"] {
   const { torneo } = contenido;
@@ -579,7 +618,7 @@ function horaDelPartido(contenido: Contenido, resolucion: Resolucion | null, vis
 /** El chat que se está leyendo en esa pantalla. La bandeja y el partido no son ninguno. */
 function chatDe(pantalla: Pantalla): string | null {
   if (pantalla.tipo === "grupo") return CHAT_GRUPO;
-  if (pantalla.tipo === "chats" || pantalla.tipo === "partido" || pantalla.tipo === "fin") return null;
+  if (pantalla.tipo === "chats" || pantalla.tipo === "partido" || pantalla.tipo === "semana" || pantalla.tipo === "fin") return null;
   return pantalla.id;
 }
 

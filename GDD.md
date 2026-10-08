@@ -447,7 +447,7 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 | 2 — Empaquetado y Steam | 🟡 Completa en macOS. Falta verificar Windows y una Deck real, y lo que necesita la cuenta de Steamworks. |
 | 3 — Interfaz y audio | 🟡 La escena, la app, la vibración y el sonido de las notificaciones están hechos. Falta el ambiente del living y el gamepad. |
 | 4 — Integración | ✅ Un viernes se juega de punta a punta adentro del teléfono, con los mensajes llegando solos y el grupo con vida propia. |
-| 5 — El simulador | 🟡 La pantalla de las 21:00: el chat se corta, el partido se cuenta con la causa de cada momento aparte. Falta la campaña. |
+| 5 — El simulador | ✅ La pantalla de las 21:00 con la narración atribuida, la cuenta de cada fecha y la campaña con sus tres finales. |
 | 6 — Contenido | ⬜ No empezó. |
 | 7 — Pulido | ⬜ No empezó. |
 

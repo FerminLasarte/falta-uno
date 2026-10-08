@@ -24,8 +24,9 @@ Los mensajes llegan solos en tiempo real: se los ve escribiendo, aparecen en una
 desde la cámara del celular, que vibra en la mano y suena. El grupo tiene vida propia: charla,
 audios que cuesta reloj escuchar y roces que hay que calmar. El perfil se elige charlando con la
 cancha, el viernes se guarda en cada acción (también en Steam Cloud) y a las 21:00 se corta el chat y
-el partido se cuenta momento a momento, cada uno con la decisión tuya que lo explica. Falta la
-campaña: que el resultado pase a la fecha siguiente.
+el partido se cuenta momento a momento, cada uno con la decisión tuya que lo explica. La campaña
+sigue fecha a fecha en el mismo torneo, con la plata y el prestigio que pasan de una a otra, y
+termina por moral, por deuda con el complejo o porque el equipo se disuelve. Esc abre el menú.
 
 ## Documentación
 
@@ -144,6 +145,7 @@ src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
   roster.ts      Composición del plantel, química y roces.
   resolucion.ts  El algoritmo del partido y la narración atribuida.
   registro.ts    El viernes guardado: la semilla y lo que hiciste, para retomarlo.
+  campana.ts     Un viernes detrás de otro: plata, prestigio, deuda y cómo termina.
   bitacora.ts    Registro de por qué pasó cada cosa.
 src/datos/       Schema, validador de grafo y carga de contenido.
 src/cli/         Herramientas de consola: jugar, validar, bot.

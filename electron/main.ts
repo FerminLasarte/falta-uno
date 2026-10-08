@@ -239,4 +239,5 @@ function registrarCanales(): void {
   });
   ipcMain.handle(CANALES.cargar, (_e, nombre: string) => cargar(nombre));
   ipcMain.handle(CANALES.archivosEnNube, () => nube.listar());
+  ipcMain.handle(CANALES.salir, () => app.quit());
 }

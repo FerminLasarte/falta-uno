@@ -33,6 +33,8 @@ export interface ApiPuente {
   guardarYa(nombre: string, contenido: string): ResultadoGuardado;
   cargar(nombre: string): Promise<{ contenido: string | null; origen: string | null }>;
   archivosEnNube(): Promise<{ nombre: string; bytes: number }[]>;
+  /** Cierra el juego. Lo que haya que guardar se guarda al cerrarse la ventana. */
+  salir(): Promise<void>;
 }
 
 export const CANALES = {
@@ -46,4 +48,5 @@ export const CANALES = {
   guardarYa: "guardado:escribir-ya",
   cargar: "guardado:leer",
   archivosEnNube: "guardado:listar",
+  salir: "juego:salir",
 } as const;

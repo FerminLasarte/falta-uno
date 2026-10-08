@@ -4,12 +4,13 @@
   render, adelante, y tapan lo que tienen que tapar.
 -->
 <script lang="ts">
-  let { children } = $props();
+  /** `oscura`: el teléfono bloqueado, sin la app. El remate no puede ser claro ahí. */
+  let { children, oscura = false } = $props();
 </script>
 
 <div class="pantalla">
   {@render children?.()}
-  <div class="remate" aria-hidden="true">
+  <div class="remate" class:oscura aria-hidden="true">
     <span class="barra-inicio"></span>
   </div>
 </div>
@@ -46,6 +47,9 @@
       transparent 100%
     );
   }
+
+  .remate.oscura { background: none; }
+  .remate.oscura .barra-inicio { background: rgb(255 255 255 / 55%); }
 
   .barra-inicio {
     width: 34%;

@@ -10,6 +10,7 @@
 -->
 <script lang="ts">
   import { untrack } from "svelte";
+  import { AGUANTE, type CierreFecha } from "../../core/campana.js";
   import type { Resolucion } from "../../core/resolucion.js";
   import Avatar from "./Avatar.svelte";
   import BotonPrincipal from "./BotonPrincipal.svelte";
@@ -22,9 +23,10 @@
     torneo,
     colores,
     visto,
+    cierre,
     volver,
     alVer,
-    alVolverAlGrupo,
+    alSiguiente,
   }: {
     resolucion: Resolucion;
     torneo: Vista["torneo"];
@@ -32,9 +34,12 @@
     colores: ReadonlyMap<string, string>;
     /** Cuántos momentos ya viste antes: esos aparecen de una. */
     visto: number;
+    /** Cómo cierra la fecha: va al final, cuando ya se contó todo. */
+    cierre: CierreFecha | null;
     volver: { cuenta: number; alVolver: () => void };
     alVer: (cuantos: number) => void;
-    alVolverAlGrupo: () => void;
+    /** Cerrar la fecha y pasar al viernes siguiente. */
+    alSiguiente: () => void;
   } = $props();
 
   /** Lo que tarda en llegar cada momento. Lo justo para leerlo sin que se haga largo. */
@@ -72,12 +77,41 @@
 
   let porQue = $state(false);
 
-  const saldo = $derived.by(() => {
-    const { dinero, prestigio } = resolucion.recompensa;
-    return [
-      ...(dinero !== 0 ? [`${dinero > 0 ? "+" : "−"}${pesos(Math.abs(dinero))}`] : []),
-      `${prestigio > 0 ? "+" : "−"}${Math.abs(prestigio)} prestigio`,
-    ];
+  const prestigio = $derived(
+    `${resolucion.recompensa.prestigio > 0 ? "+" : "−"}${Math.abs(resolucion.recompensa.prestigio)} prestigio`,
+  );
+
+  /** "+$9.000", "−$15.000". */
+  const conSigno = (monto: number): string => `${monto >= 0 ? "+" : "−"}${pesos(Math.abs(monto))}`;
+
+  /*
+    La cuenta de la fecha: con qué se llegó, lo que se juntó, la cancha (que se
+    paga igual si no hubo partido), el premio, y cómo queda. Si queda deuda, qué
+    pasa si se repite.
+  */
+  const cuenta = $derived.by(() => {
+    if (!cierre) return null;
+    const { inicial, juntado, sena, premio, campana } = cierre;
+    const filas: { concepto: string; monto: string }[] = [];
+    // En la primera fecha lo que había es tu plata; después, lo que quedó a favor de la anterior.
+    const primera = campana.jugadas.length === 1;
+    if (inicial > 0) filas.push({ concepto: primera ? "Tu plata" : "Tenían a favor", monto: pesos(inicial) });
+    if (inicial < 0) filas.push({ concepto: "Debían de la fecha anterior", monto: conSigno(inicial) });
+    filas.push({ concepto: "Juntaron entre todos", monto: pesos(juntado - inicial) });
+    filas.push({ concepto: resolucion.hayPartido ? "La cancha" : "La cancha, igual", monto: conSigno(-sena) });
+    if (premio > 0) filas.push({ concepto: "Premio por ganar", monto: conSigno(premio) });
+    const total =
+      campana.dinero >= 0
+        ? { concepto: campana.fin ? "Les queda" : `Para la fecha ${campana.fecha}`, monto: pesos(campana.dinero) }
+        : { concepto: "Le quedan debiendo al complejo", monto: pesos(-campana.dinero) };
+    let aviso: string | null = null;
+    if (campana.dinero < 0 && campana.fin === "bancarrota") aviso = "Es la segunda fecha seguida debiendo.";
+    else if (campana.dinero < 0 && !campana.fin) {
+      aviso = `Si la fecha ${campana.fecha} también termina debiendo, el complejo los saca del torneo.`;
+    } else if (!campana.fin && campana.fechasSinPartido === AGUANTE.fechasSinPartido - 1) {
+      aviso = "Una fecha más sin partido y el equipo se desarma.";
+    }
+    return { filas, total, aviso };
   });
 
   /* Lo último que llegó siempre a la vista. */
@@ -147,15 +181,23 @@
           {#if b.porque}<p class="causa">{b.porque}</p>{/if}
         </article>
       {/each}
+      {#if terminado && cuenta}
+        <section class="cuenta" aria-label="La cuenta de la fecha">
+          <h3>La cuenta de la fecha</h3>
+          {#each cuenta.filas as f (f.concepto)}
+            <p class="fila"><span>{f.concepto}</span><b>{f.monto}</b></p>
+          {/each}
+          <p class="fila total"><span>{cuenta.total.concepto}</span><b>{cuenta.total.monto}</b></p>
+          {#if cuenta.aviso}<p class="aviso">{cuenta.aviso}</p>{/if}
+        </section>
+      {/if}
     </div>
   </div>
 
   <div class="zona-pulgares">
     {#if terminado}
-      <span class="saldo">
-        {#each saldo as s (s)}<span>{s}</span>{/each}
-      </span>
-      <BotonPrincipal accion={{ texto: "Volver al grupo" }} alTocar={alVolverAlGrupo} />
+      <span class="saldo">{prestigio}</span>
+      <BotonPrincipal accion={{ texto: "Al viernes que viene" }} alTocar={alSiguiente} />
     {:else}
       <button class="gesto" onclick={verTodo}>Ver todo</button>
     {/if}
@@ -261,6 +303,35 @@
     border-bottom: 1.5px solid currentColor;
     border-bottom-left-radius: 3px;
   }
+
+  .cuenta {
+    margin-top: 4px;
+    padding: 11px 14px 12px;
+    border-radius: 12px;
+    background: var(--app-superficie);
+    box-shadow: 0 1px 0 rgb(21 24 27 / 6%);
+    animation: llegar 320ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  }
+  .cuenta h3 {
+    margin: 0 0 6px;
+    font-size: calc(10.5px * var(--escala-ui));
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--app-tinta-3);
+  }
+  .cuenta .fila {
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: calc(13px * var(--escala-ui));
+    line-height: 1.6;
+    color: var(--app-tinta-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .cuenta .total { margin-top: 4px; padding-top: 6px; border-top: 1px solid var(--app-linea); font-weight: 700; color: var(--app-tinta); }
+  .cuenta .aviso { margin: 6px 0 0; font-size: calc(12px * var(--escala-ui)); line-height: 1.35; color: var(--app-tinta-3); }
 
   .zona-pulgares {
     flex: none;

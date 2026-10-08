@@ -63,6 +63,8 @@ export interface Campana {
 /** Cómo cerró una fecha: lo que se pagó, lo que se ganó y cómo quedó todo. */
 export interface CierreFecha {
   readonly campana: Campana;
+  /** La plata con la que se llegó a este viernes: lo que había a favor, o la deuda. */
+  readonly inicial: number;
   /** La plata al terminar el viernes, antes de pagar la cancha. */
   readonly juntado: number;
   readonly sena: number;
@@ -106,6 +108,7 @@ export function cerrarFecha(campana: Campana, partida: Partida, resolucion: Reso
   else if (fechasSinPartido >= AGUANTE.fechasSinPartido) fin = "disolucion";
 
   return {
+    inicial: campana.dinero,
     juntado,
     sena: config.senaCancha,
     premio,

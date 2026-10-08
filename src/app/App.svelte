@@ -1,10 +1,14 @@
 <script lang="ts">
   import Depurador from "./Depurador.svelte";
+  import Menu from "./Menu.svelte";
   import Escena from "./escena/Escena.svelte";
   import Inscripcion from "./mensajeria/Inscripcion.svelte";
   import Mensajeria from "./mensajeria/Mensajeria.svelte";
   import BarraEstado from "./telefono/BarraEstado.svelte";
   import Apagado from "./telefono/Apagado.svelte";
+  import Semana from "./telefono/Semana.svelte";
+  import { NOMBRE_GRUPO } from "./mensajeria/rotulos.js";
+  import { formatearHora } from "../core/tiempo.js";
   import Isla from "./telefono/Isla.svelte";
   import Pantalla from "./telefono/Pantalla.svelte";
   import { calcularDeterioro } from "./estado/deterioro.js";
@@ -51,10 +55,26 @@
   );
 
   void juego.iniciar();
+
+  /* Esc abre y cierra el menú. Con el menú abierto, el tiempo real no corre. */
+  function alTeclear(evento: KeyboardEvent): void {
+    if (evento.key !== "Escape") return;
+    evento.preventDefault();
+    juego.pausado = !juego.pausado;
+  }
+
+  const estadoDelMenu = $derived.by(() => {
+    const vista = juego.vista;
+    const perfil = juego.contenido?.perfiles.find((p) => p.id === vista?.campana.perfil);
+    if (!vista || !perfil) return "Antes de arrancar";
+    return `${perfil.nombre.replace(/^El /, "")} · ${vista.torneo.fecha} · viernes ${vista.hora}`;
+  });
 </script>
 
+<svelte:window onkeydown={alTeclear} />
+
 <Escena bind:this={escena}>
-  <Pantalla>
+  <Pantalla oscura={juego.pantalla.tipo === "semana"}>
     {#if juego.error}
       <div class="falla">
         <p class="titulo">No se pudo cargar el juego</p>
@@ -63,6 +83,18 @@
     {:else if juego.eleccion}
       <BarraEstado hora={juego.eleccion.hora} restante={juego.eleccion.restante} />
       <Inscripcion eleccion={juego.eleccion} alElegir={(id) => juego.elegir(id)} />
+    {:else if juego.vista && juego.contenido && juego.pantalla.tipo === "semana"}
+      {@const contenido = juego.contenido}
+      <Semana
+        hora={formatearHora(contenido.config.horaInicio - 2)}
+        torneo={juego.vista.torneo}
+        campana={juego.vista.campana}
+        sena={contenido.config.senaCancha}
+        nombreGrupo={NOMBRE_GRUPO}
+        complejo={juego.vista.cancha.de}
+        chatCancha={juego.vista.cancha.chat}
+        alDesbloquear={() => juego.desbloquear()}
+      />
     {:else if juego.vista && juego.contenido}
       <BarraEstado hora={juego.vista.hora} restante={juego.vista.restante} />
       <Mensajeria
@@ -71,7 +103,8 @@
         costoReemplazo={juego.contenido.config.costoVacante}
       />
       <Isla />
-      {#if juego.vista.motivoFin === "moral_agotada" && juego.pantalla.tipo !== "partido"}
+      <!-- El teléfono se apaga una vez: cuando prende, ya es después del partido. -->
+      {#if juego.vista.motivoFin === "moral_agotada" && !juego.vista.fuisteALaCancha}
         <Apagado alPrender={() => juego.ir({ tipo: "partido" })} />
       {/if}
     {:else}
@@ -79,6 +112,17 @@
     {/if}
   </Pantalla>
 </Escena>
+
+{#if juego.pausado}
+  <Menu
+    estado={estadoDelMenu}
+    puedeEmpezarOtra={juego.vista !== null}
+    hayQuePerder={juego.vista !== null && juego.vista.campana.fin === null}
+    alSeguir={() => (juego.pausado = false)}
+    alCampanaNueva={() => juego.campanaNueva()}
+    alSalir={() => void window.faltaUno.salir()}
+  />
+{/if}
 
 {#if import.meta.env.DEV}
   <Depurador moral={juego.vista?.moral ?? 100} alCambiar={(v) => (moralForzada = v)} />

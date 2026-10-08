@@ -15,7 +15,9 @@
   import Chat from "./Chat.svelte";
   import Chats from "./Chats.svelte";
   import Grupo from "./Grupo.svelte";
+  import Fin from "./Fin.svelte";
   import Partido from "./Partido.svelte";
+  import { rivalDe } from "../../core/campana.js";
   import { COLOR_ESTADO, ROTULO_ESTADO, type AccionChat } from "./rotulos.js";
 
   let { vista, sena, costoReemplazo }: { vista: Vista; sena: number; costoReemplazo: number } = $props();
@@ -108,6 +110,15 @@
       alAbrirContacto={abrirContacto}
       alAbrirInterrupcion={(id) => juego.ir({ tipo: "interrupcion", id })}
     />
+  {:else if pantalla.tipo === "fin" && juego.contenido}
+    {@const contenido = juego.contenido}
+    <Fin
+      {vista}
+      cancha={vista.cancha}
+      rivalDe={(fecha) => rivalDe(contenido.torneo, fecha)}
+      alVisto={() => juego.marcarVisto("fin")}
+      alCampanaNueva={() => juego.campanaNueva()}
+    />
   {:else if pantalla.tipo === "partido" && vista.resolucion}
     <Partido
       resolucion={vista.resolucion}
@@ -115,8 +126,9 @@
       {colores}
       visto={vista.relatoVisto}
       {volver}
-      alVer={(n) => juego.verRelato(n)}
-      alVolverAlGrupo={irAlGrupo}
+      alVer={(n) => juego.marcarVisto("relato", n)}
+      cierre={vista.cierre}
+      alSiguiente={() => juego.siguienteFecha()}
     />
   {:else if contacto}
     {@const c = contacto}

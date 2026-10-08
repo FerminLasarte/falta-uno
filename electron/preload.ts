@@ -18,6 +18,7 @@ const api = {
     ipcRenderer.sendSync(CANALES.guardarYa, nombre, contenido),
   cargar: (nombre: string) => ipcRenderer.invoke(CANALES.cargar, nombre),
   archivosEnNube: () => ipcRenderer.invoke(CANALES.archivosEnNube),
+  salir: () => ipcRenderer.invoke(CANALES.salir),
 };
 
 contextBridge.exposeInMainWorld("faltaUno", api);
