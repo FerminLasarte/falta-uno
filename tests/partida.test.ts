@@ -315,6 +315,18 @@ describe("el aviso del que se está por bajar", () => {
     expect(delChat(caliente(agenda), "c0")).toContain("no sé si llego, está lloviendo");
   });
 
+  it("con avisoAntes, avisa recién sobre la hora de la revisión", () => {
+    const p = new Partida({ perfil: PERFIL, agenda: agendaCompleta(), interrupciones: SIN_INTERRUPCIONES, config: { ...CONFIG, avisoAntes: 20 }, semilla: "test" });
+    p.escribir("c0");
+    alDia(p);
+    p.responder("c0", "apurar");
+    alDia(p);
+    expect(p.avisaron).toEqual([]);
+    p.esperar(CONFIG.minutoRevision - 20 - p.reloj.minutos);
+    alDia(p);
+    expect(p.avisaron).toEqual(["c0"]);
+  });
+
   it("el tranquilo no avisa", () => {
     const p = nueva();
     p.escribir("c1");

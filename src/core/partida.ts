@@ -1132,11 +1132,15 @@ export class Partida {
 
   /**
    * El que ya se bajaría a las 20:30 te avisa antes, una sola vez y con su
-   * texto: la baja se ve venir y queda tiempo para llamarlo. Las bajas por algo
+   * texto: la baja se ve venir. Avisa sobre la hora (`avisoAntes`), así que
+   * llamar a todos los que dudan no siempre entra en el reloj. Las bajas por algo
    * que hiciste (la mentira que se descubre) no avisan: esas no son calentura.
    */
   private avisarDudas(): void {
     if (this._revisionHecha || this.reloj.minutos >= this.config.minutoRevision) return;
+    // Avisan sobre la hora: el que duda no lo dice apenas se calienta.
+    const { avisoAntes } = this.config;
+    if (avisoAntes !== undefined && this.reloj.minutos < this.config.minutoRevision - avisoAntes) return;
     for (const estado of this.estados.values()) {
       if (estado.estado !== "confirmado" || this.dudosos.has(estado.id)) continue;
       if (estado.probabilidadBaja <= this.config.umbralBaja) continue;

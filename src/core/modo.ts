@@ -45,6 +45,8 @@ export interface ConfigContenido {
   readonly minutoRevision: Readonly<Record<Competencia, number>>;
   /** Cuántos suplentes pide el torneo. El partido suelto no lleva. */
   readonly suplentesTorneo: number;
+  /** Cuántos minutos antes de la revisión avisan los que dudan: cuanto menos, menos tiempo para llamarlos. */
+  readonly avisoAntes: number;
   /** Cuántos de la agenda tienen una excusa esa noche: los elige la semilla. */
   readonly excusas: { readonly min: number; readonly max: number };
   readonly formatos: Readonly<Record<Formato, DefinicionFormato>>;
@@ -64,6 +66,7 @@ export function configDeViernes(base: ConfigContenido, modo: Modo): Config {
     senaCancha: formato.sena,
     composicion: formato.titulares,
     suplentes,
+    avisoAntes: base.avisoAntes,
     excusas: base.excusas,
   };
 }
