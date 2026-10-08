@@ -200,7 +200,8 @@ function porQueNoHubo(partida: Partida): Motivo[] {
   for (const c of contactos.filter((x) => x.estado === "bajado")) {
     const baja = bitacora.find((e) => e.tipo === "baja_tardia" && e.contactoId === c.id);
     const motivo = { hora: baja ? formatearHora(baja.minuto) : null, texto: `${c.nombre} se bajó.` };
-    motivos.push(baja?.detalle ? { ...motivo, porque: baja.detalle } : con(c.id, motivo));
+    const porque = baja?.detalle ?? avisoDe(partida, c.id);
+    motivos.push(porque ? { ...motivo, porque } : con(c.id, motivo));
   }
   for (const c of contactos.filter((x) => x.estado === "rechazado")) {
     motivos.push(con(c.id, { hora: c.minutoUltimo === null ? null : formatearHora(c.minutoUltimo), texto: `${c.nombre} no viene.` }));
@@ -218,6 +219,12 @@ function porQueNoHubo(partida: Partida): Motivo[] {
     });
   }
   return motivos;
+}
+
+/** "Te avisó a las 20:05 que no sabía si llegaba", si avisó antes de bajarse. */
+function avisoDe(partida: Partida, id: string): string | undefined {
+  const aviso = partida.bitacora.todas().find((e) => e.tipo === "duda" && e.contactoId === id);
+  return aviso ? `Te avisó a las ${formatearHora(aviso.minuto)} que no sabía si llegaba` : undefined;
 }
 
 /** "lo llamaste por teléfono" → "Lo llamaste por teléfono". */
@@ -349,10 +356,12 @@ function narrar(
         break;
       case "baja_tardia":
         if (id) {
+          // Si la baja tiene un motivo tuyo (la mentira que se descubrió), se cuenta
+          // ese; si no, el aviso que no atajaste.
+          const motivo = entrada.detalle ?? avisoDe(partida, id);
           candidatos.push({
             texto: `Se nota el hueco de ${nombre(id)}. Juegan corriendo de atrás.`,
-            // Si la baja tiene un motivo tuyo (la mentira que se descubrió), se cuenta ese.
-            porque: entrada.detalle ? `${entrada.detalle}. Se bajó a las ${hora}` : `Se bajó a las ${hora}`,
+            porque: motivo ? `${motivo}. Se bajó a las ${hora}` : `Se bajó a las ${hora}`,
             signo: -1,
             peso: 3,
             clave,

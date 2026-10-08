@@ -14,6 +14,8 @@ export interface Frases {
   };
   /** Lo que dice al bajarse quien no tiene una baja propia. */
   readonly baja: string;
+  /** Lo que avisa el que se está por bajar, si no tiene una duda propia. */
+  readonly duda: string;
 }
 
 /** Para tests y partidas sin contenido. */
@@ -21,4 +23,5 @@ export const FRASES_POR_DEFECTO: Frases = {
   saludo: "che jugás hoy a las 21?",
   llamada: { tuya: "📞 Lo llamás a {nombre}.", respuesta: "bueno bueno ya te dije q voy, cortá" },
   baja: "perdón me surgió algo, no llego",
+  duda: "che no sé si llego eh, después te confirmo",
 };

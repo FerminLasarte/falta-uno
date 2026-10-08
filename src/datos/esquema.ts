@@ -90,6 +90,7 @@ export const contactoSchema = z
     bajas: z
       .array(z.object({ si: condicionSchema.optional(), texto: z.string().min(1), porque: z.string().min(1).optional() }).strict())
       .optional(),
+    duda: z.string().min(1).optional(),
   })
   .strict();
 
@@ -114,6 +115,7 @@ export const frasesSchema = z
     saludo: z.string().min(1),
     llamada: z.object({ tuya: z.string().min(1), respuesta: z.string().min(1) }).strict(),
     baja: z.string().min(1),
+    duda: z.string().min(1),
   })
   .strict();
 

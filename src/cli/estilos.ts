@@ -34,6 +34,8 @@ export interface Estilo {
   calma(partida: Partida, ctx: Contexto): boolean;
   escucha(audioId: string, partida: Partida, ctx: Contexto): boolean;
   atiende(interrupcion: InterrupcionActiva, partida: Partida, ctx: Contexto): boolean;
+  /** Si llama al que avisó que no sabe si llega. Se decide una vez por aviso. */
+  ataja(id: string, partida: Partida, ctx: Contexto): boolean;
   /** Antes de cerrar la lista atiende lo pendiente: después ya no tiene otra cosa que hacer. */
   readonly atiendeAntesDeCerrar: boolean;
 }
@@ -57,7 +59,7 @@ const porMenor =
 /** Escribe a todos, prefiere confirmar, cuida la moral cuando se le está acabando. No escucha audios. */
 const razonable: Estilo = {
   id: "razonable",
-  descripcion: "escribe a todos, confirma con la que menos moral cuesta, calma roces, no escucha audios",
+  descripcion: "escribe a todos, confirma con la que menos moral cuesta, calma roces, no escucha audios, ataja la mitad de los avisos",
   siguiente: (pendientes) => pendientes[0],
   elegir(opciones, partida) {
     return (
@@ -71,6 +73,8 @@ const razonable: Estilo = {
   calma: () => true,
   escucha: () => false,
   atiende: (_i, partida) => partida.moral < 45,
+  // Lee los avisos a veces: el que avisa en medio de otra charla se le pasa.
+  ataja: (_id, _p, ctx) => ctx.rng.ocurre(50),
   atiendeAntesDeCerrar: true,
 };
 
@@ -111,6 +115,7 @@ const atento: Estilo = {
   calma: () => true,
   escucha: (audioId, _p, ctx) => ctx.audiosUtiles.has(audioId),
   atiende: (i, partida, ctx) => i.definicion.id === ctx.cancha || partida.moral < 45,
+  ataja: () => true,
   atiendeAntesDeCerrar: true,
 };
 
@@ -129,6 +134,7 @@ const apurado: Estilo = {
   calma: () => false,
   escucha: () => false,
   atiende: () => false,
+  ataja: () => false,
   atiendeAntesDeCerrar: false,
 };
 
@@ -148,6 +154,7 @@ const explorador: Estilo = {
   calma: (_p, ctx) => ctx.rng.ocurre(50),
   escucha: (_a, _p, ctx) => ctx.rng.ocurre(50),
   atiende: (_i, _p, ctx) => ctx.rng.ocurre(30),
+  ataja: (_id, _p, ctx) => ctx.rng.ocurre(50),
   atiendeAntesDeCerrar: true,
 };
 
@@ -216,8 +223,15 @@ export function jugarViernes(opciones: OpcionesPartida, estilo: Estilo, semilla:
     }
   };
   const lleno = (): boolean => partida.roster().confirmados >= config.jugadoresNecesarios;
+  /** Los avisos que ya leyó, los haya atajado o no. */
+  const leidos = new Set<string>();
   const atenderTodo = (): void => {
     if (partida.terminada) return;
+    for (const id of partida.avisaron) {
+      if (partida.terminada || leidos.has(id)) continue;
+      leidos.add(id);
+      if (partida.estadoDe(id).estado === "confirmado" && estilo.ataja(id, partida, ctx) && hacer(["llamar", id])) alDia();
+    }
     if (partida.accionCalmar && estilo.calma(partida, ctx) && hacer(["calmar"])) alDia();
     for (const audio of partida.audiosSinEscuchar()) {
       if (!partida.terminada && estilo.escucha(audio.id, partida, ctx) && hacer(["escuchar", audio.id])) alDia();

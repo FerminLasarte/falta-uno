@@ -4,5 +4,6 @@
     "tuya": "📞 Lo llamás a {nombre}.",
     "respuesta": "bueno bueno ya te dije q voy, cortá"
   },
-  "baja": "perdón me surgió algo, no llego"
+  "baja": "perdón me surgió algo, no llego",
+  "duda": "che no sé si llego eh, después te confirmo"
 }

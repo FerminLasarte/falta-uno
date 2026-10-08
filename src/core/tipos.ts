@@ -71,6 +71,7 @@ export const TIPOS_EVENTO = [
   "roce_calmado", // calmaste a dos que se estaban peleando en el grupo
   "trajo", // alguien de la agenda trajo a otro que no conocés
   "no_vino", // el que trajo alguien al final no vino
+  "duda", // un confirmado te avisó que se está por bajar
 ] as const;
 export type TipoEvento = (typeof TIPOS_EVENTO)[number];
 
@@ -167,6 +168,8 @@ export interface DefinicionContacto {
   readonly aperturas?: readonly Apertura[];
   readonly nodos: Readonly<Record<string, NodoDialogo>>;
   readonly bajas?: readonly Baja[];
+  /** Lo que te escribe cuando se está por bajar, antes de las 20:30. Sin esto, la frase común. */
+  readonly duda?: string;
 }
 
 /** Los nodos a los que puede llevar una respuesta. null es que la charla termina. */

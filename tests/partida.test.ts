@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { FRASES_POR_DEFECTO } from "../src/core/frases.js";
 import { alDia, CHAT_GRUPO, costoDeLeer, Partida } from "../src/core/partida.js";
+import { resolver } from "../src/core/resolucion.js";
 import type { EstadoDeContacto } from "../src/core/tipos.js";
 import {
   agendaCompleta,
@@ -243,6 +245,69 @@ describe("cada evento sabe a qué chat pertenece", () => {
     p.escribir("c0");
     alDia(p);
     expect(p.eventos().filter((e) => e.chat === "sofi").map((e) => e.de)).toEqual(["Sofi"]);
+  });
+});
+
+describe("el aviso del que se está por bajar", () => {
+  /** c0 queda caliente (90 contra un umbral de 80): a las 20:30 se baja si nadie hace nada. */
+  function caliente(agenda = agendaCompleta()): Partida {
+    const p = nueva(agenda);
+    p.escribir("c0");
+    alDia(p);
+    p.responder("c0", "apurar");
+    alDia(p);
+    return p;
+  }
+  const delChat = (p: Partida, id: string) => p.eventos().filter((e) => e.chat === id).map((e) => e.texto);
+
+  it("te escribe antes de las 20:30, una sola vez", () => {
+    const p = caliente();
+    expect(p.avisaron).toEqual(["c0"]);
+    expect(delChat(p, "c0")).toContain(FRASES_POR_DEFECTO.duda);
+    p.esperar(10);
+    alDia(p);
+    expect(delChat(p, "c0").filter((t) => t === FRASES_POR_DEFECTO.duda)).toHaveLength(1);
+  });
+
+  it("con su texto propio si lo tiene", () => {
+    const agenda = agendaCompleta().map((c) => (c.id === "c0" ? { ...c, duda: "no sé si llego, está lloviendo" } : c));
+    expect(delChat(caliente(agenda), "c0")).toContain("no sé si llego, está lloviendo");
+  });
+
+  it("el tranquilo no avisa", () => {
+    const p = nueva();
+    p.escribir("c1");
+    alDia(p);
+    p.responder("c1", "si");
+    p.esperar(10);
+    alDia(p);
+    expect(p.avisaron).toEqual([]);
+  });
+
+  it("si lo llamás, no se baja", () => {
+    const p = caliente();
+    p.llamar("c0");
+    p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    alDia(p);
+    expect(p.estadoDe("c0").estado).toBe("confirmado");
+  });
+
+  it("llamarlo sobre la hora también sirve: lo que se arregla vale desde que atiende", () => {
+    const p = caliente();
+    p.esperar(CONFIG.minutoRevision - p.reloj.minutos - 2);
+    p.llamar("c0"); // la llamada cruza las 20:30
+    alDia(p);
+    expect(p.reloj.minutos).toBeGreaterThan(CONFIG.minutoRevision);
+    expect(p.estadoDe("c0").estado).toBe("confirmado");
+  });
+
+  it("si no lo atajaste, la baja se cuenta con el aviso", () => {
+    const p = caliente();
+    p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    alDia(p);
+    expect(p.estadoDe("c0").estado).toBe("bajado");
+    const motivo = resolver(p).porQueNo.find((m) => m.texto.includes("c0 se bajó"));
+    expect(motivo?.porque).toMatch(/^Te avisó a las \d\d:\d\d que no sabía si llegaba$/);
   });
 });
 

@@ -232,7 +232,7 @@ describe("tu voz sale del contenido", () => {
       interrupciones: SIN_INTERRUPCIONES,
       config: CONFIG,
       semilla: "voz",
-      frases: { saludo: "q onda, jugás?", llamada: { tuya: "📞 a {nombre}", respuesta: "ya voy pesado" }, baja: "chau" },
+      frases: { saludo: "q onda, jugás?", llamada: { tuya: "📞 a {nombre}", respuesta: "ya voy pesado" }, baja: "chau", duda: "ni idea" },
     });
     p.escribir("tano");
     p.llamar("tano");

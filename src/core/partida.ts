@@ -132,6 +132,8 @@ type Entrega =
   | { readonly tipo: "baja"; readonly contacto: string; readonly texto: string; readonly porque?: string }
   /** El que trajo alguien avisa que no viene. */
   | { readonly tipo: "falta"; readonly invitado: string; readonly texto: string }
+  /** Un confirmado avisa que se está por bajar. */
+  | { readonly tipo: "duda"; readonly contacto: string; readonly texto: string }
   /** Un mensaje suelto de alguien que no está en la agenda, como la cancha. */
   | { readonly tipo: "texto"; readonly chat: string; readonly de: string; readonly texto: string }
   | {
@@ -213,6 +215,10 @@ export class Partida {
   private readonly audios = new Map<string, { readonly definicion: DefinicionAudio; readonly de: string; escuchado: boolean }>();
   /** Los que se están peleando en el grupo hasta que alguien los calme. */
   private rocesActivos: Roce[] = [];
+  /** Los confirmados que ya avisaron que dudan, o tienen el aviso en camino. Avisa una vez cada uno. */
+  private readonly dudosos = new Set<string>();
+  /** Los avisos que ya llegaron: lo que el jugador pudo leer. */
+  private readonly _avisaron: string[] = [];
 
   private _moral: number;
   private _dinero: number;
@@ -390,6 +396,11 @@ export class Partida {
   }
 
   /** Calmar al grupo, si hay alguien peleándose, y quiénes son. Null si no hay nada que calmar. */
+  /** Los que te escribieron que no saben si llegan, en el orden en que avisaron. */
+  get avisaron(): readonly string[] {
+    return this._avisaron;
+  }
+
   get accionCalmar(): { texto: string; costoReloj: number; entre: string[] } | null {
     if (this.rocesActivos.length === 0) return null;
     const ids = new Set(this.rocesActivos.flatMap((r) => [r.a, r.b]));
@@ -496,9 +507,11 @@ export class Partida {
         return this.fallo(`${definicion.nombre} ya te dijo que no.`);
       }
       this.emitir("propio", this.frases.llamada.tuya.replaceAll("{nombre}", definicion.nombre), definicion.nombre, id);
+      // Lo que se arregla en la llamada vale desde que atiende: si la llamada
+      // cruza las 20:30, la revisión ya lo encuentra tranquilo.
+      estado.probabilidadBaja = limitar(estado.probabilidadBaja - 30, 0, 100);
       this.consumir(COSTO.llamar);
       this.ajustarMoral(-3);
-      estado.probabilidadBaja = limitar(estado.probabilidadBaja - 30, 0, 100);
       estado.enojo = limitar(estado.enojo + 10, 0, 100);
       this.bitacora.registrar("apuro", this.reloj.minutos, id, "lo llamaste por teléfono");
       this.emitir("mensaje", this.frases.llamada.respuesta, definicion.nombre, id);
@@ -623,7 +636,7 @@ export class Partida {
       const { cerrar } = this.grupo;
       this.emitir("propio", accion.completa ? cerrar.mensaje : cerrar.sinDiez, "Vos", CHAT_GRUPO);
       this.esperarPorTramos(this.reloj.restante, () =>
-        this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta" || e.tipo === "interrupcion"),
+        this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta" || e.tipo === "duda" || e.tipo === "interrupcion"),
       );
       return this.exito();
     });
@@ -669,6 +682,7 @@ export class Partida {
     }
     const desde = this.feed.length;
     const resultado = accion();
+    this.avisarDudas();
     this.verificarFin();
     return { ...resultado, nuevos: this.feed.slice(desde) };
   }
@@ -774,6 +788,13 @@ export class Partida {
         this.ajustarMoral(-4);
         // La última baja en llegar cierra la revisión con el conteo que quedó.
         if (!this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta")) this.anunciarRevision();
+        return;
+      }
+      case "duda": {
+        if (this.estadoDe(entrega.contacto).estado !== "confirmado") return;
+        this._avisaron.push(entrega.contacto);
+        this.bitacora.registrar("duda", this.reloj.minutos, entrega.contacto);
+        this.emitir("mensaje", entrega.texto, this.definicion(entrega.contacto).nombre, entrega.contacto);
         return;
       }
       case "falta": {
@@ -928,6 +949,7 @@ export class Partida {
     this.enfriarPorEspera();
     this.dispararInterrupciones();
     this.dispararCharlas();
+    this.avisarDudas();
     this.revisarBajas();
   }
 
@@ -1064,6 +1086,23 @@ export class Partida {
         { tipo: "interrupcion", id: definicion.id },
         LLEGADA_INTERRUPCION,
       );
+    }
+  }
+
+  /**
+   * El que ya se bajaría a las 20:30 te avisa antes, una sola vez y con su
+   * texto: la baja se ve venir y queda tiempo para llamarlo. Las bajas por algo
+   * que hiciste (la mentira que se descubre) no avisan: esas no son calentura.
+   */
+  private avisarDudas(): void {
+    if (this._revisionHecha || this.reloj.minutos >= this.config.minutoRevision) return;
+    for (const estado of this.estados.values()) {
+      if (estado.estado !== "confirmado" || this.dudosos.has(estado.id)) continue;
+      if (estado.probabilidadBaja <= this.config.umbralBaja) continue;
+      const definicion = this.definicion(estado.id);
+      const texto = definicion.duda ?? this.frases.duda;
+      this.dudosos.add(estado.id);
+      this.pulso.tipear(estado.id, definicion.nombre, texto, { tipo: "duda", contacto: estado.id, texto });
     }
   }
 
