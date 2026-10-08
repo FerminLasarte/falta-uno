@@ -5,6 +5,7 @@
   grilla compacta: doce filas iguales se leen como un error, no como una agenda.
 -->
 <script lang="ts">
+  import { grupo as grupoDeAmigos } from "../estado/grupo.svelte.js";
   import { CHAT_GRUPO, type EventoFeed, type VistaRoster } from "../../core/partida.js";
   import type { EstadoContacto } from "../../core/tipos.js";
   import type { ContactoEnVista, VistaInterrupcion } from "../estado/juego.svelte.js";
@@ -12,7 +13,7 @@
   import Cabecera from "./Cabecera.svelte";
   import Franja from "./Franja.svelte";
   import ItemChat from "./ItemChat.svelte";
-  import { NOMBRE_GRUPO, ROL_CORTO, ROTULO_ESTADO, vistaPrevia } from "./rotulos.js";
+  import { ROL_CORTO, ROTULO_ESTADO, vistaPrevia } from "./rotulos.js";
 
   let {
     contactos,
@@ -73,14 +74,14 @@
 
   <div class="bandeja">
     <ItemChat
-      titulo={NOMBRE_GRUPO}
+      titulo={grupoDeAmigos.nombre}
       linea={ultimoDelGrupo ? vistaPrevia(ultimoDelGrupo) : "La lista está vacía"}
       minuto={ultimoDelGrupo?.minuto ?? null}
       sinLeer={grupoSinLeer}
       escribiendo={escribiendo.has(CHAT_GRUPO)}
       alAbrir={alAbrirGrupo}
     >
-      {#snippet avatar()}<Avatar nombre={NOMBRE_GRUPO} id="grupo" grupo />{/snippet}
+      {#snippet avatar()}<Avatar nombre={grupoDeAmigos.nombre} id="grupo" grupo />{/snippet}
     </ItemChat>
 
     {#each avisos as a (a.id)}

@@ -4,13 +4,13 @@
   cuando termina, pasa al resumen de la campaña.
 -->
 <script lang="ts">
+  import { grupo as grupoDeAmigos } from "../estado/grupo.svelte.js";
   import { AGUANTE } from "../../core/campana.js";
   import { CHAT_GRUPO, type EventoFeed } from "../../core/partida.js";
   import Avatar from "./Avatar.svelte";
   import Cabecera from "./Cabecera.svelte";
   import Charla from "./Charla.svelte";
-  import { NOMBRE_GRUPO } from "./rotulos.js";
-
+  
   let {
     nombres,
     minuto,
@@ -85,9 +85,9 @@
 </script>
 
 <div class="pantalla-app">
-  <Cabecera titulo={NOMBRE_GRUPO} subtitulo={integrantes}>
+  <Cabecera titulo={grupoDeAmigos.nombre} subtitulo={integrantes}>
     {#snippet avatar()}
-      <Avatar nombre={NOMBRE_GRUPO} id="grupo" grupo tam={38} />
+      <Avatar nombre={grupoDeAmigos.nombre} id="grupo" grupo tam={38} />
     {/snippet}
   </Cabecera>
   <Charla eventos={enPantalla.map((p) => p.evento)} mostrarNombres />

@@ -1,6 +1,7 @@
 {
   "id": "el_politico",
   "nombre": "Doctor Ferreyra",
+  "retrato": "el doctor, con contactos",
   "rol": "delantero",
   "habilidad": 44,
   "rasgos": [

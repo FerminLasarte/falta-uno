@@ -1,6 +1,7 @@
 {
   "id": "el_gordo_ruben",
   "nombre": "Rubén",
+  "retrato": "ataja con lo que tenga",
   "rol": "arquero",
   "habilidad": 55,
   "rasgos": [
@@ -9,34 +10,56 @@
   "probabilidadBajaInicial": 15,
   "voz": 108,
   "nodoInicial": "abre",
+  "aperturas": [
+    {
+      "si": {
+        "horaDesde": 1215
+      },
+      "nodo": "tarde"
+    }
+  ],
   "nodos": {
     "abre": {
       "mensajes": [
-        "Uhh loco, hoy tengo la rodilla hecha percha.",
-        "Igual si no consiguen a nadie más me pongo los guantes, pero avisame ya porque después no salgo de casa."
+        "voy voy, contá conmigo",
+        "pero no tengo guantes, los mordió el perro. si nadie tiene atajo con los de lavar los platos"
       ],
       "opciones": [
         {
-          "id": "agradecer",
-          "texto": "Sos un fenómeno Rubencito. Vos al arco y listo.",
-          "costoReloj": 2,
+          "id": "comprar",
+          "texto": "te compro unos en el chino de la esquina",
+          "costoReloj": 4,
           "efectos": {
-            "moral": -1,
-            "probabilidadBaja": -10
+            "dinero": -2000,
+            "probabilidadBaja": -20,
+            "registrar": "favor"
           },
-          "siguiente": "cierra"
+          "siguiente": "cierra",
+          "requiere": {
+            "dineroMin": 2000
+          }
         },
         {
-          "id": "apurar",
-          "texto": "Dale que no tengo tiempo, ¿venís o no venís?",
+          "id": "cocina",
+          "texto": "atajá con los de cocina, va a estar buenísimo",
           "costoReloj": 2,
           "efectos": {
-            "moral": -3,
+            "moral": 1,
+            "probabilidadBaja": 5
+          },
+          "siguiente": "cocina"
+        },
+        {
+          "id": "panza",
+          "texto": "gordo con esa panza tapás el arco sin guantes",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
             "probabilidadBaja": 25,
-            "enojo": 25,
+            "enojo": 30,
             "registrar": "apuro"
           },
-          "siguiente": "cierra"
+          "siguiente": "ofendido"
         },
         {
           "id": "dejar",
@@ -50,33 +73,139 @@
         }
       ]
     },
+    "cocina": {
+      "mensajes": [
+        "jajaja bueno. después no me digan nada si se me resbala"
+      ],
+      "opciones": [
+        {
+          "id": "trato",
+          "texto": "nadie te va a decir nada",
+          "costoReloj": 2,
+          "efectos": {},
+          "siguiente": "cierra"
+        }
+      ]
+    },
+    "tarde": {
+      "mensajes": [
+        "uh ya me puse el pijama",
+        "si de verdad falta un arquero voy, pero me tienen q rogar"
+      ],
+      "opciones": [
+        {
+          "id": "rogar",
+          "texto": "por favor {voc:el_gordo_ruben} te lo pido de rodillas",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -3,
+            "probabilidadBaja": -15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "faltas_vos",
+          "texto": "faltás vos para el arco",
+          "costoReloj": 2,
+          "efectos": {},
+          "siguiente": [
+            {
+              "si": {
+                "confirmado": "matias_el_arquero"
+              },
+              "nodo": "pillado"
+            },
+            {
+              "nodo": "cierra"
+            }
+          ]
+        },
+        {
+          "id": "dejar",
+          "texto": "[Bueno, descansá]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
     "cierra": {
       "mensajes": [
-        "Bueno dale, contá conmigo. Pero pongan a alguien que marque adelante mío, eh."
+        "listo voy. llevo el mate"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Listo. Pasame los 1500 así reservo.",
+          "texto": "joya. pasame los 1500",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
           },
           "siguiente": null
         },
         {
           "id": "confirma_debe",
-          "texto": "Después arreglamos la plata, vení nomás.",
+          "texto": "joya, la guita allá",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "probabilidadBaja": 15,
-            "moral": -1
+            "probabilidadBaja": -5
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "ofendido": {
+      "mensajes": [
+        "gordo tu vieja. sabés lo q me costó bajar tres kilos?",
+        "conseguite otro arquero, a ver quién se banca los pelotazos"
+      ],
+      "opciones": [
+        {
+          "id": "perdon",
+          "texto": "perdón {voc:el_gordo_ruben}, sos un fenómeno",
+          "costoReloj": 4,
+          "efectos": {
+            "moral": -3
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "pillado": {
+      "mensajes": [
+        "{matias_el_arquero} está en la lista, q falto ni falto",
+        "me quedo en pijama, chau"
+      ],
+      "opciones": [
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
           },
           "siguiente": null
         }
       ]
     }
-  }
+  },
+  "bajas": [
+    {
+      "texto": "el perro se comió las zapatillas también. posta. no voy"
+    }
+  ]
 }

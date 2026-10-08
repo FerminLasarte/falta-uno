@@ -19,7 +19,7 @@
 <button class="franja" onclick={alTocar} aria-label="Ver la lista en el grupo">
   <span class="n">{roster.confirmados}/{roster.necesarios}</span>
   <span class="chips">
-    <Faltantes faltantes={roster.faltantes} />
+    <Faltantes {roster} compacto />
   </span>
   <span class="sena" class:corta={dinero < sena}>
     {pesos(dinero)} / {pesos(sena)}

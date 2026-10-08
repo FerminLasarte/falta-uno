@@ -14,6 +14,7 @@
     "jugar": "tsx src/cli/jugar.ts",
     "validar": "tsx src/cli/validar.ts",
     "bot": "tsx src/cli/bot.ts",
+    "analizar": "tsx src/cli/analizar.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.app.json --noEmit && svelte-check --tsconfig ./tsconfig.app.json --fail-on-warnings",

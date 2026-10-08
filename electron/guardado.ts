@@ -9,7 +9,7 @@
  * máquina sí pisa la local.
  */
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { nube } from "./steam.js";
 
 export interface DestinoGuardado {
@@ -77,19 +77,33 @@ export function guardar(nombre: string, datos: string): DestinoGuardado {
   sellos.set(nombre, sello);
   const texto = JSON.stringify({ sello, datos } satisfies Copia);
 
-  let local = false;
+  return { local: escribirEntero(rutaLocal(nombre), texto), nube: nube.escribir(nombre, texto) };
+}
+
+/**
+ * Se escribe al lado y se renombra: un corte de luz a mitad de camino deja la
+ * copia anterior entera, nunca un archivo por la mitad.
+ */
+function escribirEntero(ruta: string, texto: string): boolean {
   try {
-    const ruta = rutaLocal(nombre);
     mkdirSync(dirname(ruta), { recursive: true });
-    // Se escribe al lado y se renombra: un corte de luz a mitad de camino deja
-    // la copia anterior entera, nunca un archivo por la mitad.
     writeFileSync(`${ruta}.tmp`, texto, "utf8");
     renameSync(`${ruta}.tmp`, ruta);
-    local = true;
+    return true;
   } catch {
-    local = false;
+    return false;
   }
-  return { local, nube: nube.escribir(nombre, texto) };
+}
+
+/**
+ * Un viernes jugado, en su propio archivo dentro de `partidas/`. Solo en el
+ * disco: es para analizar cómo jugó alguien, no para seguir jugando en otra
+ * máquina, y no tiene por qué gastar la cuota de Steam Cloud.
+ */
+export function archivar(nombre: string, datos: string): boolean {
+  // El nombre lo arma la ventana: que no pueda salirse de la carpeta.
+  if (basename(nombre) !== nombre || !nombre.endsWith(".json")) return false;
+  return escribirEntero(join(carpeta, "partidas", nombre), datos);
 }
 
 export function cargar(nombre: string): { contenido: string | null; origen: "nube" | "local" | null } {

@@ -5,6 +5,7 @@
  */
 import { createServer } from "vite";
 import { build as esbuild } from "esbuild";
+import { definiciones } from "./commit.mjs";
 import { spawn } from "node:child_process";
 import { watch } from "node:fs";
 import electron from "electron";
@@ -17,6 +18,7 @@ const comun = {
   outExtension: { ".js": ".cjs" },
   sourcemap: true,
   external: ["electron", "steamworks.js"],
+  define: definiciones(),
   logLevel: "warning",
 };
 

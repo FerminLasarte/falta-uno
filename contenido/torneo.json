@@ -3,12 +3,12 @@
   "complejo": "Los Álamos",
   "cancha": "cancha 3",
   "rivales": [
-    "La Vieja Guardia",
-    "Deportivo Fernet",
-    "Los Galácticos de Villa Luro",
-    "Sacachispas del Oeste",
-    "Atlético Sin Rodillas",
-    "Juventud Unida (más o menos)",
-    "Club Social y Asado"
+    { "nombre": "La Vieja Guardia", "nivel": 20 },
+    { "nombre": "Deportivo Fernet", "nivel": 18 },
+    { "nombre": "Los Galácticos de Villa Luro", "nivel": 24 },
+    { "nombre": "Sacachispas del Oeste", "nivel": 22 },
+    { "nombre": "Atlético Sin Rodillas", "nivel": 16 },
+    { "nombre": "Juventud Unida (más o menos)", "nivel": 24 },
+    { "nombre": "Club Social y Asado", "nivel": 26 }
   ]
 }

@@ -5,10 +5,6 @@
 import type { EventoFeed } from "../../core/partida.js";
 import type { EstadoContacto, Rol } from "../../core/tipos.js";
 
-// TODO(contenido): el nombre del grupo es de la campaña, no de la interfaz.
-// El torneo ya viene de contenido/torneo.json.
-export const NOMBRE_GRUPO = "Los Pibes F5";
-
 /** Abreviado: entra en un renglón y es como se escribe en cualquier lista de fútbol. */
 export const ROL_CORTO: Record<Rol, string> = {
   arquero: "ARQ",

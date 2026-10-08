@@ -1,53 +1,92 @@
 {
   "id": "santi_el_goleador",
   "nombre": "Santi",
+  "retrato": "goleador y libertario cripto",
   "rol": "delantero",
   "habilidad": 82,
   "rasgos": [
     "habilidoso",
-    "cagon"
+    "cagon",
+    "libertario"
   ],
   "probabilidadBajaInicial": 30,
+  "voz": 144,
   "nodoInicial": "abre",
+  "aperturas": [
+    {
+      "si": {
+        "horaDesde": 1220
+      },
+      "nodo": "tarde"
+    },
+    {
+      "si": {
+        "confirmado": "el_sindicalista"
+      },
+      "nodo": "con_beto"
+    }
+  ],
   "nodos": {
     "abre": {
       "mensajes": [
-        "¿Cuánto sale?",
-        "Porque la última vez pagué 1500 y jugamos media hora."
+        "cuánto sale?",
+        "porq la última pagué 1500 y jugamos media hora. eso es inflación de minutos",
+        "y va {el_sindicalista}? porq si va el kukardo de {el_sindicalista} no sumo ni en pedo"
       ],
       "opciones": [
         {
+          "id": "negar_beto",
+          "texto": "{el_sindicalista} no va, tranqui",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": -15
+          },
+          "siguiente": [
+            {
+              "si": {
+                "confirmado": "el_sindicalista"
+              },
+              "nodo": "pillado"
+            },
+            {
+              "nodo": "cierra"
+            }
+          ]
+        },
+        {
           "id": "explicar",
-          "texto": "1500 y jugamos la hora completa, te lo garantizo.",
+          "texto": "1500 y jugamos la hora entera, te lo garantizo",
           "costoReloj": 2,
           "efectos": {
             "moral": -1,
-            "probabilidadBaja": -15
+            "probabilidadBaja": -10
           },
           "siguiente": "cierra"
         },
         {
           "id": "invitar",
-          "texto": "Hoy va por mi cuenta. Vení.",
+          "texto": "hoy va por mi cuenta, vení",
           "costoReloj": 2,
           "efectos": {
             "dinero": -1500,
-            "probabilidadBaja": -30,
-            "moral": -1
+            "probabilidadBaja": -25
           },
-          "siguiente": "cierra"
+          "siguiente": "gratis",
+          "requiere": {
+            "dineroMin": 1500
+          }
         },
         {
-          "id": "apurar",
-          "texto": "Santi, es lo mismo de siempre. ¿Venís o no?",
+          "id": "rata",
+          "texto": "{voc:santi_el_goleador} no seas rata, son 1500",
           "costoReloj": 2,
           "efectos": {
-            "moral": -3,
-            "probabilidadBaja": 30,
-            "enojo": 25,
+            "moral": -2,
+            "probabilidadBaja": 25,
+            "enojo": 30,
             "registrar": "apuro"
           },
-          "siguiente": "cierra"
+          "siguiente": "ofendido"
         },
         {
           "id": "dejar",
@@ -61,32 +100,218 @@
         }
       ]
     },
+    "con_beto": {
+      "mensajes": [
+        "vi q está {el_sindicalista} en la lista",
+        "si va el kukardo de {el_sindicalista} no sumo ni en pedo. después me quiere cobrar la cuota sindical en el vestuario"
+      ],
+      "opciones": [
+        {
+          "id": "otro_equipo",
+          "texto": "jugás en el otro equipo y le hacés tres goles",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "invitar",
+          "texto": "te invito yo por bancártelo",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -1500,
+            "probabilidadBaja": -25
+          },
+          "siguiente": "gratis",
+          "requiere": {
+            "dineroMin": 1500
+          }
+        },
+        {
+          "id": "dejar",
+          "texto": "[Bueno, otro día]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "tarde": {
+      "mensajes": [
+        "uh justo me estaba por meter en un trade, el bitcoin está volando",
+        "si me pagás vos voy, si no me quedo mirando gráficos"
+      ],
+      "opciones": [
+        {
+          "id": "invitar",
+          "texto": "te pago yo, vení",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -1500,
+            "probabilidadBaja": -20
+          },
+          "siguiente": "gratis",
+          "requiere": {
+            "dineroMin": 1500
+          }
+        },
+        {
+          "id": "bitcoin",
+          "texto": "el bitcoin no se va a ningún lado, vení",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Suerte con el bitcoin]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
     "cierra": {
       "mensajes": [
-        "Dale, ahí voy."
+        "dale, ahí voy"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Listo. Mandame la transferencia.",
+          "texto": "listo, mandame la transferencia",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
           },
           "siguiente": null
         },
         {
           "id": "confirma_debe",
-          "texto": "Quedás anotado.",
+          "texto": "quedás anotado",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "probabilidadBaja": 20
+            "probabilidadBaja": -5
+          },
+          "siguiente": null
+        },
+        {
+          "id": "gimnasio",
+          "texto": "traete a alguien del gimnasio, yo le pago la cancha",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dinero": -1500,
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10,
+            "trae": [
+              {
+                "nombre": "Uno del gimnasio de {santi_el_goleador}",
+                "rol": "defensor",
+                "habilidad": 53,
+                "noViene": {
+                  "probabilidad": 60,
+                  "texto": "el del gimnasio no viene, tenía día de piernas. prioridades"
+                }
+              }
+            ]
+          },
+          "siguiente": "gimnasio",
+          "requiere": {
+            "faltanMin": 7,
+            "dineroMin": 1500
+          }
+        }
+      ]
+    },
+    "gratis": {
+      "mensajes": [
+        "así me gusta. libre mercado: vos pagás, yo juego"
+      ],
+      "opciones": [
+        {
+          "id": "dale",
+          "texto": "jaja dale",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado"
           },
           "siguiente": null
         }
       ]
+    },
+    "pillado": {
+      "mensajes": [
+        "{el_sindicalista} está en la lista. lo estoy viendo",
+        "me mentiste como un político. no voy"
+      ],
+      "opciones": [
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "ofendido": {
+      "mensajes": [
+        "rata? yo invierto, q es distinto",
+        "andá a pedirle la plata al estado"
+      ],
+      "opciones": [
+        {
+          "id": "perdon",
+          "texto": "perdón {voc:santi_el_goleador}, sos un crack",
+          "costoReloj": 4,
+          "efectos": {
+            "moral": -3
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "gimnasio": {
+      "mensajes": [
+        "libre mercado, me encanta",
+        "traigo a un pibe del gimnasio, no sabe parar la pelota pero empuja"
+      ],
+      "opciones": []
     }
-  }
+  },
+  "bajas": [
+    {
+      "si": {
+        "elegiste": "negar_beto",
+        "confirmado": "el_sindicalista"
+      },
+      "texto": "vi al kukardo en la lista. me mentiste, no sumo ni en pedo",
+      "porque": "Le dijiste que Beto no iba"
+    },
+    {
+      "texto": "se me cayó el exchange y estoy re caliente. no voy"
+    }
+  ]
 }

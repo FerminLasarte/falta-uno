@@ -1,6 +1,7 @@
 {
   "id": "dario_el_profe",
   "nombre": "Darío",
+  "retrato": "el profe de educación física",
   "rol": "defensor",
   "habilidad": 52,
   "rasgos": [

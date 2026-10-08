@@ -2,19 +2,31 @@
   {
     "id": "pareja_serie",
     "de": "Sofi",
-    "texto": "¿Vas a estar con el teléfono toda la noche? Dijimos que veíamos el capítulo.",
+    "texto": "vas a estar con el celu toda la noche? dijimos q veíamos el capítulo",
     "minutoDesde": 1155,
     "minutoHasta": 1200,
     "probabilidad": 70,
     "drenajePorAccion": 1.5,
     "costoAtender": 15,
-    "efectosAtender": { "moral": 6 },
+    "efectosAtender": {
+      "moral": 6
+    },
     "registrarSiIgnorada": "pareja_ignorada",
     "insistencias": [
-      { "texto": "¿Hola?", "segundos": 25 },
-      { "texto": "Bueno, veo que no.", "segundos": 40 },
-      { "texto": "Arranco el capítulo sola.", "segundos": 60 }
-    ]
+      {
+        "texto": "hola?",
+        "segundos": 25
+      },
+      {
+        "texto": "ah bueno, veo q no",
+        "segundos": 40
+      },
+      {
+        "texto": "arranco el capítulo sola. después no me pidas q te cuente",
+        "segundos": 60
+      }
+    ],
+    "drenajeMaximo": 5
   },
   {
     "id": "jefe_planilla",
@@ -25,12 +37,22 @@
     "probabilidad": 55,
     "drenajePorAccion": 1.2,
     "costoAtender": 20,
-    "efectosAtender": { "moral": 2, "dinero": 2000 },
+    "efectosAtender": {
+      "moral": 2,
+      "dinero": 2000
+    },
     "registrarSiIgnorada": "trabajo_ignorado",
     "insistencias": [
-      { "texto": "¿Lo viste?", "segundos": 35 },
-      { "texto": "Es importante, eh.", "segundos": 60 }
-    ]
+      {
+        "texto": "¿Lo viste?",
+        "segundos": 35
+      },
+      {
+        "texto": "Te veo en línea, eh.",
+        "segundos": 60
+      }
+    ],
+    "drenajeMaximo": 4
   },
   {
     "id": "cancha_confirma",
@@ -41,24 +63,39 @@
     "probabilidad": 85,
     "drenajePorAccion": 2.0,
     "costoAtender": 5,
-    "efectosAtender": { "moral": 3 },
+    "efectosAtender": {
+      "moral": 3
+    },
     "registrarSiIgnorada": "ignorado",
     "insistencias": [
-      { "texto": "¿Confirman?", "segundos": 20 },
-      { "texto": "Tenemos otro equipo preguntando por el turno de las 21.", "segundos": 35 },
-      { "texto": "Si en un rato no confirman, la largamos.", "segundos": 50 }
-    ]
+      {
+        "texto": "¿Confirman?",
+        "segundos": 20
+      },
+      {
+        "texto": "Tenemos otro equipo preguntando por el turno de las 21.",
+        "segundos": 35
+      },
+      {
+        "texto": "Si en un rato no confirman, la largamos.",
+        "segundos": 50
+      }
+    ],
+    "drenajeMaximo": 4
   },
   {
     "id": "grupo_incendiado",
-    "de": "Grupo Los Pibes F5",
+    "de": "Grupo {grupo}",
     "texto": "37 mensajes sin leer. Están discutiendo por quién puso mal la última vez.",
     "minutoDesde": 1200,
     "minutoHasta": 1240,
     "probabilidad": 60,
     "drenajePorAccion": 1.0,
     "costoAtender": 10,
-    "efectosAtender": { "moral": -2 },
-    "registrarSiIgnorada": "roce"
+    "efectosAtender": {
+      "moral": -2
+    },
+    "registrarSiIgnorada": "roce",
+    "drenajeMaximo": 2
   }
 ]

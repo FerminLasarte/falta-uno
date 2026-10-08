@@ -1,4 +1,5 @@
 import { cargarContenido, ErrorDeContenido } from "../datos/cargar.js";
+import { configDeViernes, nombreDelModo, TODOS_LOS_MODOS } from "../core/modo.js";
 import { agendaDe } from "../core/perfiles.js";
 import { ROLES } from "../core/tipos.js";
 import type { Rol } from "../core/tipos.js";
@@ -39,11 +40,16 @@ console.log(`  Grupo           ${grupo.charlas.length} charlas, ${mensajesGrupo.
 console.log(`\n  Por rol:`);
 for (const rol of ROLES) console.log(`    ${rol.padEnd(15)} ${porRol[rol]}`);
 
-// Cada perfil ve los contactos comunes más el suyo: el margen es por perfil.
-const necesarios = contenido.config.jugadoresNecesarios;
-console.log(`\n  Margen, con ${necesarios} lugares:`);
+// Cada perfil ve los contactos comunes más el suyo (menos los que excluye), y
+// cada modo pide otra cantidad: el margen es por perfil y por modo.
+console.log(`\n  Margen: cuántos te pueden fallar`);
+console.log(`    ${"".padEnd(18)} ${"agenda".padStart(6)}${TODOS_LOS_MODOS.map((m) => nombreDelModo(m).padStart(12)).join("")}`);
 for (const perfil of contenido.perfiles) {
   const disponibles = agendaDe(perfil, contenido.perfiles, contenido.contactos).length;
-  console.log(`    ${perfil.nombre.padEnd(18)} ${disponibles} contactos, pueden fallarte ${disponibles - necesarios}`);
+  const margenes = TODOS_LOS_MODOS.map((m) => {
+    const necesarios = configDeViernes(contenido.config, m).jugadoresNecesarios;
+    return `${disponibles - necesarios} de ${necesarios}`.padStart(12);
+  });
+  console.log(`    ${perfil.nombre.padEnd(18)} ${String(disponibles).padStart(6)}${margenes.join("")}`);
 }
 console.log("");

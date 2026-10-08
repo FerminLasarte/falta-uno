@@ -17,6 +17,10 @@ const api = {
   guardarYa: (nombre: string, contenido: string) =>
     ipcRenderer.sendSync(CANALES.guardarYa, nombre, contenido),
   cargar: (nombre: string) => ipcRenderer.invoke(CANALES.cargar, nombre),
+  archivar: (nombre: string, contenido: string) =>
+    ipcRenderer.invoke(CANALES.archivar, nombre, contenido),
+  archivarYa: (nombre: string, contenido: string) =>
+    ipcRenderer.sendSync(CANALES.archivarYa, nombre, contenido),
   archivosEnNube: () => ipcRenderer.invoke(CANALES.archivosEnNube),
   salir: () => ipcRenderer.invoke(CANALES.salir),
 };

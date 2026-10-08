@@ -16,6 +16,9 @@ export const CONFIG: Config = {
   costoVacante: 5000,
   umbralBaja: 80,
   minutoRevision: 1230,
+  // El picado de antes, con los dos equipos de la agenda: así los tests del núcleo no dependen del formato.
+  composicion: { arquero: 2, defensor: 3, mediocampista: 3, delantero: 2 },
+  suplentes: 0,
 };
 
 export const PERFIL: DefinicionPerfil = {

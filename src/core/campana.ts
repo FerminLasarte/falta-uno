@@ -10,6 +10,8 @@
  * Entre una fecha y otra pasan la plata y el prestigio. La moral no: en la
  * semana se recupera, y cada viernes arranca con la del perfil.
  */
+import type { Apodos } from "./apodos.js";
+import { MODO_POR_DEFECTO, type Modo } from "./modo.js";
 import type { Partida } from "./partida.js";
 import type { Resolucion } from "./resolucion.js";
 import type { Config, DefinicionPerfil, PerfilId } from "./tipos.js";
@@ -29,11 +31,21 @@ export interface DefinicionTorneo {
   readonly complejo: string;
   readonly cancha: string;
   /** Uno por fecha, en orden. Si la campaña dura más, se vuelve a empezar: es la segunda rueda. */
-  readonly rivales: readonly string[];
+  readonly rivales: readonly Rival[];
+}
+
+/** Contra quién se juega. El nivel resta en la probabilidad de ganar: es lo que pesa enfrente. */
+export interface Rival {
+  readonly nombre: string;
+  readonly nivel: number;
+}
+
+export function rivalDeFecha(torneo: DefinicionTorneo, fecha: number): Rival {
+  return torneo.rivales[(fecha - 1) % torneo.rivales.length] ?? { nombre: "", nivel: 0 };
 }
 
 export function rivalDe(torneo: DefinicionTorneo, fecha: number): string {
-  return torneo.rivales[(fecha - 1) % torneo.rivales.length] ?? "";
+  return rivalDeFecha(torneo, fecha).nombre;
 }
 
 /** Lo que quedó de una fecha ya jugada. */
@@ -47,6 +59,10 @@ export interface FechaJugada {
 
 export interface Campana {
   readonly perfil: PerfilId;
+  /** Formato y competencia. El partido suelto es una sola fecha. */
+  readonly modo: Modo;
+  /** Los nombres de los amigos de quien juega. */
+  readonly apodos?: Apodos;
   /** De acá sale la semilla de cada viernes. */
   readonly semilla: string;
   /** La fecha que se está jugando. */
@@ -72,9 +88,15 @@ export interface CierreFecha {
   readonly prestigio: number;
 }
 
-export function nuevaCampana(perfil: DefinicionPerfil, semilla: string): Campana {
+export function nuevaCampana(
+  perfil: DefinicionPerfil,
+  semilla: string,
+  ajustes: { readonly modo?: Modo; readonly apodos?: Apodos } = {},
+): Campana {
   return {
     perfil: perfil.id,
+    modo: ajustes.modo ?? MODO_POR_DEFECTO,
+    ...(ajustes.apodos ? { apodos: ajustes.apodos } : {}),
     semilla,
     fecha: 1,
     dinero: perfil.dineroInicial,
@@ -87,7 +109,7 @@ export function nuevaCampana(perfil: DefinicionPerfil, semilla: string): Campana
 }
 
 /** La semilla del viernes que se está jugando. La primera fecha usa la de la campaña tal cual. */
-export function semillaDeFecha(campana: Campana): string {
+export function semillaDeFecha(campana: Pick<Campana, "semilla" | "fecha">): string {
   return campana.fecha === 1 ? campana.semilla : `${campana.semilla}:fecha-${campana.fecha}`;
 }
 

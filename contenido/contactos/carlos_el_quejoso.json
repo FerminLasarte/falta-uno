@@ -1,55 +1,77 @@
 {
   "id": "carlos_el_quejoso",
   "nombre": "Carlos",
+  "retrato": "te cobra hasta el último peso",
   "rol": "defensor",
   "habilidad": 62,
   "rasgos": [
     "quejoso",
-    "impuntual"
+    "impuntual",
+    "gorila"
   ],
   "probabilidadBajaInicial": 30,
   "voz": 124,
   "nodoInicial": "abre",
+  "aperturas": [
+    {
+      "si": {
+        "horaDesde": 1200
+      },
+      "nodo": "tarde"
+    }
+  ],
   "nodos": {
     "abre": {
       "mensajes": [
-        "Otra vez el viernes...",
-        "Mirá, la última vez terminamos jugando 6 contra 4 porque no vino nadie, y encima puse yo la cancha. No me hagas eso de nuevo.",
-        "¿Ya hay confirmados o me estás escribiendo a todos al mismo tiempo?"
+        "otra vez el viernes...",
+        "antes q nada: la última puse yo la cancha y sigo esperando los 1500. no me olvidé eh",
+        "en este país nadie paga nada, así estamos"
       ],
       "opciones": [
         {
-          "id": "sincero",
-          "texto": "Estoy armando ahora. Sos de los primeros a los que le escribo.",
+          "id": "devolver",
+          "texto": "te los paso ahora, perdón me colgué",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -1500,
+            "moral": -1,
+            "probabilidadBaja": -20
+          },
+          "siguiente": [
+            {
+              "si": {
+                "confirmado": "el_sindicalista"
+              },
+              "nodo": "beto"
+            },
+            {
+              "nodo": "cierra"
+            }
+          ],
+          "requiere": {
+            "dineroMin": 1500
+          }
+        },
+        {
+          "id": "despues",
+          "texto": "te los doy hoy en la cancha, palabra",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 10
+          },
+          "siguiente": "promesa"
+        },
+        {
+          "id": "contador",
+          "texto": "{voc:carlos_el_quejoso} son 1500 mangos, no te hagas el contador",
           "costoReloj": 2,
           "efectos": {
             "moral": -2,
-            "probabilidadBaja": -15
-          },
-          "siguiente": "cierra"
-        },
-        {
-          "id": "mentir",
-          "texto": "Ya somos ocho, faltás vos nomás.",
-          "costoReloj": 2,
-          "efectos": {
-            "moral": -1,
-            "probabilidadBaja": 20,
-            "enojo": 10
-          },
-          "siguiente": "cierra"
-        },
-        {
-          "id": "apurar",
-          "texto": "Carlos, no arranques. ¿Venís sí o no?",
-          "costoReloj": 2,
-          "efectos": {
-            "moral": -4,
-            "probabilidadBaja": 30,
-            "enojo": 35,
+            "probabilidadBaja": 25,
+            "enojo": 30,
             "registrar": "apuro"
           },
-          "siguiente": "cierra"
+          "siguiente": "ofendido"
         },
         {
           "id": "dejar",
@@ -63,33 +85,197 @@
         }
       ]
     },
-    "cierra": {
+    "tarde": {
       "mensajes": [
-        "Bueno. Pero si somos menos de diez yo me vuelvo, te aviso."
+        "ah mirá quién apareció",
+        "las ocho y pico y recién me escribís. q pasó, te dijeron todos q no?",
+        "y encima me debés los 1500"
       ],
       "opciones": [
         {
-          "id": "confirma_paga",
-          "texto": "Somos diez. Pasame los 1500 y quedate tranquilo.",
+          "id": "sincero",
+          "texto": "sí. me dijeron q no y te necesito. te los paso ahora",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -1500,
+            "moral": -3,
+            "probabilidadBaja": -10
+          },
+          "siguiente": [
+            {
+              "si": {
+                "confirmado": "el_sindicalista"
+              },
+              "nodo": "beto"
+            },
+            {
+              "nodo": "cierra"
+            }
+          ],
+          "requiere": {
+            "dineroMin": 1500
+          }
+        },
+        {
+          "id": "primeros",
+          "texto": "nada q ver, sos de los primeros",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1
+          },
+          "siguiente": [
+            {
+              "si": {
+                "confirmadosMin": 3
+              },
+              "nodo": "pillado"
+            },
+            {
+              "nodo": "promesa"
+            }
+          ]
+        },
+        {
+          "id": "dejar",
+          "texto": "[Cerrar el chat]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "beto": {
+      "mensajes": [
+        "ahí llegó. gracias eh, no era por la plata, era por el principio",
+        "otra cosa: vi q viene {el_sindicalista}. si arma los equipos el sindicalista ese me manda de lateral y se queda con los buenos",
+        "peronista hasta para eso, reparte entre los suyos"
+      ],
+      "opciones": [
+        {
+          "id": "arma_carlos",
+          "texto": "hoy armás vos {voc:carlos_el_quejoso}",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": -15
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "arma_beto",
+          "texto": "arma {el_sindicalista} como siempre, bancatela",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 20,
+            "enojo": 15
+          },
+          "siguiente": "cierra"
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "bueno. voy"
+      ],
+      "opciones": [
+        {
+          "id": "confirma",
+          "texto": "joya. me pasás los 1500 de hoy?",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
             "dineroAportado": 1500
           },
-          "siguiente": null
-        },
+          "siguiente": "los_mismos"
+        }
+      ]
+    },
+    "los_mismos": {
+      "mensajes": [
+        "ahí van. fijate q son los mismos q me devolviste"
+      ],
+      "opciones": []
+    },
+    "promesa": {
+      "mensajes": [
+        "eso mismo me dijiste la otra vez",
+        "voy. pero si a las nueve y diez no estamos los diez me vuelvo y me devolvés los de hoy también"
+      ],
+      "opciones": [
         {
-          "id": "confirma_debe",
-          "texto": "Vení tranquilo, después vemos.",
+          "id": "trato",
+          "texto": "trato",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "probabilidadBaja": 25,
-            "moral": -2
+            "dineroAportado": 1500,
+            "probabilidadBaja": 15
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "ofendido": {
+      "mensajes": [
+        "ah bueno, ahora el contador es el q pide la plata",
+        "así nos va. armá con los planeros q no ponen nunca"
+      ],
+      "opciones": [
+        {
+          "id": "perdon",
+          "texto": "tenés razón, perdón. te los paso ya",
+          "costoReloj": 4,
+          "efectos": {
+            "dinero": -1500,
+            "moral": -4
+          },
+          "siguiente": "cierra",
+          "requiere": {
+            "dineroMin": 1500
+          }
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "pillado": {
+      "mensajes": [
+        "estoy viendo la lista del grupo. primero de qué, pelotudo",
+        "dejá. llamalo a {el_sindicalista} q le encanta organizar, como buen sindicalista"
+      ],
+      "opciones": [
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
           },
           "siguiente": null
         }
       ]
     }
-  }
+  },
+  "bajas": [
+    {
+      "si": {
+        "elegiste": "arma_beto",
+        "confirmado": "el_sindicalista"
+      },
+      "texto": "me enteré q arma {el_sindicalista}. paso, no voy a ir a regalarle la noche a ese chorro",
+      "porque": "Le dijiste que los equipos los armaba Beto"
+    },
+    {
+      "texto": "mirá no voy a ir. no me pinta ser otra vez el q pone y el q se queda esperando"
+    }
+  ]
 }

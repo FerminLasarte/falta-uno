@@ -1,6 +1,7 @@
 {
   "id": "juanma",
   "nombre": "Juanma",
+  "retrato": "siempre saliendo del laburo",
   "rol": "mediocampista",
   "habilidad": 61,
   "rasgos": [
@@ -9,16 +10,24 @@
   "probabilidadBajaInicial": 25,
   "voz": 132,
   "nodoInicial": "abre",
+  "aperturas": [
+    {
+      "si": {
+        "horaDesde": 1200
+      },
+      "nodo": "tarde"
+    }
+  ],
   "nodos": {
     "abre": {
       "mensajes": [
-        "Estoy saliendo del laburo recién.",
-        "Si llego, llego justo. ¿Arrancan puntual?"
+        "estoy saliendo del laburo recién",
+        "mi jefe es un hijo de puta, me tuvo hasta ahora con un excel. si llego, llego justo. arrancan puntual?"
       ],
       "opciones": [
         {
           "id": "flexible",
-          "texto": "Arrancamos cuando estés. Vení tranquilo.",
+          "texto": "arrancamos cuando estés, vení tranqui",
           "costoReloj": 2,
           "efectos": {
             "moral": -1,
@@ -28,13 +37,25 @@
         },
         {
           "id": "firme",
-          "texto": "21 en punto. Si llegás tarde entrás cambiado.",
+          "texto": "21 en punto. si llegás tarde entrás cambiado",
           "costoReloj": 2,
           "efectos": {
-            "probabilidadBaja": 15,
+            "probabilidadBaja": 10,
             "enojo": 10
           },
           "siguiente": "cierra"
+        },
+        {
+          "id": "ultimatum",
+          "texto": "21 en punto o no vengas",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
+            "probabilidadBaja": 30,
+            "enojo": 30,
+            "registrar": "apuro"
+          },
+          "siguiente": "ofendido"
         },
         {
           "id": "dejar",
@@ -47,32 +68,169 @@
         }
       ]
     },
+    "tarde": {
+      "mensajes": [
+        "estoy en el bondi, llego tipo 21:10",
+        "son diez ya? no me hagan ir al pedo eh"
+      ],
+      "opciones": [
+        {
+          "id": "faltas_vos",
+          "texto": "faltás vos, venite",
+          "costoReloj": 2,
+          "efectos": {},
+          "siguiente": [
+            {
+              "si": {
+                "confirmadosMin": 8
+              },
+              "nodo": "cierra"
+            },
+            {
+              "nodo": "pillado"
+            }
+          ]
+        },
+        {
+          "id": "sincero",
+          "texto": "somos pocos, pero si venís nos salvás",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": 10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "audio",
+          "texto": "arrancamos y entrás cuando llegues, tranqui",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": -20
+          },
+          "siguiente": "cierra",
+          "requiere": {
+            "escuchado": "juanma_tarde"
+          }
+        },
+        {
+          "id": "dejar",
+          "texto": "[Bueno, otro día]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
     "cierra": {
       "mensajes": [
-        "Dale, ahí voy derecho para allá."
+        "dale, voy derecho para allá"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Perfecto. Los 1500 por transferencia.",
+          "texto": "joya. pasame los 1500 por transferencia",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
           },
           "siguiente": null
         },
         {
           "id": "confirma_debe",
-          "texto": "Listo, quedás anotado.",
+          "texto": "joya, quedás anotado",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "probabilidadBaja": 15
+            "probabilidadBaja": -5
+          },
+          "siguiente": null
+        },
+        {
+          "id": "companero",
+          "texto": "si tenés a alguien del laburo q juegue, traelo",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 3000,
+            "probabilidadBaja": 10,
+            "trae": [
+              {
+                "nombre": "Uno del laburo de {juanma}",
+                "rol": "delantero",
+                "habilidad": 55,
+                "noViene": {
+                  "probabilidad": 60,
+                  "texto": "el de chacarita se borró, dice q le duele la rodilla. inferiores de qué, decime"
+                }
+              }
+            ]
+          },
+          "siguiente": "companero",
+          "requiere": {
+            "faltanMin": 7
+          }
+        }
+      ]
+    },
+    "ofendido": {
+      "mensajes": [
+        "o no venga? listo, no voy. encima q salgo reventado",
+        "armalo con tu jefe, q seguro es igual de forro q el mío"
+      ],
+      "opciones": [
+        {
+          "id": "perdon",
+          "texto": "perdón loco, vení cuando llegues",
+          "costoReloj": 4,
+          "efectos": {
+            "moral": -3
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
           },
           "siguiente": null
         }
       ]
+    },
+    "pillado": {
+      "mensajes": [
+        "estoy viendo la lista boludo, faltan banda",
+        "me bajo en la próxima y me vuelvo a casa"
+      ],
+      "opciones": [
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "companero": {
+      "mensajes": [
+        "hay uno q dice q jugaba en las inferiores de chacarita",
+        "mentira seguro, pero lo traigo"
+      ],
+      "opciones": []
     }
-  }
+  },
+  "bajas": [
+    {
+      "texto": "me hizo quedar el jefe, la concha de su madre. no llego"
+    }
+  ]
 }

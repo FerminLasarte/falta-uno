@@ -36,6 +36,7 @@ const GRUPO: DefinicionGrupo = {
     respuestas: [{ de: "a", texto: "Era joda." }],
     calientaPorAccion: 3,
   },
+  cerrar: { texto: "Cerrar la lista", mensaje: "Lista cerrada.", sinDiez: "No llegamos." },
 };
 
 function nueva(agenda: DefinicionContacto[] = agendaCompleta(), grupo = GRUPO, semilla = "grupo"): Partida {

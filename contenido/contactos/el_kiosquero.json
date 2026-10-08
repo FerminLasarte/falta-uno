@@ -1,6 +1,7 @@
 {
   "id": "el_kiosquero",
   "nombre": "Don Zenón",
+  "retrato": "cierra el kiosco y viene",
   "rol": "mediocampista",
   "habilidad": 63,
   "rasgos": [

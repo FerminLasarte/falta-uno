@@ -4,6 +4,7 @@
   acciones con su costo, centradas porque las esquinas son de los pulgares.
 -->
 <script lang="ts">
+  import { grupo as grupoDeAmigos } from "../estado/grupo.svelte.js";
   import type { EventoFeed, VistaContacto, VistaPuesto, VistaRoster } from "../../core/partida.js";
   import { COSTO } from "../../core/tiempo.js";
   import type { Rol } from "../../core/tipos.js";
@@ -12,7 +13,7 @@
   import Cabecera from "./Cabecera.svelte";
   import Charla from "./Charla.svelte";
   import ListaGrupo from "./ListaGrupo.svelte";
-  import { COLOR_ESTADO, enumerar, NOMBRE_GRUPO, pesos, ROL_CORTO } from "./rotulos.js";
+  import { COLOR_ESTADO, enumerar, pesos, ROL_CORTO } from "./rotulos.js";
 
   let {
     eventos,
@@ -30,10 +31,13 @@
     alPagar,
     calmar,
     alCalmar,
+    cerrar,
+    alCerrar,
     alIrALaCancha,
     complejo,
     escuchados,
     alEscuchar,
+    alVerInfo,
   }: {
     eventos: readonly EventoFeed[];
     /** Quién escribe en el grupo ahora mismo. */
@@ -52,12 +56,17 @@
     /** Calmar a los que se están peleando: quiénes son y lo que cuesta. Null si nadie se pelea. */
     calmar: { readonly texto: string; readonly costoReloj: number; readonly entre: readonly string[] } | null;
     alCalmar: () => void;
+    /** Cerrar la lista y lo que cuesta: lo que falta para las 21:00. Null mientras todavía no se pueda. */
+    cerrar: { readonly texto: string; readonly costoReloj: number } | null;
+    alCerrar: () => void;
     /** Ya son las 21:00: lo único que queda es ir a la cancha. Null mientras se juega el viernes. */
     alIrALaCancha: (() => void) | null;
     /** Dónde se juega: va en el título de la lista. */
     complejo: string;
     escuchados: ReadonlySet<string>;
     alEscuchar: (audioId: string) => void;
+    /** Tocar el nombre del grupo: "Info del grupo", con los apodos. */
+    alVerInfo: () => void;
   } = $props();
 
   /* El subtítulo de un grupo de WhatsApp: los integrantes por orden alfabético. */
@@ -77,7 +86,10 @@
     return estado ? COLOR_ESTADO[estado] : null;
   };
 
-  const puedePagar = $derived(roster.faltantes.length > 0 && dinero >= costoReemplazo);
+  /* Con los diez ya no hay reemplazo que pagar, aunque falte alguien de un puesto: sería el undécimo. */
+  const puedePagar = $derived(
+    roster.confirmados < roster.necesarios && roster.faltantes.length > 0 && dinero >= costoReemplazo,
+  );
   let eligiendoPuesto = $state(false);
 
   function pagar(rol: Rol): void {
@@ -89,12 +101,13 @@
 <div class="pantalla-app">
   <!-- Cerrada la lista, el grupo queda como uno de solo administradores: ya nadie escribe. -->
   <Cabecera
-    titulo={NOMBRE_GRUPO}
+    titulo={grupoDeAmigos.nombre}
     subtitulo={alIrALaCancha ? "Solo los administradores pueden enviar mensajes" : escribiendo ? `${escribiendo} está escribiendo…` : integrantes}
     volver={{ cuenta: sinLeerAfuera, alVolver }}
+    alTocarTitulo={alVerInfo}
   >
     {#snippet avatar()}
-      <Avatar nombre={NOMBRE_GRUPO} id="grupo" grupo tam={38} />
+      <Avatar nombre={grupoDeAmigos.nombre} id="grupo" grupo tam={38} />
     {/snippet}
   </Cabecera>
 
@@ -127,6 +140,9 @@
         <button class="accion tenue" onclick={() => (eligiendoPuesto = false)}>Cancelar</button>
       </div>
     {:else}
+      {#if cerrar}
+        <BotonPrincipal accion={{ texto: cerrar.texto, minutos: cerrar.costoReloj }} alTocar={alCerrar} />
+      {/if}
       <div class="fila">
         <button class="accion" onclick={alEscribirAAlguien}>Escribir a alguien</button>
         {#if puedePagar}

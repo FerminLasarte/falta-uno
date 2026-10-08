@@ -1,3 +1,4 @@
+import { configDeViernes, MODO_POR_DEFECTO } from "../core/modo.js";
 import { crearLector } from "./entrada.js";
 import { alDia, Partida, type EventoFeed } from "../core/partida.js";
 import { agendaDe } from "../core/perfiles.js";
@@ -54,7 +55,7 @@ const partida = new Partida({
   agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
   interrupciones: contenido.interrupciones,
   grupo: contenido.grupo,
-  config: contenido.config,
+  config: configDeViernes(contenido.config, MODO_POR_DEFECTO),
   semilla,
 });
 
@@ -162,12 +163,14 @@ while (!partida.terminada) {
       `${C.gris}[e]${C.reset} esperar 10′   ${C.gris}[q]${C.reset} cortar`,
   );
   const calmar = partida.accionCalmar;
+  const cerrar = partida.accionCerrar;
   const audios = partida.audiosSinEscuchar();
-  if (calmar || audios.length > 0) {
+  if (calmar || cerrar || audios.length > 0) {
     console.log(
       `  ${C.gris}grupo:${C.reset}` +
         (audios.length > 0 ? `   ${C.gris}[o]${C.reset} escuchar audios (${audios.length})` : "") +
-        (calmar ? `   ${C.gris}[c]${C.reset} ${calmar.texto} (${calmar.costoReloj}′)` : ""),
+        (calmar ? `   ${C.gris}[c]${C.reset} ${calmar.texto} (${calmar.costoReloj}′)` : "") +
+        (cerrar ? `   ${C.gris}[x]${C.reset} ${cerrar.texto} (${cerrar.costoReloj}′)` : ""),
     );
   }
 
@@ -201,6 +204,11 @@ while (!partida.terminada) {
 
   if (entrada === "c") {
     mostrar(partida.calmar());
+    continue;
+  }
+
+  if (entrada === "x") {
+    mostrar(partida.cerrarLista());
     continue;
   }
 

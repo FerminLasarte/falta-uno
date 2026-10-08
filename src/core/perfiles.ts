@@ -1,7 +1,7 @@
 /**
  * Lo que cambia según quién arma el partido. Cada perfil tiene en la agenda a
- * todos los contactos comunes más el suyo; los contactos únicos de los otros
- * perfiles no existen para él.
+ * todos los contactos comunes más el suyo, menos los que excluye; los contactos
+ * únicos de los otros perfiles no existen para él.
  */
 import type { DefinicionContacto, DefinicionPerfil } from "./tipos.js";
 
@@ -12,5 +12,6 @@ export function agendaDe(
 ): DefinicionContacto[] {
   const ajenos = new Set(perfiles.filter((p) => p.id !== perfil.id).map((p) => p.contactoUnico));
   ajenos.delete(perfil.contactoUnico);
+  for (const id of perfil.excluidos ?? []) ajenos.add(id);
   return contactos.filter((c) => !ajenos.has(c.id));
 }

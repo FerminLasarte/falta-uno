@@ -1,23 +1,25 @@
 {
   "id": "pablo_el_pibe",
   "nombre": "Pablo",
+  "retrato": "el pibe, siempre en una juntada",
   "rol": "delantero",
   "habilidad": 74,
   "rasgos": [
     "habilidoso"
   ],
   "probabilidadBajaInicial": 35,
+  "voz": 150,
   "nodoInicial": "abre",
   "nodos": {
     "abre": {
       "mensajes": [
-        "Uh, hoy tenía juntada.",
-        "Pero si me decís que hace falta me escapo un rato."
+        "uh hoy tenía juntada con los de la facu",
+        "pero si me decís q hace falta me escapo un rato"
       ],
       "opciones": [
         {
           "id": "necesito",
-          "texto": "Te necesito, Pablo. Sin vos no llego a diez.",
+          "texto": "te necesito {voc:pablo_el_pibe}, sin vos no llego a diez",
           "costoReloj": 2,
           "efectos": {
             "moral": -2,
@@ -27,7 +29,7 @@
         },
         {
           "id": "restar",
-          "texto": "Si no podés no pasa nada, ya tengo casi todo.",
+          "texto": "si no podés no pasa nada, ya tengo casi todo",
           "costoReloj": 2,
           "efectos": {
             "probabilidadBaja": 30
@@ -47,30 +49,68 @@
     },
     "cierra": {
       "mensajes": [
-        "Bueno, voy un rato y me escapo temprano."
+        "bueno, voy un rato y me escapo temprano"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Dale. Pasame los 1500 ahora así reservo.",
+          "texto": "dale. pasame los 1500 ahora así reservo",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
           },
           "siguiente": null
         },
         {
           "id": "confirma_debe",
-          "texto": "Vení nomás, la plata después.",
+          "texto": "vení nomás, la plata después",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "probabilidadBaja": 30
+            "probabilidadBaja": -5
           },
           "siguiente": null
+        },
+        {
+          "id": "juntada",
+          "texto": "traete a alguno de la juntada, q falta gente",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500,
+            "probabilidadBaja": 15,
+            "trae": [
+              {
+                "nombre": "Uno de la juntada de {pablo_el_pibe}",
+                "rol": "mediocampista",
+                "habilidad": 50,
+                "noViene": {
+                  "probabilidad": 60,
+                  "texto": "el chino no viene, se tomó un fernet más y quedó tirado"
+                }
+              }
+            ]
+          },
+          "siguiente": "juntada",
+          "requiere": {
+            "faltanMin": 7
+          }
         }
       ]
+    },
+    "juntada": {
+      "mensajes": [
+        "el chino se prende, ya tomó dos fernet pero se prende",
+        "la plata la pone él cuando llegue... creo"
+      ],
+      "opciones": []
     }
-  }
+  },
+  "bajas": [
+    {
+      "texto": "me agarraron con el fernet en la juntada, no salgo más de acá jajaja perdón"
+    }
+  ]
 }

@@ -1,9 +1,36 @@
 {
   "chat": "cancha_confirma",
-  "mensajes": [
-    "¡Buenas! Quedaron anotados en el Torneo Relámpago.",
-    "Primera fecha este viernes, 21 h, cancha 3. La seña son {sena} y se paga antes de entrar.",
-    "¿Cómo la van a pagar?"
-  ],
+  "saludo": "¡Buenas! Complejo Los Álamos. ¿Qué buscan para este viernes a las 21?",
+  "competencias": {
+    "partido": {
+      "respuesta": "un turno suelto, para jugar un partido",
+      "titulo": "Partido",
+      "resumen": "un viernes y listo, sin suplentes"
+    },
+    "torneo": {
+      "respuesta": "anotarnos en el torneo relámpago",
+      "titulo": "Torneo",
+      "resumen": "fecha a fecha, con 3 suplentes"
+    }
+  },
+  "preguntaFormato": {
+    "partido": "Perfecto. ¿De cuánto? Tenemos canchas de fútbol 5, 6 y 8.",
+    "torneo": "Perfecto. ¿De cuánto? Tenemos canchas de fútbol 5, 6 y 8. El torneo se juega con 3 suplentes."
+  },
+  "formatos": {
+    "f5": "fútbol 5",
+    "f6": "fútbol 6",
+    "f8": "fútbol 8"
+  },
+  "confirmacion": {
+    "partido": [
+      "Listo, les reservo la cancha 3 este viernes a las 21. La seña son {sena} y se paga antes de entrar.",
+      "¿Cómo la van a pagar?"
+    ],
+    "torneo": [
+      "Quedaron anotados en el Torneo Relámpago. Primera fecha este viernes, 21 h, cancha 3. La seña son {sena} y se paga antes de entrar.",
+      "¿Cómo la van a pagar?"
+    ]
+  },
   "respuesta": "Anotado. Los esperamos a las 21."
 }

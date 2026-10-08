@@ -14,7 +14,9 @@
  */
 import { Partida, type OpcionesPartida, type ResultadoComando } from "./partida.js";
 import { hashTexto } from "./rng.js";
+import type { Apodos } from "./apodos.js";
 import { FINES_CAMPANA, type Campana, type FechaJugada } from "./campana.js";
+import { COMPETENCIAS, FORMATOS, MODO_POR_DEFECTO, type Modo } from "./modo.js";
 import { PERFILES, ROLES, type Rol } from "./tipos.js";
 
 export type Paso =
@@ -26,6 +28,7 @@ export type Paso =
   | readonly ["atender", string]
   | readonly ["escuchar", string]
   | readonly ["calmar"]
+  | readonly ["cerrar"]
   | readonly ["esperar", number];
 
 function aplicar(partida: Partida, paso: Paso): ResultadoComando {
@@ -46,6 +49,8 @@ function aplicar(partida: Partida, paso: Paso): ResultadoComando {
       return partida.escuchar(paso[1]);
     case "calmar":
       return partida.calmar();
+    case "cerrar":
+      return partida.cerrarLista();
     case "esperar":
       return partida.esperar(paso[1]);
   }
@@ -54,11 +59,17 @@ function aplicar(partida: Partida, paso: Paso): ResultadoComando {
 /** Una partida y lo que se hizo en ella. Todo comando que se quiera guardar pasa por acá. */
 export class Registro {
   private readonly lista: Paso[] = [];
+  private msJugados = 0;
 
   constructor(readonly partida: Partida) {}
 
   get pasos(): readonly Paso[] {
     return this.lista;
+  }
+
+  /** Milisegundos reales jugados: la suma de todo el tiempo que pasó. Con esto se fecha lo que hace la vista. */
+  get ms(): number {
+    return this.msJugados;
   }
 
   /**
@@ -80,6 +91,7 @@ export class Registro {
       return;
     }
     if (paso[1] === 0) return;
+    this.msJugados += paso[1];
     const ultimo = this.lista.at(-1);
     if (ultimo?.[0] === "t") this.lista[this.lista.length - 1] = ["t", ultimo[1] + paso[1]];
     else this.lista.push(paso);
@@ -138,7 +150,7 @@ export function huella(texto: string): string {
   return hashTexto(texto).toString(16).padStart(8, "0");
 }
 
-const esTexto = (x: unknown): x is string => typeof x === "string";
+export const esTexto = (x: unknown): x is string => typeof x === "string";
 const esEntero = (x: unknown): x is number => Number.isInteger(x) && (x as number) >= 0;
 
 function esPaso(x: unknown): x is Paso {
@@ -158,6 +170,7 @@ function esPaso(x: unknown): x is Paso {
     case "pagar":
       return x.length === 2 && (ROLES as readonly unknown[]).includes(a);
     case "calmar":
+    case "cerrar":
       return x.length === 1;
     default:
       return false;
@@ -165,7 +178,7 @@ function esPaso(x: unknown): x is Paso {
 }
 
 const esNumero = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x);
-const esObjeto = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null;
+export const esObjeto = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null;
 
 function esFechaJugada(x: unknown): x is FechaJugada {
   if (!esObjeto(x)) return false;
@@ -178,9 +191,23 @@ function esFechaJugada(x: unknown): x is FechaJugada {
   );
 }
 
+export function esModo(x: unknown): x is Modo {
+  return esObjeto(x) && (FORMATOS as readonly unknown[]).includes(x["formato"]) && (COMPETENCIAS as readonly unknown[]).includes(x["competencia"]);
+}
+
+export function esApodos(x: unknown): x is Apodos {
+  if (!esObjeto(x)) return false;
+  const { contactos, vos, grupo } = x;
+  const textos = contactos === undefined || (esObjeto(contactos) && Object.values(contactos).every(esTexto));
+  return textos && (vos === undefined || esTexto(vos)) && (grupo === undefined || esTexto(grupo));
+}
+
+/** Los guardados de antes del modo no lo traen: son del torneo de fútbol 5. */
 function esCampana(x: unknown): x is Campana {
   if (!esObjeto(x)) return false;
   return (
+    (x["modo"] === undefined || esModo(x["modo"])) &&
+    (x["apodos"] === undefined || esApodos(x["apodos"])) &&
     (PERFILES as readonly unknown[]).includes(x["perfil"]) &&
     esTexto(x["semilla"]) &&
     esEntero(x["fecha"]) &&
@@ -195,7 +222,7 @@ function esCampana(x: unknown): x is Campana {
   );
 }
 
-function esViernes(x: unknown): x is ViernesGuardado {
+export function esViernes(x: unknown): x is ViernesGuardado {
   if (!esObjeto(x)) return false;
   return (
     esEntero(x["fecha"]) &&
@@ -217,5 +244,6 @@ export function leerGuardado(texto: string): Guardado | null {
   if (!esObjeto(crudo)) return null;
   const { formato, campana, viernes, vista } = crudo;
   if (formato !== FORMATO_GUARDADO || !esCampana(campana) || !esViernes(viernes)) return null;
-  return { formato, campana, viernes, ...(vista !== undefined ? { vista } : {}) };
+  const conModo: Campana = { ...campana, modo: campana.modo ?? MODO_POR_DEFECTO };
+  return { formato, campana: conModo, viernes, ...(vista !== undefined ? { vista } : {}) };
 }

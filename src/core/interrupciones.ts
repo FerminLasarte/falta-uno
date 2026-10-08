@@ -16,6 +16,8 @@ export interface DefinicionInterrupcion {
   readonly probabilidad: number;
   /** Moral que se pierde por cada acción mientras siga sin atender. */
   readonly drenajePorAccion: number;
+  /** Hasta cuánto drena antes de rendirse: Sofi arranca el capítulo sola. Sin tope, drena siempre. */
+  readonly drenajeMaximo?: number;
   readonly costoAtender: number;
   readonly efectosAtender: Efectos;
   readonly registrarSiIgnorada: TipoEvento;

@@ -29,7 +29,7 @@
   } = $props();
 
   type Renglon =
-    | { tipo: "confirmado"; id: string; nombre: string; rol: Rol; relleno: boolean }
+    | { tipo: "confirmado"; id: string; nombre: string; rol: Rol; relleno: boolean; traidoPor?: string }
     | { tipo: "duda"; id: string; nombre: string; rol: Rol }
     | { tipo: "vacio" };
 
@@ -65,6 +65,10 @@
           <span class="quien">{r.nombre}</span>
           <span class="rol">{ROL_CORTO[r.rol]}</span>
           <span class="marca ok" aria-label="pagado">$</span>
+        {:else if r.tipo === "confirmado" && r.traidoPor}
+          <span class="quien">{r.nombre}</span>
+          <span class="rol">{ROL_CORTO[r.rol]}</span>
+          <span class="marca ok" aria-label="lo trae {r.traidoPor}">+</span>
         {:else}
           <button class="quien" onclick={() => alAbrir(r.id)}>{r.nombre}</button>
           <span class="rol">{ROL_CORTO[r.rol]}</span>
@@ -79,10 +83,10 @@
   </ol>
 
   <div class="pie">
-    {#if roster.faltantes.length === 0}
+    {#if roster.confirmados >= roster.necesarios}
       <span class="completa">Están los {roster.necesarios}</span>
     {:else}
-      <Faltantes faltantes={roster.faltantes} />
+      <Faltantes {roster} />
     {/if}
     <span class="sena" class:corta={!alcanza}>
       Seña {pesos(dinero)} de {pesos(sena)}

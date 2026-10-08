@@ -7,7 +7,7 @@
     "ventaja": "Empezás con plata de sobra: podés tapar agujeros pagando.",
     "desventaja": "Poca moral inicial. Todos esperan que vos pongas.",
     "contactoUnico": "el_politico",
-    "respuesta": "La pongo yo, tranqui.",
+    "respuesta": "la pongo yo, tranqui",
     "resumen": "plata sí, paciencia no · con el Doctor Ferreyra"
   },
   {
@@ -18,7 +18,7 @@
     "ventaja": "Moral alta y la gente te contesta rápido.",
     "desventaja": "No tenés un peso. Dependés de que cada uno ponga lo suyo.",
     "contactoUnico": "el_kiosquero",
-    "respuesta": "La juntamos entre todos, como siempre.",
+    "respuesta": "la juntamos entre todos, como siempre",
     "resumen": "paciencia de sobra, ni un peso · con Don Zenón"
   },
   {
@@ -29,7 +29,8 @@
     "ventaja": "Balance medio en todo.",
     "desventaja": "El jefe te interrumpe mucho más seguido.",
     "contactoUnico": "el_sindicalista",
-    "respuesta": "Te la transfiero cuando salga del laburo.",
+    "excluidos": ["dario_el_profe"],
+    "respuesta": "te la transfiero cuando salga del laburo",
     "resumen": "un poco de todo, el jefe encima · con Beto",
     "probabilidadInterrupciones": {
       "jefe_planilla": 1.5

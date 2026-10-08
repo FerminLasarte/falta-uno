@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { configDeViernes, MODO_POR_DEFECTO } from "../src/core/modo.js";
 import { cargarContenido } from "../src/datos/cargar.js";
 import { revisarPerfiles } from "../src/datos/validar.js";
 import { formatearPesos } from "../src/core/formato.js";
-import type { DefinicionInscripcion } from "../src/core/inscripcion.js";
+import type { InscripcionResuelta } from "../src/core/inscripcion.js";
 import { alDia, CHAT_GRUPO, Partida } from "../src/core/partida.js";
 import { agendaDe } from "../src/core/perfiles.js";
 import { agendaCompleta, CONFIG, contacto, interrupcionSegura, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js";
@@ -20,12 +21,14 @@ describe("la agenda de cada perfil", () => {
     }
   });
 
-  it("los contactos comunes están en todas", () => {
+  it("los contactos comunes están en todas, menos los que el perfil excluye", () => {
     const unicos = new Set(contenido.perfiles.map((p) => p.contactoUnico));
     const comunes = contenido.contactos.filter((c) => !unicos.has(c.id)).map((c) => c.id);
     for (const perfil of contenido.perfiles) {
       const ids = agendaDe(perfil, contenido.perfiles, contenido.contactos).map((c) => c.id);
-      expect(ids).toEqual(expect.arrayContaining(comunes));
+      const excluidos = new Set(perfil.excluidos ?? []);
+      expect(ids).toEqual(expect.arrayContaining(comunes.filter((id) => !excluidos.has(id))));
+      for (const id of excluidos) expect(ids).not.toContain(id);
     }
   });
 
@@ -37,7 +40,7 @@ describe("la agenda de cada perfil", () => {
       agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
       interrupciones: contenido.interrupciones,
       grupo: contenido.grupo,
-      config: contenido.config,
+      config: configDeViernes(contenido.config, MODO_POR_DEFECTO),
       semilla: "arranque",
     });
     alDia(partida);
@@ -48,9 +51,13 @@ describe("la agenda de cada perfil", () => {
 
 describe("la inscripción", () => {
   const cancha = { ...interrupcionSegura("cancha", 1200), de: "Complejo" };
-  const inscripcion: DefinicionInscripcion = {
+  const inscripcion: InscripcionResuelta = {
     chat: "cancha",
-    mensajes: ["Quedaron anotados.", "La seña son {sena}."],
+    charla: [
+      { tuyo: false, texto: "¿Qué buscan?" },
+      { tuyo: true, texto: "el torneo" },
+      { tuyo: false, texto: "La seña son $15.000." },
+    ],
     respuesta: "Anotado.",
   };
   const nueva = (): Partida =>
@@ -66,7 +73,8 @@ describe("la inscripción", () => {
   it("la charla con la cancha ya está, con tu respuesta, en el chat de la interrupción", () => {
     const enCancha = nueva().eventos().filter((e) => e.chat === "cancha");
     expect(enCancha.map((e) => [e.clase, e.de, e.texto])).toEqual([
-      ["mensaje", "Complejo", "Quedaron anotados."],
+      ["mensaje", "Complejo", "¿Qué buscan?"],
+      ["propio", "Vos", "el torneo"],
       ["mensaje", "Complejo", "La seña son $15.000."],
       ["propio", "Vos", PERFIL.respuesta],
     ]);
@@ -129,7 +137,7 @@ describe("lo que el perfil cambia de las interrupciones", () => {
 });
 
 describe("el validador atrapa perfiles mal escritos", () => {
-  const inscripcion: DefinicionInscripcion = { chat: "cancha_confirma", mensajes: ["¿?"], respuesta: "Ok." };
+  const inscripcion = { ...contenido.inscripcion, chat: "cancha_confirma" };
 
   it("los perfiles reales no tienen problemas", () => {
     expect(revisarPerfiles(contenido.perfiles, contenido.contactos, contenido.interrupciones, contenido.inscripcion)).toEqual([]);

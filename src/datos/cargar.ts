@@ -1,30 +1,34 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { z } from "zod";
+import type { Frases } from "../core/frases.js";
 import type { DefinicionGrupo } from "../core/grupo.js";
 import type { DefinicionTorneo } from "../core/campana.js";
 import type { DefinicionInscripcion } from "../core/inscripcion.js";
 import type { DefinicionInterrupcion } from "../core/interrupciones.js";
-import type { Config, DefinicionContacto, DefinicionPerfil } from "../core/tipos.js";
+import type { ConfigContenido } from "../core/modo.js";
+import type { DefinicionContacto, DefinicionPerfil } from "../core/tipos.js";
 import {
   configSchema,
   contactoSchema,
+  frasesSchema,
   grupoSchema,
   inscripcionSchema,
   interrupcionSchema,
   perfilSchema,
   torneoSchema,
 } from "./esquema.js";
-import { revisarGrafo, revisarGrupo, revisarPerfiles, type ProblemaContenido } from "./validar.js";
+import { revisarCondiciones, revisarGrafo, revisarGrupo, revisarMarcas, revisarPerfiles, type ProblemaContenido } from "./validar.js";
 
 export interface Contenido {
-  readonly config: Config;
+  readonly config: ConfigContenido;
   readonly perfiles: readonly DefinicionPerfil[];
   readonly contactos: readonly DefinicionContacto[];
   readonly interrupciones: readonly DefinicionInterrupcion[];
   readonly grupo: DefinicionGrupo;
   readonly inscripcion: DefinicionInscripcion;
   readonly torneo: DefinicionTorneo;
+  readonly frases: Frases;
 }
 
 export class ErrorDeContenido extends Error {
@@ -68,6 +72,7 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
   const grupo = await leer("grupo.json", grupoSchema);
   const inscripcion = await leer("inscripcion.json", inscripcionSchema);
   const torneo = await leer("torneo.json", torneoSchema);
+  const frases = await leer("frases.json", frasesSchema);
 
   const dirContactos = join(raiz, "contactos");
   const archivos = (await readdir(dirContactos)).filter((a) => a.endsWith(".json")).sort();
@@ -98,24 +103,27 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
     problemas.push({ archivo: "contactos/", detalle: "no hay ningún contacto cargado" });
   }
 
+  problemas.push(...revisarCondiciones(contactos));
   if (grupo && config) problemas.push(...revisarGrupo(grupo as DefinicionGrupo, contactos, config));
+  if (grupo && interrupciones) problemas.push(...revisarMarcas(contactos, grupo as DefinicionGrupo, interrupciones as DefinicionInterrupcion[]));
   if (perfiles && interrupciones && inscripcion) {
     problemas.push(
       ...revisarPerfiles(perfiles as DefinicionPerfil[], contactos, interrupciones as DefinicionInterrupcion[], inscripcion),
     );
   }
 
-  if (problemas.length > 0 || !config || !perfiles || !interrupciones || !grupo || !inscripcion || !torneo) {
+  if (problemas.length > 0 || !config || !perfiles || !interrupciones || !grupo || !inscripcion || !torneo || !frases) {
     throw new ErrorDeContenido(problemas);
   }
 
   return {
-    config,
+    config: config as ConfigContenido,
     perfiles: perfiles as DefinicionPerfil[],
     contactos,
     interrupciones: interrupciones as DefinicionInterrupcion[],
     grupo: grupo as DefinicionGrupo,
     inscripcion,
     torneo,
+    frases,
   };
 }

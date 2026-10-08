@@ -1,14 +1,15 @@
 <script lang="ts">
+  import { grupo as grupoDeAmigos } from "./estado/grupo.svelte.js";
   import Depurador from "./Depurador.svelte";
   import Menu from "./Menu.svelte";
   import Escena from "./escena/Escena.svelte";
   import Inscripcion from "./mensajeria/Inscripcion.svelte";
+  import InfoGrupo from "./mensajeria/InfoGrupo.svelte";
   import Mensajeria from "./mensajeria/Mensajeria.svelte";
   import BarraEstado from "./telefono/BarraEstado.svelte";
   import Apagado from "./telefono/Apagado.svelte";
   import Semana from "./telefono/Semana.svelte";
-  import { NOMBRE_GRUPO } from "./mensajeria/rotulos.js";
-  import { formatearHora } from "../core/tiempo.js";
+    import { formatearHora } from "../core/tiempo.js";
   import Isla from "./telefono/Isla.svelte";
   import Pantalla from "./telefono/Pantalla.svelte";
   import { calcularDeterioro } from "./estado/deterioro.js";
@@ -82,15 +83,18 @@
       </div>
     {:else if juego.eleccion}
       <BarraEstado hora={juego.eleccion.hora} restante={juego.eleccion.restante} />
-      <Inscripcion eleccion={juego.eleccion} alElegir={(id) => juego.elegir(id)} />
-    {:else if juego.vista && juego.contenido && juego.pantalla.tipo === "semana"}
-      {@const contenido = juego.contenido}
+      {#if juego.eleccion.grupo}
+        <div class="app-sola"><InfoGrupo info={juego.eleccion.grupo} alListo={(apodos) => juego.empezar(apodos)} /></div>
+      {:else}
+        <Inscripcion eleccion={juego.eleccion} alElegir={(id) => juego.elegir(id)} />
+      {/if}
+    {:else if juego.vista && juego.pantalla.tipo === "semana"}
       <Semana
-        hora={formatearHora(contenido.config.horaInicio - 2)}
+        hora={formatearHora(juego.vista.horaInicio - 2)}
         torneo={juego.vista.torneo}
         campana={juego.vista.campana}
-        sena={contenido.config.senaCancha}
-        nombreGrupo={NOMBRE_GRUPO}
+        sena={juego.vista.sena}
+        nombreGrupo={grupoDeAmigos.nombre}
         complejo={juego.vista.cancha.de}
         chatCancha={juego.vista.cancha.chat}
         alDesbloquear={() => juego.desbloquear()}
@@ -99,7 +103,7 @@
       <BarraEstado hora={juego.vista.hora} restante={juego.vista.restante} />
       <Mensajeria
         vista={juego.vista}
-        sena={juego.contenido.config.senaCancha}
+        sena={juego.vista.sena}
         costoReemplazo={juego.contenido.config.costoVacante}
       />
       <Isla />
@@ -129,6 +133,9 @@
 {/if}
 
 <style>
+  /* "Info del grupo" antes de que haya viernes: ocupa la pantalla como la app. */
+  .app-sola { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--app-fondo); }
+
   .falla,
   .cargando {
     flex: 1;

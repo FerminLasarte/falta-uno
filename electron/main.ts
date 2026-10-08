@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { writeFile } from "node:fs/promises";
 import { CANALES, type Versiones } from "./canal.js";
 import { cargarContenido, ErrorDeContenido, type Contenido } from "../src/datos/cargar.js";
-import { cargar, configurarCarpeta, guardar } from "./guardado.js";
+import { archivar, cargar, configurarCarpeta, guardar } from "./guardado.js";
 import { carpetaBundle } from "./rutas.js";
 import {
   cerrarSteam,
@@ -16,6 +16,10 @@ import {
 } from "./steam.js";
 
 const aquí = carpetaBundle;
+
+/** Lo define el build (scripts/commit.mjs). Corriendo el fuente sin build, no hay. */
+declare const __COMMIT__: string | undefined;
+const COMMIT = typeof __COMMIT__ === "string" ? __COMMIT__ : "sin-build";
 const esProduccion = app.isPackaged;
 
 // El overlay setea switches de línea de comandos: tiene que ser lo primero,
@@ -223,6 +227,7 @@ function registrarCanales(): void {
       plataforma: process.platform,
       arquitectura: process.arch,
       empaquetado: esProduccion,
+      commit: COMMIT,
     };
   });
 
@@ -238,6 +243,10 @@ function registrarCanales(): void {
     evento.returnValue = guardar(nombre, contenido);
   });
   ipcMain.handle(CANALES.cargar, (_e, nombre: string) => cargar(nombre));
+  ipcMain.handle(CANALES.archivar, (_e, nombre: string, contenido: string) => archivar(nombre, contenido));
+  ipcMain.on(CANALES.archivarYa, (evento, nombre: string, contenido: string) => {
+    evento.returnValue = archivar(nombre, contenido);
+  });
   ipcMain.handle(CANALES.archivosEnNube, () => nube.listar());
   ipcMain.handle(CANALES.salir, () => app.quit());
 }

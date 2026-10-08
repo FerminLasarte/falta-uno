@@ -1,6 +1,7 @@
 {
   "id": "el_tano",
   "nombre": "El Tano",
+  "retrato": "pega patadas y se ríe",
   "rol": "defensor",
   "habilidad": 58,
   "rasgos": [
@@ -8,17 +9,26 @@
     "aguantador"
   ],
   "probabilidadBajaInicial": 10,
+  "voz": 112,
   "nodoInicial": "abre",
+  "aperturas": [
+    {
+      "si": {
+        "horaDesde": 1215
+      },
+      "nodo": "tarde"
+    }
+  ],
   "nodos": {
     "abre": {
       "mensajes": [
-        "Yo juego siempre, sabés que sí.",
-        "¿Va a estar el pibe ese que se hace el Messi? Porque si se hace el vivo lo cruzo."
+        "yo juego siempre, sabés q sí",
+        "va el pibe ese q se hace el messi? porq si se hace el vivo lo cruzo y lo dejo de figurita del mundial"
       ],
       "opciones": [
         {
           "id": "tranquilizar",
-          "texto": "Tano, es un picadito. Vengan a jugar y listo.",
+          "texto": "{voc:el_tano} es un picado, venite a jugar y listo",
           "costoReloj": 2,
           "efectos": {
             "moral": -1,
@@ -28,13 +38,31 @@
         },
         {
           "id": "azuzar",
-          "texto": "Va a estar. Marcalo vos que le sacás las ganas.",
+          "texto": "va. marcalo vos q le sacás las ganas",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": 1,
+            "enojo": 15,
+            "otros": [
+              {
+                "contacto": "fede_el_habilidoso",
+                "probabilidadBaja": 15
+              }
+            ]
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "tronco",
+          "texto": "{voc:el_tano} sos un tronco, venís a pegar nomás",
           "costoReloj": 2,
           "efectos": {
             "moral": -2,
-            "enojo": 15
+            "probabilidadBaja": 30,
+            "enojo": 30,
+            "registrar": "apuro"
           },
-          "siguiente": "cierra"
+          "siguiente": "ofendido"
         },
         {
           "id": "dejar",
@@ -48,22 +76,156 @@
         }
       ]
     },
-    "cierra": {
+    "tarde": {
       "mensajes": [
-        "Ahí estoy. Llevo la pelota buena."
+        "uh pensé q no se jugaba, ya me abrí una birra",
+        "igual si falta gente voy, pero llego medio picante eh"
       ],
       "opciones": [
         {
-          "id": "confirma_paga",
-          "texto": "Grande Tano. Los 1500 cuando puedas.",
+          "id": "asi",
+          "texto": "venite así, mejor, pegás con más ganas",
           "costoReloj": 2,
           "efectos": {
-            "estado": "confirmado",
-            "dineroAportado": 1500
+            "moral": 1,
+            "probabilidadBaja": -5,
+            "otros": [
+              {
+                "contacto": "fede_el_habilidoso",
+                "probabilidadBaja": 10
+              }
+            ]
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "cafe",
+          "texto": "tomate un café y vení",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": -10
+          },
+          "siguiente": "cafe"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Dejalo con su birra]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
           },
           "siguiente": null
         }
       ]
+    },
+    "cafe": {
+      "mensajes": [
+        "café? jajaja q sos, mi vieja?",
+        "bueno dale, me lo tomo con fernet"
+      ],
+      "opciones": [
+        {
+          "id": "dale",
+          "texto": "jaja dale",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": 1
+          },
+          "siguiente": "cierra"
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "ahí estoy. llevo la pelota buena, la q no está pinchada"
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "grande {voc:el_tano}. pasame los 1500",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "grande, la guita allá",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": -5
+          },
+          "siguiente": null
+        },
+        {
+          "id": "con_primo",
+          "texto": "y si tu primo está al pedo, traelo",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10,
+            "trae": [
+              {
+                "nombre": "El Gringo, primo de {el_tano}",
+                "rol": "defensor",
+                "habilidad": 48,
+                "noViene": {
+                  "probabilidad": 60,
+                  "texto": "che el gringo al final no viene, se quedó dormido en el sillón. es un animal"
+                }
+              }
+            ]
+          },
+          "siguiente": "primo",
+          "requiere": {
+            "faltanMin": 7
+          }
+        }
+      ]
+    },
+    "ofendido": {
+      "mensajes": [
+        "tronco tu vieja",
+        "jugá con los finitos y después no llores cuando te bailen"
+      ],
+      "opciones": [
+        {
+          "id": "perdon",
+          "texto": "nah {voc:el_tano} sos el alma del equipo, vení",
+          "costoReloj": 4,
+          "efectos": {
+            "moral": -3
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "primo": {
+      "mensajes": [
+        "el gringo? jajaja dale le aviso",
+        "eso sí, pega más q yo. después no lloren"
+      ],
+      "opciones": []
     }
-  }
+  },
+  "bajas": [
+    {
+      "texto": "me quedé dormido con la birra en la mano. no llego loco jajaja perdón"
+    }
+  ]
 }

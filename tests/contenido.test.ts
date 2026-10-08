@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { configDeViernes, MODO_POR_DEFECTO, nombreDelModo, TODOS_LOS_MODOS } from "../src/core/modo.js";
 import { cargarContenido } from "../src/datos/cargar.js";
 import { revisarGrafo, revisarGrupo } from "../src/datos/validar.js";
 import { contactoSchema, grupoSchema } from "../src/datos/esquema.js";
@@ -17,10 +18,13 @@ describe("el contenido real carga y valida", () => {
     expect(contenido.interrupciones.length).toBeGreaterThan(0);
   });
 
-  it("cada perfil tiene más contactos que lugares: le pueden fallar y seguir", () => {
-    for (const perfil of contenido.perfiles) {
-      const agenda = agendaDe(perfil, contenido.perfiles, contenido.contactos);
-      expect(agenda.length, perfil.id).toBeGreaterThan(contenido.config.jugadoresNecesarios);
+  it("en todos los modos, cada perfil tiene más contactos que lugares: le pueden fallar y seguir", () => {
+    for (const modo of TODOS_LOS_MODOS) {
+      const necesarios = configDeViernes(contenido.config, modo).jugadoresNecesarios;
+      for (const perfil of contenido.perfiles) {
+        const agenda = agendaDe(perfil, contenido.perfiles, contenido.contactos);
+        expect(agenda.length, `${perfil.id} en ${nombreDelModo(modo)}`).toBeGreaterThan(necesarios);
+      }
     }
   });
 
@@ -36,8 +40,11 @@ describe("el contenido real carga y valida", () => {
   });
 
   it("la revisión de bajas cae dentro del viernes", () => {
-    expect(contenido.config.minutoRevision).toBeGreaterThan(contenido.config.horaInicio);
-    expect(contenido.config.minutoRevision).toBeLessThan(contenido.config.horaCorte);
+    for (const modo of TODOS_LOS_MODOS) {
+      const config = configDeViernes(contenido.config, modo);
+      expect(config.minutoRevision, nombreDelModo(modo)).toBeGreaterThan(config.horaInicio);
+      expect(config.minutoRevision, nombreDelModo(modo)).toBeLessThan(config.horaCorte);
+    }
   });
 });
 
@@ -146,7 +153,7 @@ describe("un viernes completo con el contenido real", () => {
       agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
       interrupciones: contenido.interrupciones,
       grupo: contenido.grupo,
-      config: contenido.config,
+      config: configDeViernes(contenido.config, MODO_POR_DEFECTO),
       semilla: "viernes-real",
     });
 
@@ -175,12 +182,12 @@ describe("un viernes completo con el contenido real", () => {
     }
   });
 
-  it.each(contenido.perfiles.map((p) => [p.nombre, p] as const))("%s puede llegar a diez", (_, perfil) => {
+  it.each(contenido.perfiles.map((p) => [p.nombre, p] as const))("%s puede llenar la lista", (_, perfil) => {
     const partida = new Partida({
       perfil,
       agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
       interrupciones: [],
-      config: contenido.config,
+      config: configDeViernes(contenido.config, MODO_POR_DEFECTO),
       semilla: "optimo",
     });
     for (const c of partida.contactos()) {
@@ -197,7 +204,7 @@ describe("un viernes completo con el contenido real", () => {
         alDia(partida);
       }
     }
-    expect(partida.roster().confirmados).toBeGreaterThanOrEqual(contenido.config.jugadoresNecesarios);
+    expect(partida.roster().confirmados).toBeGreaterThanOrEqual(partida.config.jugadoresNecesarios);
   });
 });
 

@@ -1,36 +1,38 @@
 {
   "id": "lucho",
   "nombre": "Lucho",
+  "retrato": "vive en la loma del orto",
   "rol": "mediocampista",
   "habilidad": 57,
   "rasgos": [],
   "probabilidadBajaInicial": 20,
+  "voz": 118,
   "nodoInicial": "abre",
   "nodos": {
     "abre": {
       "mensajes": [
-        "¡Obvio que juego!",
-        "El tema es cómo llego, que vivo lejísimos y hoy no tengo el auto."
+        "obvio q juego!",
+        "el tema es cómo llego, vivo en la loma del orto y hoy no tengo el auto"
       ],
       "opciones": [
         {
           "id": "remis",
-          "texto": "Te pago el remis, vení.",
+          "texto": "te pago el remis, vení",
           "costoReloj": 2,
-          "requiere": {
-            "dineroMin": 2500
-          },
           "efectos": {
             "dinero": -2500,
             "estado": "confirmado",
             "probabilidadBaja": -20,
             "registrar": "plata"
           },
-          "siguiente": null
+          "siguiente": null,
+          "requiere": {
+            "dineroMin": 2500
+          }
         },
         {
           "id": "colectivo",
-          "texto": "Tomate el 60, te deja en la puerta.",
+          "texto": "tomate el 60, te deja en la puerta",
           "costoReloj": 2,
           "efectos": {
             "probabilidadBaja": 15,
@@ -40,12 +42,37 @@
         },
         {
           "id": "alguien",
-          "texto": "Preguntá en el grupo si alguien te alcanza.",
+          "texto": "preguntá en el grupo si alguien te alcanza",
           "costoReloj": 2,
           "efectos": {
             "probabilidadBaja": 5
           },
           "siguiente": "cierra"
+        },
+        {
+          "id": "hermano",
+          "texto": "venite con tu hermano q tiene auto, y q juegue él también",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 3000,
+            "probabilidadBaja": 10,
+            "trae": [
+              {
+                "nombre": "Hermano de {lucho}",
+                "rol": "mediocampista",
+                "habilidad": 52,
+                "noViene": {
+                  "probabilidad": 60,
+                  "texto": "mi hermano se fue con el auto a lo de la novia. me tomo el 60, llego igual"
+                }
+              }
+            ]
+          },
+          "siguiente": "hermano",
+          "requiere": {
+            "faltanMin": 7
+          }
         },
         {
           "id": "dejar",
@@ -60,30 +87,43 @@
     },
     "cierra": {
       "mensajes": [
-        "Bueno, me arreglo. Salgo ya así llego."
+        "bueno, me arreglo. salgo ya así llego"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Grande. Los 1500 cuando llegues.",
+          "texto": "grande. los 1500 cuando llegues",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
           },
           "siguiente": null
         },
         {
           "id": "confirma_debe",
-          "texto": "Anotado. La plata la vemos.",
+          "texto": "anotado, la plata la vemos",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "probabilidadBaja": 10
+            "probabilidadBaja": -5
           },
           "siguiente": null
         }
       ]
+    },
+    "hermano": {
+      "mensajes": [
+        "uh sí, le digo. igual juega peor q yo eh",
+        "ahí vamos los dos, ponemos 1500 cada uno"
+      ],
+      "opciones": []
     }
-  }
+  },
+  "bajas": [
+    {
+      "texto": "el 60 no pasa ni en pedo. me vuelvo, perdón"
+    }
+  ]
 }

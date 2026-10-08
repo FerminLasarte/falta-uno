@@ -71,7 +71,7 @@ export function resolver(partida: Partida): Resolucion {
     const faltan = config.jugadoresNecesarios - plantel.length;
     return sinPartido(
       partida,
-      `Quedaron ${plantel.length}/${config.jugadoresNecesarios}. Faltando ${faltan}, no hay picadito.`,
+      `Quedaron ${plantel.length}/${config.jugadoresNecesarios}. Faltando ${faltan}, no hay partido.`,
     );
   }
   if (partida.dinero < config.senaCancha) {
@@ -85,8 +85,12 @@ export function resolver(partida: Partida): Resolucion {
   const base = habilidadPromedio(plantel);
   const desglose: Desglose[] = [
     { concepto: "Habilidad promedio del plantel", valor: Math.round(base) },
-    ...quimica(plantel),
+    ...quimica(plantel, config.composicion),
   ];
+
+  if (config.rival && config.rival.nivel > 0) {
+    desglose.push({ concepto: `Enfrente: ${config.rival.nombre}`, valor: -config.rival.nivel });
+  }
 
   const moral = partida.moral;
   if (moral < 25) desglose.push({ concepto: "Llegás fundido a la cancha", valor: -10 });
@@ -195,7 +199,8 @@ function porQueNoHubo(partida: Partida): Motivo[] {
   const contactos = partida.contactos();
   for (const c of contactos.filter((x) => x.estado === "bajado")) {
     const baja = bitacora.find((e) => e.tipo === "baja_tardia" && e.contactoId === c.id);
-    motivos.push(con(c.id, { hora: baja ? formatearHora(baja.minuto) : null, texto: `${c.nombre} se bajó.` }));
+    const motivo = { hora: baja ? formatearHora(baja.minuto) : null, texto: `${c.nombre} se bajó.` };
+    motivos.push(baja?.detalle ? { ...motivo, porque: baja.detalle } : con(c.id, motivo));
   }
   for (const c of contactos.filter((x) => x.estado === "rechazado")) {
     motivos.push(con(c.id, { hora: c.minutoUltimo === null ? null : formatearHora(c.minutoUltimo), texto: `${c.nombre} no viene.` }));
@@ -340,9 +345,30 @@ function narrar(
         if (id) {
           candidatos.push({
             texto: `Se nota el hueco de ${nombre(id)}. Juegan corriendo de atrás.`,
-            porque: `Se bajó a las ${hora}`,
+            // Si la baja tiene un motivo tuyo (la mentira que se descubrió), se cuenta ese.
+            porque: entrada.detalle ? `${entrada.detalle}. Se bajó a las ${hora}` : `Se bajó a las ${hora}`,
             signo: -1,
             peso: 3,
+            clave,
+          });
+        }
+        break;
+      case "no_vino":
+        candidatos.push({
+          texto: `Falta ${entrada.detalle ?? "uno"}. Juegan con uno menos de los que esperabas.`,
+          porque: `Era el que traía ${nombre(id)}: no lo conocías`,
+          signo: -1,
+          peso: 3,
+          clave,
+        });
+        break;
+      case "trajo":
+        if (id && enPlantel.has(id)) {
+          candidatos.push({
+            texto: `${entrada.detalle ?? "El que trajo"} juega como si los conociera de toda la vida.`,
+            porque: `Lo trajo ${nombre(id)} a las ${hora}`,
+            signo: 0,
+            peso: 2,
             clave,
           });
         }

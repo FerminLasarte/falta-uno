@@ -1,6 +1,7 @@
 {
   "id": "nico_el_cunado",
   "nombre": "Nico",
+  "retrato": "si llueve no viene",
   "rol": "defensor",
   "habilidad": 46,
   "rasgos": [
@@ -8,30 +9,30 @@
     "impuntual"
   ],
   "probabilidadBajaInicial": 45,
+  "voz": 128,
   "nodoInicial": "abre",
   "nodos": {
     "abre": {
       "mensajes": [
-        "Nooo pero yo juego mal, ustedes juegan re bien.",
-        "Me da cosa arruinarles el partido."
+        "nooo pero yo juego re mal, ustedes juegan bien",
+        "me da cosa arruinarles el partido. y encima está por llover"
       ],
       "opciones": [
         {
           "id": "bancar",
-          "texto": "Nico, nadie juega bien. Venís y la pasamos bien.",
+          "texto": "{voc:nico_el_cunado} nadie juega bien, venís y nos cagamos de risa",
           "costoReloj": 2,
           "efectos": {
-            "moral": -1,
+            "moral": -3,
             "probabilidadBaja": -25
           },
           "siguiente": "cierra"
         },
         {
           "id": "presionar",
-          "texto": "Necesito el número, Nico. Aunque sea parate ahí atrás.",
+          "texto": "necesito el número {voc:nico_el_cunado}, aunque sea parate atrás",
           "costoReloj": 2,
           "efectos": {
-            "moral": -2,
             "probabilidadBaja": 20,
             "enojo": 15,
             "registrar": "apuro"
@@ -51,22 +52,23 @@
     },
     "cierra": {
       "mensajes": [
-        "Bueno... dale. Pero no me pongan de arquero, por favor."
+        "bueno... dale. pero no me pongan de arquero porfa"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Hecho. Mandame los 1500.",
+          "texto": "hecho. mandame los 1500",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
           },
           "siguiente": null
         },
         {
           "id": "confirma_gratis",
-          "texto": "Tu parte la pongo yo, vení tranquilo.",
+          "texto": "tu parte la pongo yo, vení tranqui",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
@@ -77,5 +79,10 @@
         }
       ]
     }
-  }
+  },
+  "bajas": [
+    {
+      "texto": "está lloviendo? acá está re nublado. no voy, perdón"
+    }
+  ]
 }

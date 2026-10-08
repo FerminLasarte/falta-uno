@@ -1,9 +1,56 @@
 {
   "horaInicio": 1140,
   "horaCorte": 1260,
-  "jugadoresNecesarios": 10,
-  "senaCancha": 15000,
   "costoVacante": 5000,
-  "umbralBaja": 80,
-  "minutoRevision": 1230
+  "umbralBaja": {
+    "partido": 50,
+    "torneo": 68
+  },
+  "minutoRevision": {
+    "partido": 1230,
+    "torneo": 1230
+  },
+  "suplentesTorneo": 3,
+  "formatos": {
+    "f5": {
+      "nombre": "Fútbol 5",
+      "porEquipo": 5,
+      "sena": 10000,
+      "titulares": {
+        "arquero": 1,
+        "defensor": 2,
+        "mediocampista": 1,
+        "delantero": 1
+      },
+      "minutoRevision": {
+        "partido": 1240
+      }
+    },
+    "f6": {
+      "nombre": "Fútbol 6",
+      "porEquipo": 6,
+      "sena": 12000,
+      "titulares": {
+        "arquero": 1,
+        "defensor": 2,
+        "mediocampista": 2,
+        "delantero": 1
+      },
+      "minutoRevision": {
+        "partido": 1240
+      }
+    },
+    "f8": {
+      "nombre": "Fútbol 8",
+      "porEquipo": 8,
+      "sena": 16000,
+      "titulares": {
+        "arquero": 1,
+        "defensor": 3,
+        "mediocampista": 2,
+        "delantero": 2
+      },
+      "horaInicio": 1125
+    }
+  }
 }

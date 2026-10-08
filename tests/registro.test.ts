@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { opcionesDeViernes } from "../src/core/viernes.js";
 import { cargarContenido } from "../src/datos/cargar.js";
 import { Partida, type OpcionesPartida } from "../src/core/partida.js";
-import { agendaDe } from "../src/core/perfiles.js";
 import { FORMATO_GUARDADO, huella, leerGuardado, Registro, type Guardado, type Paso } from "../src/core/registro.js";
 import { resolver } from "../src/core/resolucion.js";
 import { nuevaCampana } from "../src/core/campana.js";
@@ -13,15 +13,7 @@ const contenido = await cargarContenido();
 /** Como arma el viernes el juego: la agenda del perfil y la charla con la cancha. */
 function opcionesReales(semilla: string, indice = 0): OpcionesPartida {
   const perfil = contenido.perfiles[indice]!;
-  return {
-    perfil,
-    agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
-    interrupciones: contenido.interrupciones,
-    grupo: contenido.grupo,
-    config: contenido.config,
-    inscripcion: contenido.inscripcion,
-    semilla,
-  };
+  return opcionesDeViernes(contenido, perfil, semilla, { fecha: 1, dinero: perfil.dineroInicial });
 }
 
 function nueva(): Registro {
@@ -90,6 +82,15 @@ describe("el registro", () => {
     r.hacer(["escribir", "c0"]);
     r.hacer(["t", 80]);
     expect(r.pasos).toEqual([["t", 250], ["escribir", "c0"], ["t", 80]]);
+  });
+
+  it("suma el tiempo real jugado, para fechar lo que hace la vista", () => {
+    const r = nueva();
+    r.hacer(["t", 100]);
+    r.hacer(["escribir", "c0"]);
+    r.hacer(["t", 250]);
+    r.hacer(["t", 100.5]);
+    expect(r.ms).toBe(350);
   });
 
   it("no anota lo que falló, porque no cambió nada", () => {
@@ -174,6 +175,7 @@ describe("el archivo", () => {
     formato: FORMATO_GUARDADO,
     campana: {
       perfil: "oficinista",
+      modo: { formato: "f5", competencia: "torneo" },
       semilla: "s",
       fecha: 2,
       dinero: -1500,

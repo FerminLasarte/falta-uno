@@ -1,14 +1,21 @@
-<!-- Lo que falta para completar la lista, por puesto: "1 ARQ", "3 DEF". -->
+<!--
+  Lo que falta para completar la lista, por puesto y en suplentes: "1 ARQ",
+  "3 DEF", "3 SUP". En un renglón no entra todo: los suplentes aparecen cuando
+  ya no falta ningún titular.
+-->
 <script lang="ts">
   import type { VistaRoster } from "../../core/partida.js";
   import { ROL_CORTO } from "./rotulos.js";
 
-  let { faltantes }: { faltantes: VistaRoster["faltantes"] } = $props();
+  let { roster, compacto = false }: { roster: VistaRoster; compacto?: boolean } = $props();
 </script>
 
-{#each faltantes as f (f.rol)}
+{#each roster.faltantes as f (f.rol)}
   <span class="chip">{f.faltan} {ROL_CORTO[f.rol]}</span>
 {/each}
+{#if roster.suplentes > 0 && (!compacto || roster.faltantes.length === 0)}
+  <span class="chip">{roster.suplentes} SUP</span>
+{/if}
 
 <style>
   .chip {

@@ -102,8 +102,10 @@ npm install
 | `npm run humo` | Smoke test: levanta el juego, verifica que la ventana cargue, lo cierra. |
 | `npm run jugar` | Juga un viernes completo por consola. Acepta stdin por pipe. |
 | `npm run validar` | Valida todo el contenido y reporta el volumen escrito. |
-| `npm run bot -- 500` | Corre 500 viernes headless por perfil y reporta balance. |
+| `npm run bot -- 500` | Corre 500 viernes headless por perfil y por estilo de jugador, y reporta balance. Acepta `--perfil oficinista`, `--estilo razonable,atento` y `--modo torneo-f5,partido-f8` (o `--modo todos`). |
 | `npm run bot -- 1 --narrar` | Imprime un partido completo con su desglose y narración. |
+| `npm run bot -- 2000 --decisiones` | Contesta al azar y busca decisiones falsas: respuestas que siempre convienen. |
+| `npm run analizar -- carpeta` | Reproduce viernes jugados por personas (`partidas/` o un guardado) y saca el mismo informe que el bot, con la línea de tiempo de cada uno (`--linea`). |
 | `npm test` | Corre la suite. |
 | `npm run typecheck` | `tsc --noEmit` estricto, para el lado Node y para la ventana. |
 
@@ -145,10 +147,14 @@ src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
   roster.ts      Composición del plantel, química y roces.
   resolucion.ts  El algoritmo del partido y la narración atribuida.
   registro.ts    El viernes guardado: la semilla y lo que hiciste, para retomarlo.
+  archivo.ts     El viernes archivado: cada uno en su archivo, con el build y qué pantalla se miraba.
+  viernes.ts     Cómo se arma un viernes desde el contenido: igual al jugarlo, retomarlo y analizarlo.
   campana.ts     Un viernes detrás de otro: plata, prestigio, deuda y cómo termina.
   bitacora.ts    Registro de por qué pasó cada cosa.
 src/datos/       Schema, validador de grafo y carga de contenido.
-src/cli/         Herramientas de consola: jugar, validar, bot.
+src/cli/         Herramientas de consola: jugar, validar, bot y analizar.
+  estilos.ts     Cómo juega el bot: razonable, atento, apurado y el explorador de decisiones.
+  medicion.ts    Medir un viernes: lo que reportan el bot y el analizador, con la misma vara.
 contenido/       Los datos del juego. Un archivo por contacto, más el grupo (grupo.json).
 arte/            La escena en Blender, el script que la exporta y los créditos de assets.
 tests/           Tests sobre el núcleo y el contenido.
@@ -225,22 +231,53 @@ que sí. Un error de contenido rompe la validación, nunca la partida.
 
 ### Balance
 
-El bot juega miles de viernes contra el núcleo headless. Estado actual (300 viernes por perfil; el
-bot calma los roces y no escucha los audios):
+Armás **tu equipo** contra un rival. El formato dice cuántos van: en un partido suelto, los
+titulares (uno al arco); en el torneo, además, tres suplentes del puesto que sean. La agenda es la
+misma en todos los modos, así que el formato es la dificultad:
 
-| Perfil | Llega a 10 | Gana | Moral al final |
+| | Partido | Torneo |
+|---|---|---|
+| Fútbol 5 | 5 | 8 |
+| Fútbol 6 | 6 | 9 |
+| Fútbol 8 | 8 | 11 |
+
+El bot juega miles de viernes contra el núcleo headless, con tres estilos de jugador: **razonable**
+(confirma con la respuesta que menos moral cuesta y calma los roces), **atento** (lo mismo, más lo
+que da prestar atención: escribe primero a los puestos que faltan, usa lo que dijeron los audios,
+atiende a la cancha, no miente sobre lo que la lista va a descubrir y cuida la plata) y **apurado**
+(confirma lo más rápido posible y no atiende a nadie). Con la lista llena atiende lo pendiente y la
+cierra, como en el juego. Lista llena, Oficinista, 500 viernes:
+
+| | razonable | atento | apurado |
 |---|---|---|---|
-| El Acomodado | 92% | 59% | 20 |
-| El Pibe de Barrio | 84% | 68% | 24 |
-| El Oficinista | 84% | 64% | 21 |
+| Partido F5 | 80% | 92% | 19% |
+| Partido F6 | 60% | 94% | 4% |
+| Partido F8 | 71% | 75% | 4% |
+| **Torneo F5** (el slice) | **62%** | **88%** | **20%** |
+| Torneo F6 | 24% | 57% | 6% |
+| Torneo F8 | 26% | 33% | 6% |
 
-Cada perfil tiene en la agenda los doce contactos comunes más el suyo: trece para diez lugares. El
-Acomodado llega a 10 más seguido porque puede pagar reemplazos.
+Se gana entre el 41% y el 53% de los partidos que se juegan: el rival de cada fecha resta su nivel.
 
-**Pendiente del vertical slice:** antes de la vida del grupo, un jugador competente armaba el equipo
-el 100% de las veces. Ahora el viernes se puede perder, pero por el reloj: el bot usa 119 de los 120
-minutos, y escuchar todos los audios además de calmar cada roce lo deja en 18%. El margen de reloj
-es la perilla más sensible del juego.
+Las perillas, en `contenido/config.json` salvo donde se dice:
+
+- **Umbral de baja de las 20:30:** 68 en el torneo, 50 en el partido suelto (la gente se compromete
+  menos). Es un escalón, no una rampa: pocos puntos cambian mucho.
+- **Revisión:** 20:30; en el partido de fútbol 5 y 6, 20:40, para que las bajas lleguen cuando queda
+  poco para reponer.
+- **Fútbol 8** arranca 18:45: más reloj para armar la cancha grande.
+- **Traer a alguien** (en los contactos): se ofrece cuando faltan 7 o más; el invitado juega peor,
+  se va si se va el que lo trajo y falta 60% de las veces.
+- **Interrupciones:** cada una drena hasta un tope y se rinde (`interrupciones.json`), así el que
+  las ignora sufre pero puede llegar.
+- **El rival:** su nivel en `torneo.json` (la primera fecha, 20).
+
+### Partidas de personas
+
+Cada viernes jugado queda en `partidas/` dentro de la carpeta de datos (o de `FALTA_UNO_DATOS`), en
+un archivo por campaña y fecha: la semilla, lo que hizo el jugador, qué pantalla miraba y desde
+cuándo, el commit con el que se construyó el build y la huella del contenido. Solo en el disco, nunca
+en Steam Cloud. `npm run analizar` los reproduce tal cual contra el núcleo.
 
 ## Steam
 

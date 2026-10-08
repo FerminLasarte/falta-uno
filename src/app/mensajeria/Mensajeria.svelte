@@ -15,6 +15,7 @@
   import Chat from "./Chat.svelte";
   import Chats from "./Chats.svelte";
   import Grupo from "./Grupo.svelte";
+  import InfoGrupo from "./InfoGrupo.svelte";
   import Fin from "./Fin.svelte";
   import Partido from "./Partido.svelte";
   import { rivalDe } from "../../core/campana.js";
@@ -93,8 +94,20 @@
       alIrALaCancha={vista.terminada ? alIrALaCancha : null}
       complejo={vista.torneo.complejo}
       alCalmar={() => juego.calmar()}
+      cerrar={vista.cerrar}
+      alCerrar={() => juego.cerrarLista()}
+      alVerInfo={() => juego.ir({ tipo: "info" })}
       escuchados={new Set(vista.audiosEscuchados)}
       alEscuchar={(id) => juego.escuchar(id)}
+    />
+  {:else if pantalla.tipo === "info"}
+    <InfoGrupo
+      info={vista.infoDelGrupo}
+      {volver}
+      alListo={(apodos) => {
+        juego.cambiarApodos(apodos);
+        juego.ir({ tipo: "grupo" });
+      }}
     />
   {:else if pantalla.tipo === "chats"}
     <Chats
@@ -128,7 +141,8 @@
       {volver}
       alVer={(n) => juego.marcarVisto("relato", n)}
       cierre={vista.cierre}
-      alSiguiente={() => juego.siguienteFecha()}
+      partidoSuelto={vista.partidoSuelto}
+      alSiguiente={() => (vista.partidoSuelto ? juego.campanaNueva() : juego.siguienteFecha())}
     />
   {:else if contacto}
     {@const c = contacto}

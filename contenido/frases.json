@@ -1,0 +1,8 @@
+{
+  "saludo": "che jugás hoy a las 21?",
+  "llamada": {
+    "tuya": "📞 Lo llamás a {nombre}.",
+    "respuesta": "bueno bueno ya te dije q voy, cortá"
+  },
+  "baja": "perdón me surgió algo, no llego"
+}

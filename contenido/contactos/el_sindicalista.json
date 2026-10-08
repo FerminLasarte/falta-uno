@@ -1,39 +1,72 @@
 {
   "id": "el_sindicalista",
   "nombre": "Beto",
+  "retrato": "peronista de la vieja, arma los equipos",
   "rol": "defensor",
   "habilidad": 64,
   "rasgos": [
-    "capitan"
+    "capitan",
+    "kuka"
   ],
   "probabilidadBajaInicial": 20,
+  "voz": 102,
   "nodoInicial": "abre",
+  "aperturas": [
+    {
+      "si": {
+        "horaDesde": 1200
+      },
+      "nodo": "tarde"
+    }
+  ],
   "nodos": {
     "abre": {
       "mensajes": [
-        "Contá conmigo, pero te aviso una cosa.",
-        "Si el complejo te quiere cobrar de más, me avisás a mí y lo arreglamos. Con esa gente ya tuve palabras."
+        "compañero! contá conmigo",
+        "eso sí: si el complejo te quiere cobrar de más me avisás. con esa gente ya tuve palabras, el dueño me debe una desde la paritaria del 2019"
       ],
       "opciones": [
         {
           "id": "aceptar_ayuda",
-          "texto": "Te tomo la palabra, Beto. Hablales vos.",
+          "texto": "te tomo la palabra, hablales vos",
           "costoReloj": 4,
           "efectos": {
-            "moral": -2,
             "dinero": 4000,
+            "moral": -2,
             "probabilidadBaja": -15
           },
-          "siguiente": "cierra"
+          "siguiente": "descuento"
         },
         {
           "id": "rechazar_ayuda",
-          "texto": "Está todo bien con la cancha, gracias igual.",
+          "texto": "está todo bien con la cancha, gracias igual",
           "costoReloj": 2,
           "efectos": {
-            "moral": 2
+            "moral": 1
           },
-          "siguiente": "cierra"
+          "siguiente": [
+            {
+              "si": {
+                "confirmado": "santi_el_goleador"
+              },
+              "nodo": "santi"
+            },
+            {
+              "nodo": "cierra"
+            }
+          ]
+        },
+        {
+          "id": "piquete",
+          "texto": "dejá {voc:el_sindicalista}, no me armes un piquete en el complejo",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
+            "probabilidadBaja": 25,
+            "enojo": 30,
+            "registrar": "apuro"
+          },
+          "siguiente": "ofendido"
         },
         {
           "id": "dejar",
@@ -47,22 +80,185 @@
         }
       ]
     },
+    "descuento": {
+      "mensajes": [
+        "listo, ya hablé. nos hacen precio",
+        "vieron q conviene llevarse bien con los trabajadores"
+      ],
+      "opciones": [
+        {
+          "id": "genio",
+          "texto": "sos un genio {voc:el_sindicalista}",
+          "costoReloj": 2,
+          "efectos": {},
+          "siguiente": [
+            {
+              "si": {
+                "confirmado": "santi_el_goleador"
+              },
+              "nodo": "santi"
+            },
+            {
+              "nodo": "cierra"
+            }
+          ]
+        }
+      ]
+    },
+    "santi": {
+      "mensajes": [
+        "vi q está {santi_el_goleador} en la lista. el de las criptos",
+        "q no me venga a explicar la escuela austríaca en el vestuario porq lo cago a trompadas eh"
+      ],
+      "opciones": [
+        {
+          "id": "tranqui",
+          "texto": "tranqui q no habla de política",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "en_contra",
+          "texto": "jugalo en contra y sacate las ganas en la cancha",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
+            "probabilidadBaja": -15,
+            "enojo": 15
+          },
+          "siguiente": "cierra"
+        }
+      ]
+    },
+    "tarde": {
+      "mensajes": [
+        "compañero estoy en una asamblea, terminamos tipo nueve menos cuarto",
+        "si me esperan llego, pero arranquen sin mí"
+      ],
+      "opciones": [
+        {
+          "id": "esperar",
+          "texto": "te esperamos, sin vos no hay quién ordene",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "revolucion",
+          "texto": "dejá la asamblea, la revolución puede esperar",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 20,
+            "enojo": 20
+          },
+          "siguiente": "gorila"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Dejarlo en su asamblea]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "gorila": {
+      "mensajes": [
+        "la revolución? jajaja sos un gorila de manual",
+        "igual voy, porq sin mí ustedes no saben ni dónde queda la cancha. pero me debés una"
+      ],
+      "opciones": [
+        {
+          "id": "trato",
+          "texto": "te debo una",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
+          },
+          "siguiente": null
+        }
+      ]
+    },
     "cierra": {
       "mensajes": [
-        "Ahí estamos entonces. Yo llevo pecheras."
+        "listo, ahí estoy. llevo las pecheras"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Gracias Beto. Los 1500 cuando puedas.",
+          "texto": "joya. pasame los 1500 q estoy juntando",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "joya, la guita la arreglamos allá",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": -5
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "ofendido": {
+      "mensajes": [
+        "piquete? a mí el peronismo no me lo bardeás pibe",
+        "arreglate solo, a ver cuánto te cobran"
+      ],
+      "opciones": [
+        {
+          "id": "perdon",
+          "texto": "perdón {voc:el_sindicalista}, viva perón carajo",
+          "costoReloj": 4,
+          "efectos": {
+            "moral": -4
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
           },
           "siguiente": null
         }
       ]
     }
-  }
+  },
+  "bajas": [
+    {
+      "si": {
+        "elegidoA": {
+          "contacto": "carlos_el_quejoso",
+          "opcion": "arma_carlos"
+        }
+      },
+      "texto": "me enteré q le diste los equipos al gorila de {carlos_el_quejoso}. paso compañero, no juego para la oligarquía",
+      "porque": "Le dijiste a Carlos que armaba él los equipos"
+    },
+    {
+      "texto": "compañero me surgió una asamblea de urgencia. no llego, perdón"
+    }
+  ]
 }

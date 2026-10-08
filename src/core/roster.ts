@@ -1,18 +1,16 @@
 import { ROLES, type DefinicionContacto, type Desglose, type Rasgo, type Rol } from "./tipos.js";
 
-/** Composición ideal para un picadito de F5: dos equipos de cinco. */
-export const COMPOSICION_IDEAL: Readonly<Record<Rol, number>> = {
-  arquero: 2,
-  defensor: 3,
-  mediocampista: 3,
-  delantero: 2,
-};
-
 /** Pares de rasgos que se cruzan en el chat: cuestan moral, pero suman intensidad. */
 /** Más allá de este número, los cruces ya no suman al porcentaje de victoria. */
 export const TOPE_ROCES_CON_BONO = 3;
 
+/**
+ * Pares de rasgos que se pelean. Si dos chocan por más de un lado, se pelean por
+ * el primero de la lista: la política va primero porque es la pelea que se ve.
+ */
 export const PARES_EN_ROCE: readonly (readonly [Rasgo, Rasgo])[] = [
+  ["kuka", "gorila"],
+  ["kuka", "libertario"],
   ["rustico", "habilidoso"],
   ["quejoso", "capitan"],
   ["cagon", "aguantador"],
@@ -30,16 +28,23 @@ export function contarPorRol(plantel: readonly DefinicionContacto[]): Record<Rol
   return conteo;
 }
 
+/**
+ * Lo que falta para el equipo ideal, por puesto, y cuántos suplentes. Los que
+ * sobran de un puesto ya cubierto cuentan como suplentes.
+ */
 export function faltantes(
   plantel: readonly DefinicionContacto[],
-): { rol: Rol; faltan: number }[] {
+  composicion: Readonly<Record<Rol, number>>,
+  necesarios: number,
+): { porPuesto: { rol: Rol; faltan: number }[]; suplentes: number } {
   const conteo = contarPorRol(plantel);
-  return ROLES.map((rol) => ({ rol, faltan: COMPOSICION_IDEAL[rol] - conteo[rol] })).filter(
-    (f) => f.faltan > 0,
-  );
+  const porPuesto = ROLES.map((rol) => ({ rol, faltan: composicion[rol] - conteo[rol] })).filter((f) => f.faltan > 0);
+  const titularesQueFaltan = porPuesto.reduce((suma, f) => suma + f.faltan, 0);
+  const suplentes = Math.max(0, necesarios - plantel.length - titularesQueFaltan);
+  return { porPuesto, suplentes };
 }
 
-/** Roces que se forman al sumar `nuevo` a un plantel ya armado. */
+/** Roces que se forman al sumar `nuevo` a un plantel ya armado. Dos se cruzan una vez, aunque choquen por dos lados. */
 export function rocesAlSumar(
   plantel: readonly DefinicionContacto[],
   nuevo: DefinicionContacto,
@@ -50,7 +55,10 @@ export function rocesAlSumar(
       const cruce =
         (existente.rasgos.includes(x) && nuevo.rasgos.includes(y)) ||
         (existente.rasgos.includes(y) && nuevo.rasgos.includes(x));
-      if (cruce) roces.push({ a: existente.id, b: nuevo.id, rasgos: [x, y] });
+      if (cruce) {
+        roces.push({ a: existente.id, b: nuevo.id, rasgos: [x, y] });
+        break;
+      }
     }
   }
   return roces;
@@ -69,18 +77,18 @@ export function todosLosRoces(plantel: readonly DefinicionContacto[]): Roce[] {
  * Química del plantel, como desglose auditable en vez de un número opaco.
  * Que sea inspeccionable es lo que después permite balancear con el bot.
  */
-export function quimica(plantel: readonly DefinicionContacto[]): Desglose[] {
+export function quimica(plantel: readonly DefinicionContacto[], composicion: Readonly<Record<Rol, number>>): Desglose[] {
   if (plantel.length === 0) return [];
   const conteo = contarPorRol(plantel);
   const desglose: Desglose[] = [];
 
   if (conteo.arquero === 0) {
     desglose.push({ concepto: "Ningún arquero natural", valor: -18 });
-  } else if (conteo.arquero === 1) {
-    desglose.push({ concepto: "Un solo arquero para dos equipos", valor: -7 });
+  } else if (conteo.arquero > composicion.arquero) {
+    desglose.push({ concepto: "Arquero de suplente, por si acaso", valor: 2 });
   }
 
-  const excesoDelanteros = Math.max(0, conteo.delantero - COMPOSICION_IDEAL.delantero);
+  const excesoDelanteros = Math.max(0, conteo.delantero - composicion.delantero);
   if (excesoDelanteros > 0) {
     desglose.push({
       concepto: `${excesoDelanteros} delantero(s) de más, nadie marca`,
@@ -88,7 +96,7 @@ export function quimica(plantel: readonly DefinicionContacto[]): Desglose[] {
     });
   }
 
-  const faltaFondo = Math.max(0, COMPOSICION_IDEAL.defensor - conteo.defensor);
+  const faltaFondo = Math.max(0, composicion.defensor - conteo.defensor);
   if (faltaFondo > 0) {
     desglose.push({ concepto: `Falta fondo (${faltaFondo} defensor/es)`, valor: -3 * faltaFondo });
   }

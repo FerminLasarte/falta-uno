@@ -9,6 +9,7 @@
   final volver al grupo.
 -->
 <script lang="ts">
+  import { grupo as grupoDeAmigos } from "../estado/grupo.svelte.js";
   import { untrack } from "svelte";
   import { AGUANTE, type CierreFecha } from "../../core/campana.js";
   import type { Resolucion } from "../../core/resolucion.js";
@@ -16,7 +17,7 @@
   import BotonPrincipal from "./BotonPrincipal.svelte";
   import Cabecera from "./Cabecera.svelte";
   import type { Vista } from "../estado/juego.svelte.js";
-  import { NOMBRE_GRUPO, pesos, resaltarNombres } from "./rotulos.js";
+  import { pesos, resaltarNombres } from "./rotulos.js";
 
   let {
     resolucion,
@@ -24,6 +25,7 @@
     colores,
     visto,
     cierre,
+    partidoSuelto = false,
     volver,
     alVer,
     alSiguiente,
@@ -36,9 +38,11 @@
     visto: number;
     /** Cómo cierra la fecha: va al final, cuando ya se contó todo. */
     cierre: CierreFecha | null;
+    /** Un partido suelto: termina acá, no hay fecha que viene. */
+    partidoSuelto?: boolean;
     volver: { cuenta: number; alVolver: () => void };
     alVer: (cuantos: number) => void;
-    /** Cerrar la fecha y pasar al viernes siguiente. */
+    /** Cerrar la fecha y pasar al viernes siguiente; en un partido suelto, armar otro. */
     alSiguiente: () => void;
   } = $props();
 
@@ -102,10 +106,11 @@
     if (premio > 0) filas.push({ concepto: "Premio por ganar", monto: conSigno(premio) });
     const total =
       campana.dinero >= 0
-        ? { concepto: campana.fin ? "Les queda" : `Para la fecha ${campana.fecha}`, monto: pesos(campana.dinero) }
+        ? { concepto: campana.fin || partidoSuelto ? "Les queda" : `Para la fecha ${campana.fecha}`, monto: pesos(campana.dinero) }
         : { concepto: "Le quedan debiendo al complejo", monto: pesos(-campana.dinero) };
     let aviso: string | null = null;
-    if (campana.dinero < 0 && campana.fin === "bancarrota") aviso = "Es la segunda fecha seguida debiendo.";
+    if (partidoSuelto) aviso = null;
+    else if (campana.dinero < 0 && campana.fin === "bancarrota") aviso = "Es la segunda fecha seguida debiendo.";
     else if (campana.dinero < 0 && !campana.fin) {
       aviso = `Si la fecha ${campana.fecha} también termina debiendo, el complejo los saca del torneo.`;
     } else if (!campana.fin && campana.fechasSinPartido === AGUANTE.fechasSinPartido - 1) {
@@ -132,7 +137,7 @@
   <section class="marcador" aria-label="Marcador">
     {#if resolucion.hayPartido}
       <div class="equipos">
-        <span class="eq">{NOMBRE_GRUPO}</span>
+        <span class="eq">{grupoDeAmigos.nombre}</span>
         <span class="goles" aria-label="{nuestros} a {suyos}">{nuestros}<span>–</span>{suyos}</span>
         <span class="eq rival">{torneo.rival}</span>
       </div>
@@ -196,8 +201,8 @@
 
   <div class="zona-pulgares">
     {#if terminado}
-      <span class="saldo">{prestigio}</span>
-      <BotonPrincipal accion={{ texto: "Al viernes que viene" }} alTocar={alSiguiente} />
+      {#if !partidoSuelto}<span class="saldo">{prestigio}</span>{/if}
+      <BotonPrincipal accion={{ texto: partidoSuelto ? "Armar otro partido" : "Al viernes que viene" }} alTocar={alSiguiente} />
     {:else}
       <button class="gesto" onclick={verTodo}>Ver todo</button>
     {/if}

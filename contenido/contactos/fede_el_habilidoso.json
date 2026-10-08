@@ -1,34 +1,53 @@
 {
   "id": "fede_el_habilidoso",
   "nombre": "Fede",
+  "retrato": "el crack que se hace rogar",
   "rol": "mediocampista",
   "habilidad": 85,
   "rasgos": [
     "habilidoso"
   ],
   "probabilidadBajaInicial": 40,
+  "voz": 138,
   "nodoInicial": "abre",
+  "aperturas": [
+    {
+      "si": {
+        "horaDesde": 1210
+      },
+      "nodo": "tarde"
+    }
+  ],
   "nodos": {
     "abre": {
       "mensajes": [
-        "Depende quién va.",
-        "Si está el Tano paso, la última vez me pegó tres patadas y se rió."
+        "depende quién va",
+        "si va {el_tano} ni en pedo eh. la última me cagó a patadas y encima se cagaba de risa el hijo de puta"
       ],
       "opciones": [
         {
           "id": "negar",
-          "texto": "El Tano no viene hoy.",
+          "texto": "no va, quedate tranqui",
           "costoReloj": 2,
           "efectos": {
-            "moral": -3,
-            "probabilidadBaja": -20,
-            "enojo": 5
+            "moral": -1,
+            "probabilidadBaja": -20
           },
-          "siguiente": "cierra"
+          "siguiente": [
+            {
+              "si": {
+                "confirmado": "el_tano"
+              },
+              "nodo": "pillado"
+            },
+            {
+              "nodo": "cierra"
+            }
+          ]
         },
         {
-          "id": "sincerar",
-          "texto": "Va a estar, pero jugás en otro equipo. Te lo prometo.",
+          "id": "otro_equipo",
+          "texto": "va pero en el otro equipo, te lo juro por mi vieja",
           "costoReloj": 4,
           "efectos": {
             "moral": -2,
@@ -37,16 +56,29 @@
           "siguiente": "cierra"
         },
         {
-          "id": "apurar",
-          "texto": "Fede, es un picadito de barrio, no la Champions.",
+          "id": "de_nueve",
+          "texto": "jugás de 9 parado, no corrés ni el bondi",
           "costoReloj": 2,
           "efectos": {
-            "moral": -3,
-            "probabilidadBaja": 35,
+            "moral": 1,
+            "probabilidadBaja": -25
+          },
+          "siguiente": "cierra",
+          "requiere": {
+            "escuchado": "fede_rodilla"
+          }
+        },
+        {
+          "id": "cagon",
+          "texto": "{voc:fede_el_habilidoso} no seas cagón, es un picado",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
+            "probabilidadBaja": 30,
             "enojo": 30,
             "registrar": "apuro"
           },
-          "siguiente": "cierra"
+          "siguiente": "ofendido"
         },
         {
           "id": "dejar",
@@ -60,32 +92,147 @@
         }
       ]
     },
+    "tarde": {
+      "mensajes": [
+        "uh recién me escribís",
+        "me invitaron a otro en villa luro a las 21:30 y ya les dije q sí",
+        "igual esa cancha tiene luz, no como la de los álamos q jugás a oscuras"
+      ],
+      "opciones": [
+        {
+          "id": "doble",
+          "texto": "venite al nuestro y después vas al otro. jugás los dos",
+          "costoReloj": 2,
+          "efectos": {},
+          "siguiente": "doble"
+        },
+        {
+          "id": "pagar_otro",
+          "texto": "si venís te pago la cancha del otro",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -2000,
+            "probabilidadBaja": -20,
+            "registrar": "plata"
+          },
+          "siguiente": "cierra",
+          "requiere": {
+            "dineroMin": 2000
+          }
+        },
+        {
+          "id": "suerte",
+          "texto": "[Bueno, suerte]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "doble": {
+      "mensajes": [
+        "dos partidos seguidos? vos me querés matar",
+        "bueno dale. pero juego de 9 y no vuelvo a defender ni aunque se prenda fuego la cancha"
+      ],
+      "opciones": [
+        {
+          "id": "trato",
+          "texto": "trato",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500,
+            "probabilidadBaja": 15
+          },
+          "siguiente": null
+        }
+      ]
+    },
     "cierra": {
       "mensajes": [
-        "Bueno, voy. Pero si me lesionan me debés una."
+        "bueno voy. pero si me lesionan me debés una"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Anotado. Pasame los 1500.",
+          "texto": "anotado. pasame los 1500 ahora",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
           },
           "siguiente": null
         },
         {
           "id": "confirma_debe",
-          "texto": "Dale, vení nomás.",
+          "texto": "dale, la guita la vemos allá",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "probabilidadBaja": 20
+            "probabilidadBaja": -5
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "pillado": {
+      "mensajes": [
+        "{el_tano} está en la lista boludo, lo estoy viendo",
+        "me viste cara de pelotudo? borrame"
+      ],
+      "opciones": [
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "ofendido": {
+      "mensajes": [
+        "cagón las pelotas",
+        "armá con los troncos q tengas, a mí no me escribas más"
+      ],
+      "opciones": [
+        {
+          "id": "perdon",
+          "texto": "nah perdón, sin vos somos un desastre",
+          "costoReloj": 4,
+          "efectos": {
+            "moral": -4
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
           },
           "siguiente": null
         }
       ]
     }
-  }
+  },
+  "bajas": [
+    {
+      "si": {
+        "elegiste": "negar",
+        "confirmado": "el_tano"
+      },
+      "texto": "vi a {el_tano} en la lista. me mentiste en la cara forro, no voy",
+      "porque": "Le dijiste que el Tano no venía"
+    },
+    {
+      "texto": "me re surgió algo, no llego. perdón posta"
+    }
+  ]
 }

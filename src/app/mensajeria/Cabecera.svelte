@@ -12,12 +12,15 @@
     volver = null,
     avatar,
     accion,
+    alTocarTitulo = null,
   }: {
     titulo: string;
     subtitulo?: string | null;
     volver?: { cuenta: number; alVolver: () => void } | null;
     avatar?: Snippet;
     accion?: Snippet;
+    /** Tocar el nombre abre la info, como en cualquier app de mensajes. */
+    alTocarTitulo?: (() => void) | null;
   } = $props();
 </script>
 
@@ -37,10 +40,17 @@
 
   {@render avatar?.()}
 
-  <span class="titulo" class:solo={!avatar}>
-    <strong>{titulo}</strong>
-    {#if subtitulo}<span>{subtitulo}</span>{/if}
-  </span>
+  {#if alTocarTitulo}
+    <button class="titulo" class:solo={!avatar} onclick={alTocarTitulo} aria-label="{titulo}: info">
+      <strong>{titulo}</strong>
+      {#if subtitulo}<span>{subtitulo}</span>{/if}
+    </button>
+  {:else}
+    <span class="titulo" class:solo={!avatar}>
+      <strong>{titulo}</strong>
+      {#if subtitulo}<span>{subtitulo}</span>{/if}
+    </span>
+  {/if}
 
   {@render accion?.()}
 </header>

@@ -1,21 +1,23 @@
 import { describe, expect, it } from "vitest";
 import { quimica, rocesAlSumar, todosLosRoces, habilidadPromedio } from "../src/core/roster.js";
-import { contacto } from "./ayudas.js";
+import { CONFIG, contacto } from "./ayudas.js";
+
+const IDEAL = CONFIG.composicion;
 
 const suma = (d: { valor: number }[]): number => d.reduce((t, x) => t + x.valor, 0);
 
 describe("química del plantel", () => {
   it("castiga fuerte no tener arquero", () => {
     const plantel = Array.from({ length: 10 }, (_, i) => contacto(`c${i}`, { rol: "defensor" }));
-    const conceptos = quimica(plantel).map((d) => d.concepto);
+    const conceptos = quimica(plantel, IDEAL).map((d) => d.concepto);
     expect(conceptos.some((c) => c.includes("Ningún arquero"))).toBe(true);
-    expect(suma(quimica(plantel))).toBeLessThan(0);
+    expect(suma(quimica(plantel, IDEAL))).toBeLessThan(0);
   });
 
   it("castiga menos tener un solo arquero que ninguno", () => {
     const ninguno = Array.from({ length: 10 }, (_, i) => contacto(`c${i}`, { rol: "defensor" }));
     const uno = [contacto("arq", { rol: "arquero" }), ...ninguno.slice(1)];
-    expect(suma(quimica(uno))).toBeGreaterThan(suma(quimica(ninguno)));
+    expect(suma(quimica(uno, IDEAL))).toBeGreaterThan(suma(quimica(ninguno, IDEAL)));
   });
 
   it("invitar cinco delanteros baja el porcentaje, como dice el diseño", () => {
@@ -28,11 +30,11 @@ describe("química del plantel", () => {
     ];
     const equilibrado = [...base, ...Array.from({ length: 5 }, (_, i) => contacto(`m${i}`, { rol: "mediocampista" }))];
     const puroAtaque = [...base, ...Array.from({ length: 5 }, (_, i) => contacto(`f${i}`, { rol: "delantero" }))];
-    expect(suma(quimica(puroAtaque))).toBeLessThan(suma(quimica(equilibrado)));
+    expect(suma(quimica(puroAtaque, IDEAL))).toBeLessThan(suma(quimica(equilibrado, IDEAL)));
   });
 
   it("un plantel vacío no tiene química, no rompe", () => {
-    expect(quimica([])).toEqual([]);
+    expect(quimica([], IDEAL)).toEqual([]);
     expect(habilidadPromedio([])).toBe(0);
   });
 });
@@ -60,7 +62,7 @@ describe("roces", () => {
     const sinRoce = [contacto("a", { rasgos: ["aguantador"] }), contacto("b", { rasgos: [] })];
     const conRoce = [contacto("a", { rasgos: ["rustico"] }), contacto("b", { rasgos: ["habilidoso"] })];
     expect(todosLosRoces(conRoce)).toHaveLength(1);
-    expect(suma(quimica(conRoce))).toBeGreaterThan(suma(quimica(sinRoce)));
+    expect(suma(quimica(conRoce, IDEAL))).toBeGreaterThan(suma(quimica(sinRoce, IDEAL)));
   });
 
   it("no cuenta dos veces el mismo par", () => {

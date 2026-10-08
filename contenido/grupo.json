@@ -2,19 +2,34 @@
   "charlas": [
     {
       "id": "arranque",
-      "cuando": { "desde": 1140, "hasta": 1145 },
+      "cuando": { "desde": 1110, "hasta": 1145 },
       "mensajes": [
-        { "de": "el_tano", "texto": "¿Hoy se juega o qué?" },
-        { "de": "juanma", "texto": "Preguntale al que arma, que está calladito." },
-        { "de": "nico_el_cunado", "texto": "Yo si llueve no voy, aviso desde ahora." }
+        { "de": "el_tano", "texto": "{vos} hoy se juega o q?" },
+        { "de": "juanma", "texto": "preguntale al q arma, q está calladito" },
+        { "de": "nico_el_cunado", "texto": "yo si llueve no voy, aviso desde ahora" }
       ]
     },
     {
       "id": "pelota",
       "cuando": { "desde": 1150, "hasta": 1175 },
       "mensajes": [
-        { "de": "pablo_el_pibe", "texto": "¿El que llega último lleva la pelota?" },
-        { "de": "santi_el_goleador", "texto": "Llevo la mía, pero que nadie me la patee a la autopista." }
+        { "de": "pablo_el_pibe", "texto": "el q llega último lleva la pelota?" },
+        { "de": "santi_el_goleador", "texto": "llevo la mía, pero q nadie me la patee a la autopista q me salió una fortuna" }
+      ]
+    },
+    {
+      "id": "fede_rodilla",
+      "cuando": { "desde": 1155, "hasta": 1185 },
+      "mensajes": [
+        {
+          "de": "fede_el_habilidoso",
+          "audio": {
+            "id": "fede_rodilla",
+            "segundos": 26,
+            "transcripcion": "muchachos si juego, juego de 9 y parado eh. tengo la rodilla q suena como tranquera",
+            "enfriaPorAccion": 1
+          }
+        }
       ]
     },
     {
@@ -26,7 +41,7 @@
           "audio": {
             "id": "zenon_rodilla",
             "segundos": 47,
-            "transcripcion": "Muchachos, buenas noches. Hoy cierro el kiosco a las ocho y media, así que llego justo. Y por favor no me pongan de arquero, que tengo la rodilla a la miseria.",
+            "transcripcion": "muchachos buenas noches. hoy cierro el kiosco a las ocho y media así q llego justo. y por favor no me pongan de arquero q tengo la rodilla a la miseria",
             "enfriaPorAccion": 1
           }
         }
@@ -41,7 +56,7 @@
           "audio": {
             "id": "ruben_guantes",
             "segundos": 31,
-            "transcripcion": "Che, ¿alguien tiene guantes? Los míos los mordió el perro. Si no consigo, atajo con los de lavar los platos, eh. Después no me digan nada.",
+            "transcripcion": "che alguien tiene guantes? los míos los mordió el perro. si no consigo atajo con los de lavar los platos eh, después no me digan nada",
             "alEscuchar": { "moral": 1 }
           }
         }
@@ -56,7 +71,7 @@
           "audio": {
             "id": "carlos_condicion",
             "segundos": 23,
-            "transcripcion": "Yo voy, ¿eh? Pero si a las nueve y diez no hay diez, me vuelvo. Ya me pasó dos veces y no me pasa más.",
+            "transcripcion": "yo voy eh. pero si a las nueve y diez no hay diez me vuelvo. ya me pasó dos veces y no me pasa más",
             "alEscuchar": { "probabilidadBaja": -5 },
             "enfriaPorAccion": 1
           }
@@ -67,16 +82,16 @@
       "id": "mitad",
       "cuando": { "conConfirmados": 5 },
       "mensajes": [
-        { "de": "pablo_el_pibe", "texto": "Vamos que se arma." },
-        { "de": "matias_el_arquero", "texto": "Cinco ya. ¿Los otros cinco los inventamos?" }
+        { "de": "pablo_el_pibe", "texto": "vamos q se arma" },
+        { "de": "matias_el_arquero", "texto": "cinco ya. los otros cinco los inventamos?" }
       ]
     },
     {
       "id": "casi",
       "cuando": { "conConfirmados": 8 },
       "mensajes": [
-        { "de": "fede_el_habilidoso", "texto": "Ocho. Si llegamos a diez pago la coca." },
-        { "de": "el_tano", "texto": "La coca la pagás igual.", "cita": true }
+        { "de": "fede_el_habilidoso", "texto": "ocho. si llegamos a diez pago la coca" },
+        { "de": "el_tano", "texto": "la coca la pagás igual rata", "cita": true }
       ]
     },
     {
@@ -88,7 +103,7 @@
           "audio": {
             "id": "juanma_tarde",
             "segundos": 19,
-            "transcripcion": "Estoy saliendo del laburo recién. Llego nueve y cinco seguro, arranquen sin mí si quieren, pero guárdenme el lugar."
+            "transcripcion": "estoy saliendo del laburo recién. llego nueve y cinco seguro, arranquen sin mí si quieren pero guárdenme el lugar eh"
           }
         }
       ]
@@ -97,46 +112,71 @@
       "id": "refresca",
       "cuando": { "desde": 1245, "hasta": 1255 },
       "mensajes": [
-        { "de": "nico_el_cunado", "texto": "¿Al final se juega? Porque está refrescando." },
-        { "de": "el_sindicalista", "texto": "Nico, son las nueve menos diez.", "cita": true }
+        { "de": "nico_el_cunado", "texto": "al final se juega? porq está refrescando" },
+        { "de": "el_sindicalista", "texto": "{voc:nico_el_cunado} son las nueve menos diez", "cita": true }
       ]
     }
   ],
   "roces": [
     {
+      "entre": ["kuka", "gorila"],
+      "mensajes": [
+        { "de": "b", "texto": "si arma {a} los equipos ya sé cómo es: los buenos para él y a los demás un plan social" },
+        { "de": "a", "texto": "habló el q todavía llora 1500 pesos de hace un mes. gorila y rata, combo completo", "cita": true },
+        { "de": "b", "texto": "rata no, ordenado. algo q ustedes no conocen", "cita": true },
+        { "de": "a", "texto": "te espero en la cancha {b}, traé la calculadora" }
+      ],
+      "calmar": "muchachos regla del grupo: de política y de river-boca no se habla. vengan a jugar"
+    },
+    {
+      "entre": ["kuka", "libertario"],
+      "mensajes": [
+        { "de": "b", "texto": "si viene el kukardo de {a} q deje las pecheras de la cgt en la casa jajaja" },
+        { "de": "a", "texto": "dijo el q perdió el aguinaldo en una cripto q le recomendó un pibe de tiktok", "cita": true },
+        { "de": "b", "texto": "al menos yo laburo, vos hace 15 años q estás \"de licencia gremial\"", "cita": true },
+        { "de": "a", "texto": "vení a decírmelo a la cancha, libertario de cotillón" }
+      ],
+      "calmar": "muchachos regla del grupo: de política y de river-boca no se habla. vengan a jugar"
+    },
+    {
       "entre": ["rustico", "habilidoso"],
       "mensajes": [
-        { "de": "a", "texto": "Si viene {b} yo me pongo de 9, que ese no la pasa ni a palos." },
-        { "de": "b", "texto": "Dijo el que la última vez la tiró a la autopista.", "cita": true },
-        { "de": "a", "texto": "Vení a decírmelo a la cancha, nene.", "cita": true },
-        { "de": "b", "texto": "Jajaja dale, te espero." }
+        { "de": "a", "texto": "si viene {b} q no se haga el messi eh, q lo cruzo en la primera" },
+        { "de": "b", "texto": "dijo el q la última la tiró a la autopista y casi mata a un remisero", "cita": true },
+        { "de": "a", "texto": "vení a decírmelo a la cancha nene", "cita": true },
+        { "de": "b", "texto": "jajaja dale, traé canilleras para el ego" }
       ]
     },
     {
       "entre": ["quejoso", "capitan"],
       "mensajes": [
-        { "de": "a", "texto": "¿Otra vez {b} armando los equipos? Siempre se queda con los mejores." },
-        { "de": "b", "texto": "Si llegaras a horario elegirías vos, {a}.", "cita": true },
-        { "de": "a", "texto": "Ah, ahora el problema soy yo." }
+        { "de": "a", "texto": "otra vez {b} armando los equipos? siempre se queda con los mejores" },
+        { "de": "b", "texto": "si llegaras a horario elegirías vos {a}", "cita": true },
+        { "de": "a", "texto": "ah ahora el problema soy yo. siempre lo mismo en este grupo" }
       ]
     },
     {
       "entre": ["cagon", "aguantador"],
       "mensajes": [
-        { "de": "a", "texto": "Che, ¿viene {b}? La última me dejó la pierna violeta." },
-        { "de": "b", "texto": "Fue una caricia, {a}. Si no aguantás, quedate en tu casa.", "cita": true },
-        { "de": "a", "texto": "Juego lejos tuyo, avisame de qué lado vas." }
+        { "de": "a", "texto": "che viene {b}? la última me dejó la pierna violeta" },
+        { "de": "b", "texto": "fue una caricia {a}. si no aguantás quedate en tu casa", "cita": true },
+        { "de": "a", "texto": "juego lejos tuyo, avisame de q lado vas" }
       ]
     }
   ],
   "calmar": {
     "texto": "Calmar a los muchachos",
     "costoReloj": 2,
-    "mensaje": "Muchachos, bajen un cambio. Es un picado, no la final del mundo.",
+    "mensaje": "muchachos bajen un cambio, es un picado no la final del mundo",
     "respuestas": [
-      { "de": "a", "texto": "Está bien, está bien. Era joda." },
-      { "de": "b", "texto": "Todo bien. Nos vemos en la cancha." }
+      { "de": "a", "texto": "ok ok era joda" },
+      { "de": "b", "texto": "todo bien, nos vemos en la cancha" }
     ],
     "calientaPorAccion": 2
+  },
+  "cerrar": {
+    "texto": "Cerrar la lista",
+    "mensaje": "lista cerrada. 21 en la cancha, no me cuelguen eh",
+    "sinDiez": "muchachos no llegamos. hoy no se juega, perdón"
   }
 }

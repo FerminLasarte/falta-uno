@@ -124,6 +124,7 @@ function estadoDe(cambios: Partial<EstadoDeContacto> = {}): EstadoDeContacto {
     enojo: 0,
     dineroAportado: 0,
     nodoActual: null,
+    elegidas: [],
     historial: [],
     ...cambios,
   };
@@ -287,6 +288,81 @@ describe("la revisión de las 20:30", () => {
     p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
     alDia(p);
     expect(p.estadoDe("c0").estado).toBe("confirmado");
+  });
+});
+
+describe("esperar y cerrar la lista", () => {
+  /** Le escribe y le confirma a los primeros `cuantos`, con la respuesta `opcion`. */
+  function confirmar(p: Partida, cuantos: number, opcion = "si"): void {
+    for (const c of p.contactos().slice(0, cuantos)) {
+      p.escribir(c.id);
+      alDia(p);
+      p.responder(c.id, opcion);
+    }
+  }
+
+  it("esperar cobra una acción cada dos minutos: el que te reclama drena en proporción", () => {
+    const p = nueva(agendaCompleta(), [interrupcionSegura("pareja", 1140)]);
+    p.escribir("c0");
+    alDia(p);
+    expect(p.interrupcionesActivas).toHaveLength(1);
+    const antes = p.moral;
+    p.esperar(8);
+    // Cuatro tramos de dos minutos, cada uno drena 2.
+    expect(antes - p.moral).toBe(8);
+  });
+
+  it("con menos de diez y gente a quien escribirle, todavía no se cierra", () => {
+    const p = nueva();
+    confirmar(p, 9);
+    expect(p.accionCerrar).toBeNull();
+    expect(p.cerrarLista().ok).toBe(false);
+  });
+
+  it("con los diez se cierra: lo avisás en el grupo y el reloj llega a las 21:00", () => {
+    const p = nueva();
+    confirmar(p, 10);
+    const accion = p.accionCerrar;
+    expect(accion).toEqual({ texto: "Cerrar la lista", costoReloj: p.reloj.restante, completa: true });
+    expect(p.cerrarLista().ok).toBe(true);
+    expect(p.eventos().some((e) => e.chat === CHAT_GRUPO && e.clase === "propio" && e.texto === "Lista cerrada.")).toBe(true);
+    expect(p.terminada).toBe(true);
+    expect(p.motivoFin).toBe("corte_horario");
+  });
+
+  it("si a las 20:30 alguien se va a bajar, el reloj se frena ahí y la lista se vuelve a abrir", () => {
+    const p = nueva();
+    p.escribir("c0");
+    alDia(p);
+    p.responder("c0", "apurar"); // probabilidadBaja 90: se baja en la revisión
+    for (const c of p.contactos().slice(1, 10)) {
+      p.escribir(c.id);
+      alDia(p);
+      p.responder(c.id, "si");
+    }
+    expect(p.reloj.minutos).toBeLessThan(CONFIG.minutoRevision);
+    p.cerrarLista();
+    expect(p.terminada).toBe(false);
+    expect(p.reloj.minutos).toBeGreaterThanOrEqual(CONFIG.minutoRevision);
+    expect(p.reloj.minutos).toBeLessThan(CONFIG.minutoRevision + 2);
+    alDia(p);
+    expect(p.estadoDe("c0").estado).toBe("bajado");
+    expect(p.roster().confirmados).toBe(9);
+    // Quedan dos sin escribir: no se puede cerrar hasta llenarla de nuevo.
+    expect(p.accionCerrar).toBeNull();
+  });
+
+  it("sin los diez y sin nada más para hacer, se puede cerrar igual: no hay partido", () => {
+    const agenda = agendaCompleta().slice(0, 3);
+    const p = new Partida({ perfil: { ...PERFIL, dineroInicial: 0 }, agenda, interrupciones: SIN_INTERRUPCIONES, config: CONFIG, semilla: "test" });
+    expect(p.accionCerrar).toBeNull();
+    confirmar(p, 3);
+    // Con lo que aportaron no llega a un reemplazo, y no queda nadie.
+    expect(p.dinero).toBeLessThan(CONFIG.costoVacante);
+    expect(p.accionCerrar?.completa).toBe(false);
+    p.cerrarLista();
+    expect(p.eventos().some((e) => e.clase === "propio" && e.texto === "No llegamos.")).toBe(true);
+    expect(p.terminada).toBe(true);
   });
 });
 

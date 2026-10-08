@@ -9,18 +9,21 @@ import {
   type MensajeGrupo,
   type PlantillaRoce,
 } from "./grupo.js";
-import { textosDeInscripcion, type DefinicionInscripcion } from "./inscripcion.js";
+import { FRASES_POR_DEFECTO, type Frases } from "./frases.js";
+import type { InscripcionResuelta } from "./inscripcion.js";
 import type { DefinicionInterrupcion, InterrupcionActiva } from "./interrupciones.js";
 import { Pulso, type Rango, type Tipeo } from "./pulso.js";
 import { Rng } from "./rng.js";
-import { habilidadPromedio, rocesAlSumar, type Roce } from "./roster.js";
+import { faltantes, habilidadPromedio, rocesAlSumar, type Roce } from "./roster.js";
 import { COSTO, formatearHora, Reloj } from "./tiempo.js";
 import type {
+  Condicion,
   Config,
   DefinicionContacto,
   DefinicionPerfil,
   Efectos,
   EstadoDeContacto,
+  Invitado,
   MotivoFin,
   OpcionDialogo,
   Rasgo,
@@ -36,9 +39,11 @@ export interface OpcionesPartida {
   /** La vida propia del grupo. Sin ella, el grupo solo anuncia. */
   readonly grupo?: DefinicionGrupo;
   /** La charla con la cancha con la que arranca la campaña. Solo el primer viernes la tiene. */
-  readonly inscripcion?: DefinicionInscripcion;
+  readonly inscripcion?: InscripcionResuelta;
   /** La plata con la que llegás al viernes, si no es la inicial del perfil. Negativa es deuda. */
   readonly dineroInicial?: number;
+  /** Tu voz: el saludo, la llamada, la baja genérica. */
+  readonly frases?: Frases;
 }
 
 /** El chat del grupo del equipo, donde se arma la lista. */
@@ -104,12 +109,16 @@ export interface VistaPuesto {
   readonly rol: Rol;
   /** Alguien que entró pagando, no un contacto de la agenda. */
   readonly relleno: boolean;
+  /** Si lo trajo alguien de la agenda, quién. */
+  readonly traidoPor?: string;
 }
 
 export interface VistaRoster {
   readonly confirmados: number;
   readonly necesarios: number;
   readonly faltantes: readonly { rol: Rol; faltan: number }[];
+  /** Cuántos suplentes faltan, además de los puestos. */
+  readonly suplentes: number;
 }
 
 /**
@@ -120,7 +129,9 @@ type Entrega =
   | { readonly tipo: "mensaje"; readonly contacto: string; readonly texto: string }
   | { readonly tipo: "interrupcion"; readonly id: string }
   | { readonly tipo: "insistencia"; readonly id: string; readonly indice: number }
-  | { readonly tipo: "baja"; readonly contacto: string }
+  | { readonly tipo: "baja"; readonly contacto: string; readonly texto: string; readonly porque?: string }
+  /** El que trajo alguien avisa que no viene. */
+  | { readonly tipo: "falta"; readonly invitado: string; readonly texto: string }
   /** Un mensaje suelto de alguien que no está en la agenda, como la cancha. */
   | { readonly tipo: "texto"; readonly chat: string; readonly de: string; readonly texto: string }
   | {
@@ -143,7 +154,11 @@ const CLAMP_MORAL = { min: 0, max: 100 } as const;
 /** Moral que cuesta una pelea en el grupo. Se cobra una vez por confirmación. */
 const COSTO_MORAL_POR_ROCE = 3;
 
-const MENSAJE_BAJA = "Perdón, me surgió algo. No voy a poder llegar.";
+/**
+ * Cuánta espera cuenta como una acción: lo que cuesta mandar un mensaje. Así
+ * esperar media hora con Sofi reclamando drena como quince mensajes, no como uno.
+ */
+const ESPERA_POR_ACCION = COSTO.mensaje;
 
 function limitar(valor: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, valor));
@@ -183,9 +198,16 @@ export class Partida {
   private readonly pulso: Pulso<Entrega>;
   private readonly feed: EventoFeed[] = [];
   private readonly sintéticos: DefinicionContacto[] = [];
+  /** Los que trajo alguien de la agenda, y quién: juegan si él juega. */
+  private readonly traidos = new Map<string, string>();
+  /** Cómo es cada invitado, para saber si a las 20:30 viene. */
+  private readonly invitados = new Map<string, Invitado>();
+  /** Los invitados que al final no vinieron. */
+  private readonly faltaron = new Set<string>();
   /** Ids en el orden en que entraron a la lista. Puede tener bajas: lista() las filtra. */
   private readonly ordenLista: string[] = [];
   private readonly grupo: DefinicionGrupo;
+  private readonly frases: Frases;
   private readonly charlasDisparadas = new Set<string>();
   /** Los audios que ya llegaron al grupo: quién los mandó y si los escuchaste. */
   private readonly audios = new Map<string, { readonly definicion: DefinicionAudio; readonly de: string; escuchado: boolean }>();
@@ -208,6 +230,7 @@ export class Partida {
     this.reloj = new Reloj(opciones.config.horaInicio, opciones.config.horaCorte);
     this.interrupcionesPosibles = opciones.interrupciones;
     this.grupo = opciones.grupo ?? GRUPO_QUIETO;
+    this.frases = opciones.frases ?? FRASES_POR_DEFECTO;
     this._moral = opciones.perfil.moralInicial;
     this._dinero = opciones.dineroInicial ?? opciones.perfil.dineroInicial;
 
@@ -220,6 +243,7 @@ export class Partida {
         enojo: 0,
         dineroAportado: 0,
         nodoActual: null,
+        elegidas: [],
         historial: [],
       });
     }
@@ -265,36 +289,28 @@ export class Partida {
     return e;
   }
 
-  /** Plantel confirmado: contactos reales más los cubiertos con plata. */
+  /** Plantel confirmado: contactos reales, los cubiertos con plata y los que trajo alguien que viene. */
   plantel(): DefinicionContacto[] {
     const reales = [...this.estados.values()]
       .filter((e) => e.estado === "confirmado")
       .map((e) => this.definicion(e.id));
-    return [...reales, ...this.sintéticos];
+    return [...reales, ...this.sintéticos.filter((s) => this.vieneSintetico(s.id))];
+  }
+
+  /** Un pagado viene siempre; uno que trajo alguien, solo si ese alguien viene y él no faltó. */
+  private vieneSintetico(id: string): boolean {
+    const quien = this.traidos.get(id);
+    return quien === undefined || (this.estados.get(quien)?.estado === "confirmado" && !this.faltaron.has(id));
   }
 
   roster(): VistaRoster {
     const plantel = this.plantel();
-    const conteo: Record<Rol, number> = {
-      arquero: 0,
-      defensor: 0,
-      mediocampista: 0,
-      delantero: 0,
-    };
-    for (const c of plantel) conteo[c.rol]++;
-    const ideal: Record<Rol, number> = {
-      arquero: 2,
-      defensor: 3,
-      mediocampista: 3,
-      delantero: 2,
-    };
-    const faltantes = (Object.keys(ideal) as Rol[])
-      .map((rol) => ({ rol, faltan: ideal[rol] - conteo[rol] }))
-      .filter((f) => f.faltan > 0);
+    const { porPuesto, suplentes } = faltantes(plantel, this.config.composicion, this.config.jugadoresNecesarios);
     return {
       confirmados: plantel.length,
       necesarios: this.config.jugadoresNecesarios,
-      faltantes,
+      faltantes: porPuesto,
+      suplentes,
     };
   }
 
@@ -303,7 +319,13 @@ export class Partida {
     const rellenos = new Map(this.sintéticos.map((s) => [s.id, s]));
     return this.ordenLista.flatMap((id): VistaPuesto[] => {
       const relleno = rellenos.get(id);
-      if (relleno) return [{ id, nombre: relleno.nombre, rol: relleno.rol, relleno: true }];
+      if (relleno) {
+        if (!this.vieneSintetico(id)) return [];
+        const quien = this.traidos.get(id);
+        return quien === undefined
+          ? [{ id, nombre: relleno.nombre, rol: relleno.rol, relleno: true }]
+          : [{ id, nombre: relleno.nombre, rol: relleno.rol, relleno: false, traidoPor: this.definicion(quien).nombre }];
+      }
       if (this.estadoDe(id).estado !== "confirmado") return [];
       const d = this.definicion(id);
       return [{ id, nombre: d.nombre, rol: d.rol, relleno: false }];
@@ -338,7 +360,7 @@ export class Partida {
     if (this.pulso.enCamino(id)) return [];
     const nodo = this.definicion(id).nodos[estado.nodoActual];
     if (!nodo) return [];
-    return nodo.opciones.filter((o) => this.cumpleRequisitos(o));
+    return nodo.opciones.filter((o) => !o.requiere || this.cumple(o.requiere, id));
   }
 
   eventos(): readonly EventoFeed[] {
@@ -378,6 +400,26 @@ export class Partida {
     };
   }
 
+  /**
+   * Cerrar la lista: con los diez, o cuando ya no queda nada por hacer para
+   * llegar (nadie a quien escribirle, nadie con quien seguir, ni plata para un
+   * reemplazo). Cuesta lo que falta para las 21:00. Null si todavía no se puede.
+   */
+  get accionCerrar(): { texto: string; costoReloj: number; completa: boolean } | null {
+    if (this._terminada) return null;
+    const completa = this.roster().confirmados >= this.config.jugadoresNecesarios;
+    if (!completa && this.quedaAlgoPorHacer()) return null;
+    return { texto: this.grupo.cerrar.texto, costoReloj: this.reloj.restante, completa };
+  }
+
+  /** Si todavía se puede hacer algo para llenar la lista. */
+  private quedaAlgoPorHacer(): boolean {
+    if (this._dinero >= this.config.costoVacante) return true;
+    return [...this.estados.values()].some(
+      (e) => e.estado === "sin_contactar" || this.enCamino(e.id) || this.opcionesDisponibles(e.id).length > 0,
+    );
+  }
+
   /** Quién se ve escribiendo ahora, un renglón por chat. Terminado el viernes, ya nadie. */
   escribiendo(): Tipeo[] {
     return this._terminada ? [] : this.pulso.escribiendo();
@@ -407,10 +449,10 @@ export class Partida {
         return this.fallo(`Ya le escribiste a ${this.definicion(id).nombre}.`);
       }
       const definicion = this.definicion(id);
-      this.emitir("propio", `Che, ¿jugás hoy a las 21?`, definicion.nombre, id);
+      this.emitir("propio", this.frases.saludo, definicion.nombre, id);
       this.consumir(COSTO.mensaje);
       estado.estado = "esperando";
-      estado.nodoActual = definicion.nodoInicial;
+      estado.nodoActual = definicion.aperturas?.find((a) => this.cumple(a.si, id))?.nodo ?? definicion.nodoInicial;
       this.entregarNodo(id);
       return this.exito();
     });
@@ -426,6 +468,7 @@ export class Partida {
       const estado = this.estadoDe(id);
 
       this.emitir("propio", opcion.texto, definicion.nombre, id);
+      estado.elegidas.push(opcion.id);
       this.consumir(opcion.costoReloj);
       this.aplicarEfectos(id, opcion.efectos);
 
@@ -435,7 +478,10 @@ export class Partida {
         this.emitir("alerta", `${definicion.nombre} no viene.`, "Sistema", id);
       }
 
-      estado.nodoActual = opcion.siguiente;
+      // La charla sigue por el primer desvío que se cumpla, ya con lo que provocó esta respuesta.
+      estado.nodoActual = Array.isArray(opcion.siguiente)
+        ? (opcion.siguiente.find((d) => !d.si || this.cumple(d.si, id))?.nodo ?? null)
+        : (opcion.siguiente as string | null);
       if (estado.nodoActual !== null) this.entregarNodo(id);
       return this.exito();
     });
@@ -449,13 +495,13 @@ export class Partida {
       if (estado.estado === "rechazado" || estado.estado === "bajado") {
         return this.fallo(`${definicion.nombre} ya te dijo que no.`);
       }
-      this.emitir("propio", `📞 Lo llamás a ${definicion.nombre}.`, definicion.nombre, id);
+      this.emitir("propio", this.frases.llamada.tuya.replaceAll("{nombre}", definicion.nombre), definicion.nombre, id);
       this.consumir(COSTO.llamar);
       this.ajustarMoral(-3);
       estado.probabilidadBaja = limitar(estado.probabilidadBaja - 30, 0, 100);
       estado.enojo = limitar(estado.enojo + 10, 0, 100);
       this.bitacora.registrar("apuro", this.reloj.minutos, id, "lo llamaste por teléfono");
-      this.emitir("mensaje", `Bueno, bueno, ya te dije que voy. Cortá.`, definicion.nombre, id);
+      this.emitir("mensaje", this.frases.llamada.respuesta, definicion.nombre, id);
       return this.exito();
     });
   }
@@ -537,7 +583,8 @@ export class Partida {
       if (!primero) return this.fallo("No hay nadie peleándose en el grupo.");
       this.rocesActivos = [];
       const { calmar } = this.grupo;
-      this.emitir("propio", calmar.mensaje, "Vos", CHAT_GRUPO);
+      const { plantilla, a, b } = this.plantillaDe(primero);
+      this.emitir("propio", plantilla?.calmar ?? calmar.mensaje, "Vos", CHAT_GRUPO);
       this.consumir(calmar.costoReloj);
       for (const roce of roces) {
         this.bitacora.registrar(
@@ -547,17 +594,36 @@ export class Partida {
           `${this.definicion(roce.a).nombre} y ${this.definicion(roce.b).nombre}`,
         );
       }
-      const { a, b } = this.plantillaDe(primero);
       this.programarEnGrupo(calmar.respuestas, { a, b });
       return this.exito();
     });
   }
 
-  /** Dejás pasar el tiempo a propósito. */
+  /** Dejás pasar el tiempo a propósito. Cada dos minutos de espera cuentan como una acción. */
   esperar(minutos: number): ResultadoComando {
     return this.ejecutar(() => {
       if (minutos <= 0) return this.fallo("Tenés que esperar al menos un minuto.");
-      this.consumir(minutos);
+      this.esperarPorTramos(minutos);
+      return this.exito();
+    });
+  }
+
+  /**
+   * Cerrás la lista: lo avisás en el grupo y el reloj corre hasta las 21:00. Se
+   * frena si en el camino algo te reclama: la revisión de las 20:30 encuentra a
+   * alguien que se va a bajar (la baja llega y la lista se vuelve a abrir) o cae
+   * una interrupción. La espera es un solo toque: si no se frenara, no habría
+   * cómo atender lo que llega en el medio.
+   */
+  cerrarLista(): ResultadoComando {
+    return this.ejecutar(() => {
+      const accion = this.accionCerrar;
+      if (!accion) return this.fallo("Todavía no se puede cerrar la lista.");
+      const { cerrar } = this.grupo;
+      this.emitir("propio", accion.completa ? cerrar.mensaje : cerrar.sinDiez, "Vos", CHAT_GRUPO);
+      this.esperarPorTramos(this.reloj.restante, () =>
+        this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta" || e.tipo === "interrupcion"),
+      );
       return this.exito();
     });
   }
@@ -585,13 +651,13 @@ export class Partida {
   // ----------------------------------------------------------------- interno
 
   /**
-   * La charla con la cancha que ya estaba antes de las 19:00, con lo que le
-   * contestaste, que es el perfil. La cancha contesta por el pulso, como todos.
+   * La charla con la cancha que ya estaba antes del viernes, con lo que le
+   * contestaste: el modo y, al final, el perfil. La cancha contesta por el pulso, como todos.
    */
-  private inscribir(inscripcion: DefinicionInscripcion): void {
+  private inscribir(inscripcion: InscripcionResuelta): void {
     const { chat, respuesta } = inscripcion;
     const { de } = this.interrupcion(chat);
-    for (const texto of textosDeInscripcion(inscripcion, this.config)) this.emitir("mensaje", texto, de, chat);
+    for (const r of inscripcion.charla) this.emitir(r.tuyo ? "propio" : "mensaje", r.texto, r.tuyo ? "Vos" : de, chat);
     this.emitir("propio", this.perfil.respuesta, "Vos", chat);
     this.pulso.tipear(chat, de, respuesta, { tipo: "texto", chat, de, texto: respuesta });
   }
@@ -614,14 +680,20 @@ export class Partida {
     return { ok: false, error, nuevos: [] };
   }
 
-  private cumpleRequisitos(opcion: OpcionDialogo): boolean {
-    const r = opcion.requiere;
-    if (!r) return true;
-    if (r.dineroMin !== undefined && this._dinero < r.dineroMin) return false;
-    if (r.moralMin !== undefined && this._moral < r.moralMin) return false;
-    if (r.horaDesde !== undefined && this.reloj.minutos < r.horaDesde) return false;
-    if (r.horaHasta !== undefined && this.reloj.minutos > r.horaHasta) return false;
-    if (r.escuchado !== undefined && !this.escuchado(r.escuchado)) return false;
+  /** Si la condición es cierta ahora. `id` es el contacto del que se habla: el de `elegiste`. */
+  private cumple(c: Condicion, id: string): boolean {
+    const confirmado = (otro: string): boolean => this.estados.get(otro)?.estado === "confirmado";
+    if (c.dineroMin !== undefined && this._dinero < c.dineroMin) return false;
+    if (c.moralMin !== undefined && this._moral < c.moralMin) return false;
+    if (c.horaDesde !== undefined && this.reloj.minutos < c.horaDesde) return false;
+    if (c.horaHasta !== undefined && this.reloj.minutos > c.horaHasta) return false;
+    if (c.escuchado !== undefined && !this.escuchado(c.escuchado)) return false;
+    if (c.confirmado !== undefined && !confirmado(c.confirmado)) return false;
+    if (c.noConfirmado !== undefined && confirmado(c.noConfirmado)) return false;
+    if (c.confirmadosMin !== undefined && this.roster().confirmados < c.confirmadosMin) return false;
+    if (c.faltanMin !== undefined && this.config.jugadoresNecesarios - this.roster().confirmados < c.faltanMin) return false;
+    if (c.elegiste !== undefined && !this.estadoDe(id).elegidas.includes(c.elegiste)) return false;
+    if (c.elegidoA !== undefined && !this.estados.get(c.elegidoA.contacto)?.elegidas.includes(c.elegidoA.opcion)) return false;
     return true;
   }
 
@@ -695,12 +767,25 @@ export class Partida {
         if (estado.estado !== "confirmado") return;
         const definicion = this.definicion(entrega.contacto);
         estado.estado = "bajado";
-        this.bitacora.registrar("baja_tardia", this.reloj.minutos, estado.id);
-        this.emitir("alerta", MENSAJE_BAJA, definicion.nombre, estado.id);
+        this.bitacora.registrar("baja_tardia", this.reloj.minutos, estado.id, entrega.porque);
+        this.emitir("alerta", entrega.texto, definicion.nombre, estado.id);
         this.emitir("alerta", `${definicion.nombre} se bajó de la lista.`, "Sistema", CHAT_GRUPO);
-        this.ajustarMoral(-6);
+        this.ajustarMoral(-4);
         // La última baja en llegar cierra la revisión con el conteo que quedó.
-        if (!this.pulso.alguna((e) => e.tipo === "baja")) this.anunciarRevision();
+        if (!this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta")) this.anunciarRevision();
+        return;
+      }
+      case "falta": {
+        const quien = this.traidos.get(entrega.invitado);
+        if (!quien || !this.vieneSintetico(entrega.invitado)) return;
+        const invitado = this.invitados.get(entrega.invitado)!;
+        this.faltaron.add(entrega.invitado);
+        this.bitacora.registrar("no_vino", this.reloj.minutos, quien, invitado.nombre);
+        const de = this.definicion(quien).nombre;
+        this.emitir("alerta", entrega.texto, de, quien);
+        this.emitir("alerta", `${invitado.nombre} no viene.`, "Sistema", CHAT_GRUPO);
+        this.ajustarMoral(-3);
+        if (!this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta")) this.anunciarRevision();
         return;
       }
     }
@@ -738,6 +823,32 @@ export class Partida {
       this._dinero += efectos.dineroAportado;
     }
     if (efectos.estado !== undefined) estado.estado = efectos.estado;
+    // El que trae va primero en la lista, y los suyos después.
+    if (efectos.trae?.length && estado.estado === "confirmado" && !this.ordenLista.includes(id)) this.ordenLista.push(id);
+    for (const [i, invitado] of (efectos.trae ?? []).entries()) {
+      const traido: DefinicionContacto = {
+        id: `${id}_trae_${estado.elegidas.length}_${i}`,
+        nombre: invitado.nombre,
+        rol: invitado.rol,
+        habilidad: invitado.habilidad,
+        rasgos: [],
+        probabilidadBajaInicial: 0,
+        nodoInicial: "",
+        nodos: {},
+      };
+      this.sintéticos.push(traido);
+      this.traidos.set(traido.id, id);
+      this.invitados.set(traido.id, invitado);
+      this.ordenLista.push(traido.id);
+      this.bitacora.registrar("trajo", this.reloj.minutos, id, invitado.nombre);
+    }
+    // Lo que le llega a otro: Beto se entera de que los equipos los arma Carlos.
+    for (const otro of efectos.otros ?? []) {
+      const suyo = this.estados.get(otro.contacto);
+      if (!suyo) continue;
+      if (otro.probabilidadBaja !== undefined) suyo.probabilidadBaja = limitar(suyo.probabilidadBaja + otro.probabilidadBaja, 0, 100);
+      if (otro.enojo !== undefined) suyo.enojo = limitar(suyo.enojo + otro.enojo, 0, 100);
+    }
     if (efectos.registrar !== undefined) {
       this.bitacora.registrar(efectos.registrar, this.reloj.minutos, id);
     }
@@ -796,6 +907,16 @@ export class Partida {
 
   private ajustarMoral(delta: number): void {
     this._moral = limitar(this._moral + delta, CLAMP_MORAL.min, CLAMP_MORAL.max);
+  }
+
+  /** Deja correr el reloj de a una acción por tramo, hasta que se acabe, se agote la moral o `frenar` diga basta. */
+  private esperarPorTramos(minutos: number, frenar: () => boolean = () => false): void {
+    for (let falta = minutos; falta > 0 && !this.reloj.agotado && this._moral > 0; ) {
+      const tramo = Math.min(ESPERA_POR_ACCION, falta);
+      this.consumir(tramo);
+      falta -= tramo;
+      if (frenar()) return;
+    }
   }
 
   /** Toda acción que consume reloj pasa por acá: dispara triggers y drenajes. */
@@ -878,7 +999,11 @@ export class Partida {
       if (aviso !== undefined) this.emitir("alerta", aviso, "Sistema", CHAT_GRUPO);
       return;
     }
-    const nombres = par && { a: this.definicion(par.a).nombre, b: this.definicion(par.b).nombre };
+    // Adentro de lo que escriben, los nombres van como se escriben en un grupo: en minúscula.
+    const nombres = par && {
+      a: this.definicion(par.a).nombre.toLowerCase(),
+      b: this.definicion(par.b).nombre.toLowerCase(),
+    };
     const completar = (texto: string): string =>
       nombres ? texto.replaceAll("{a}", nombres.a).replaceAll("{b}", nombres.b) : texto;
     let anterior: { de: string; texto: string } | undefined;
@@ -902,7 +1027,10 @@ export class Partida {
 
   private drenarPorInterrupciones(): void {
     for (const activa of this.interrupcionesActivas) {
-      const drenaje = activa.definicion.drenajePorAccion;
+      // Ignorada mucho tiempo, se rinde: deja de drenar. Lo que te costó, ya te costó.
+      const tope = activa.definicion.drenajeMaximo ?? Number.POSITIVE_INFINITY;
+      const drenaje = Math.min(activa.definicion.drenajePorAccion, tope - activa.drenajeAcumulado);
+      if (drenaje <= 0) continue;
       activa.drenajeAcumulado += drenaje;
       this.ajustarMoral(-drenaje);
       if (activa.drenajeAcumulado >= 6 && this.bitacora.deContacto(activa.definicion.id).length === 0) {
@@ -938,8 +1066,10 @@ export class Partida {
   }
 
   /**
-   * A las 20:30 los que quedaron calientes se bajan. Quién se baja se decide en
-   * ese minuto; el mensaje llega por el pulso y la baja cuenta cuando llega.
+   * A las 20:30 los que quedaron calientes se bajan, y también los que tienen un
+   * motivo propio que se cumplió (la mentira que se descubrió), aunque estén
+   * tranquilos. Quién se baja se decide en ese minuto; el mensaje llega por el
+   * pulso y la baja cuenta cuando llega.
    */
   private revisarBajas(): void {
     if (this._revisionHecha) return;
@@ -949,11 +1079,28 @@ export class Partida {
     let hayBajas = false;
     for (const estado of this.estados.values()) {
       if (estado.estado !== "confirmado") continue;
-      if (estado.probabilidadBaja <= this.config.umbralBaja) continue;
       const definicion = this.definicion(estado.id);
-      this.pulso.tipear(estado.id, definicion.nombre, MENSAJE_BAJA, {
+      const motivo = definicion.bajas?.find((b) => b.si && this.cumple(b.si, estado.id));
+      if (!motivo && estado.probabilidadBaja <= this.config.umbralBaja) continue;
+      const baja = motivo ?? definicion.bajas?.find((b) => !b.si);
+      const texto = baja?.texto ?? this.frases.baja;
+      this.pulso.tipear(estado.id, definicion.nombre, texto, {
         tipo: "baja",
         contacto: estado.id,
+        texto,
+        ...(baja?.porque ? { porque: baja.porque } : {}),
+      });
+      hayBajas = true;
+    }
+    // Los invitados de los que vienen: no los conocés, y alguno avisa que no viene.
+    for (const [id, invitado] of this.invitados) {
+      if (!invitado.noViene || !this.vieneSintetico(id)) continue;
+      if (!this.rng.ocurre(invitado.noViene.probabilidad)) continue;
+      const quien = this.traidos.get(id)!;
+      this.pulso.tipear(quien, this.definicion(quien).nombre, invitado.noViene.texto, {
+        tipo: "falta",
+        invitado: id,
+        texto: invitado.noViene.texto,
       });
       hayBajas = true;
     }

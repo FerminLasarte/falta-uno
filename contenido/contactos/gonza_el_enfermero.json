@@ -1,23 +1,25 @@
 {
   "id": "gonza_el_enfermero",
   "nombre": "Gonza",
+  "retrato": "de guardia en el hospital",
   "rol": "arquero",
   "habilidad": 66,
   "rasgos": [
     "aguantador"
   ],
   "probabilidadBajaInicial": 25,
+  "voz": 116,
   "nodoInicial": "abre",
   "nodos": {
     "abre": {
       "mensajes": [
-        "Estoy de guardia hasta las 20:30.",
-        "Si no entra nadie descompuesto, voy. Pero no te prometo nada."
+        "estoy de guardia hasta las 20:30",
+        "si no entra nadie hecho mierda voy. pero no te prometo nada"
       ],
       "opciones": [
         {
           "id": "bancar",
-          "texto": "Te esperamos. Sin vos no hay arquero.",
+          "texto": "te esperamos, sin vos no hay arquero",
           "costoReloj": 2,
           "efectos": {
             "moral": -1,
@@ -27,7 +29,7 @@
         },
         {
           "id": "apurar",
-          "texto": "Pedí salir antes, dale. Es un partido nomás.",
+          "texto": "pedí salir antes, dale, es un partido nomás",
           "costoReloj": 2,
           "efectos": {
             "probabilidadBaja": 20,
@@ -49,30 +51,36 @@
     },
     "cierra": {
       "mensajes": [
-        "Listo. Si me llaman de la guardia salgo corriendo, eh."
+        "listo. si me llaman de la guardia salgo corriendo eh"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Hecho. Pasame los 1500 cuando puedas.",
+          "texto": "hecho. pasame los 1500 cuando puedas",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
           },
           "siguiente": null
         },
         {
           "id": "confirma_debe",
-          "texto": "Vení directo de la guardia, la plata después.",
+          "texto": "vení directo, la plata después",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "probabilidadBaja": 10
+            "probabilidadBaja": -5
           },
           "siguiente": null
         }
       ]
     }
-  }
+  },
+  "bajas": [
+    {
+      "texto": "entró uno con un tenedor clavado en la mano. literal. no llego"
+    }
+  ]
 }

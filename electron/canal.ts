@@ -11,6 +11,8 @@ export interface Versiones {
   readonly plataforma: string;
   readonly arquitectura: string;
   readonly empaquetado: boolean;
+  /** El commit con el que se construyó el build, con "+" si había cambios sin commitear. */
+  readonly commit: string;
 }
 
 export interface ResultadoGuardado {
@@ -32,6 +34,10 @@ export interface ApiPuente {
    */
   guardarYa(nombre: string, contenido: string): ResultadoGuardado;
   cargar(nombre: string): Promise<{ contenido: string | null; origen: string | null }>;
+  /** Deja un viernes jugado en `partidas/`, solo en el disco. */
+  archivar(nombre: string, contenido: string): Promise<boolean>;
+  /** Lo mismo, bloqueando hasta terminar: para cuando se cierra la ventana. */
+  archivarYa(nombre: string, contenido: string): boolean;
   archivosEnNube(): Promise<{ nombre: string; bytes: number }[]>;
   /** Cierra el juego. Lo que haya que guardar se guarda al cerrarse la ventana. */
   salir(): Promise<void>;
@@ -47,6 +53,8 @@ export const CANALES = {
   guardar: "guardado:escribir",
   guardarYa: "guardado:escribir-ya",
   cargar: "guardado:leer",
+  archivar: "partidas:escribir",
+  archivarYa: "partidas:escribir-ya",
   archivosEnNube: "guardado:listar",
   salir: "juego:salir",
 } as const;

@@ -1,6 +1,7 @@
 {
   "id": "matias_el_arquero",
   "nombre": "Matías",
+  "retrato": "buen arquero, siempre tarde",
   "rol": "arquero",
   "habilidad": 79,
   "rasgos": [
@@ -8,27 +9,36 @@
     "impuntual"
   ],
   "probabilidadBajaInicial": 35,
+  "voz": 126,
   "nodoInicial": "abre",
+  "aperturas": [
+    {
+      "si": {
+        "horaDesde": 1200
+      },
+      "nodo": "tarde"
+    }
+  ],
   "nodos": {
     "abre": {
       "mensajes": [
-        "Che, justo hoy tenía cumple de mi sobrina.",
-        "Puedo hacer un esfuerzo pero llego 21:15 mínimo. ¿Te sirve?"
+        "che justo hoy tengo el cumple de mi sobrina",
+        "puedo hacer un esfuerzo pero llego 21:15 mínimo. te sirve?"
       ],
       "opciones": [
         {
           "id": "esperamos",
-          "texto": "Te esperamos, arrancamos con uno menos.",
+          "texto": "te esperamos, arrancamos con uno menos",
           "costoReloj": 2,
           "efectos": {
             "moral": -2,
-            "probabilidadBaja": -15
+            "probabilidadBaja": -10
           },
           "siguiente": "cierra"
         },
         {
           "id": "favor",
-          "texto": "Te paso a buscar yo así llegás a horario.",
+          "texto": "te paso a buscar así llegás a horario",
           "costoReloj": 8,
           "efectos": {
             "moral": -7,
@@ -38,16 +48,16 @@
           "siguiente": "cierra"
         },
         {
-          "id": "apurar",
-          "texto": "Matías, siempre lo mismo con vos. O venís 21 o no venís.",
+          "id": "sobrina",
+          "texto": "la nena cumple todos los años, el picado es hoy",
           "costoReloj": 2,
           "efectos": {
-            "moral": -3,
-            "probabilidadBaja": 35,
-            "enojo": 30,
+            "moral": -2,
+            "probabilidadBaja": 30,
+            "enojo": 25,
             "registrar": "apuro"
           },
-          "siguiente": "cierra"
+          "siguiente": "ofendido"
         },
         {
           "id": "dejar",
@@ -61,32 +71,132 @@
         }
       ]
     },
-    "cierra": {
+    "tarde": {
       "mensajes": [
-        "Dale, me organizo. Anotame."
+        "estoy en el cumple, ya me comí tres porciones de torta",
+        "mi hermana me mata si me voy antes de q sople las velitas"
+      ],
+      "opciones": [
+        {
+          "id": "velitas",
+          "texto": "esperá las velitas y vení, te guardamos el arco",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": 10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "ruben",
+          "texto": "si no venís ataja {el_gordo_ruben} con los guantes de lavar platos",
+          "costoReloj": 2,
+          "efectos": {
+            "probabilidadBaja": -20
+          },
+          "siguiente": "ruben",
+          "requiere": {
+            "confirmado": "el_gordo_ruben",
+            "escuchado": "ruben_guantes"
+          }
+        },
+        {
+          "id": "dejar",
+          "texto": "[Dejalo, que disfrute]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "ruben": {
+      "mensajes": [
+        "{el_gordo_ruben}?? con los guantes de cocina? jajajaja",
+        "no, eso no lo puedo permitir. voy, anotame"
       ],
       "opciones": [
         {
           "id": "confirma_paga",
-          "texto": "Buenísimo. Pasame los 1500.",
+          "texto": "sabía. pasame los 1500",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "dineroAportado": 1500
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
           },
           "siguiente": null
         },
         {
           "id": "confirma_debe",
-          "texto": "Ahí quedás anotado, la plata la vemos allá.",
+          "texto": "sabía. la plata allá",
           "costoReloj": 2,
           "efectos": {
             "estado": "confirmado",
-            "probabilidadBaja": 20
+            "probabilidadBaja": -5
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "cierra": {
+      "mensajes": [
+        "dale, me organizo. anotame"
+      ],
+      "opciones": [
+        {
+          "id": "confirma_paga",
+          "texto": "buenísimo. pasame los 1500",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "dineroAportado": 1500,
+            "probabilidadBaja": 10
+          },
+          "siguiente": null
+        },
+        {
+          "id": "confirma_debe",
+          "texto": "ahí quedás, la plata la vemos allá",
+          "costoReloj": 2,
+          "efectos": {
+            "estado": "confirmado",
+            "probabilidadBaja": -5
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "ofendido": {
+      "mensajes": [
+        "sos un enfermo. es mi sobrina boludo",
+        "conseguite otro arquero, a ver si encontrás uno"
+      ],
+      "opciones": [
+        {
+          "id": "perdon",
+          "texto": "perdón, tenés razón. vení cuando puedas",
+          "costoReloj": 4,
+          "efectos": {
+            "moral": -4
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
           },
           "siguiente": null
         }
       ]
     }
-  }
+  },
+  "bajas": [
+    {
+      "texto": "mi hermana me mató. no llego, perdón loco"
+    }
+  ]
 }

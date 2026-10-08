@@ -49,6 +49,8 @@ export interface Charla {
 export interface PlantillaRoce {
   readonly entre: readonly [Rasgo, Rasgo];
   readonly mensajes: readonly MensajeGrupo[];
+  /** Lo que mandás para calmar esta pelea, si no es el de siempre. */
+  readonly calmar?: string;
 }
 
 /** Bajar un cambio en el grupo cuando hay roce: cuesta reloj y frena que se calienten. */
@@ -63,10 +65,23 @@ export interface Calmar {
   readonly calientaPorAccion: number;
 }
 
+/**
+ * Cerrar la lista: mandás un mensaje al grupo y el reloj corre hasta las 21:00.
+ * Con los diez, o cuando ya no queda nada por hacer para llegar.
+ */
+export interface Cerrar {
+  readonly texto: string;
+  /** Lo que mandás al grupo con los diez. */
+  readonly mensaje: string;
+  /** Lo que mandás cuando no llegaste y ya no queda a quién escribirle. */
+  readonly sinDiez: string;
+}
+
 export interface DefinicionGrupo {
   readonly charlas: readonly Charla[];
   readonly roces: readonly PlantillaRoce[];
   readonly calmar: Calmar;
+  readonly cerrar: Cerrar;
 }
 
 /** Un grupo sin vida: para tests y partidas que no la necesitan. */
@@ -74,6 +89,7 @@ export const GRUPO_QUIETO: DefinicionGrupo = {
   charlas: [],
   roces: [],
   calmar: { texto: "Calmar", costoReloj: 3, mensaje: "Tranquilos.", respuestas: [], calientaPorAccion: 0 },
+  cerrar: { texto: "Cerrar la lista", mensaje: "Lista cerrada.", sinDiez: "No llegamos." },
 };
 
 /** La voz de quien no tiene una definida, en Hz: la del murmullo de sus audios. */

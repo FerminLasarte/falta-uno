@@ -8,14 +8,14 @@
   ese chat. Lo que llega al chat que estás mirando no pasa por acá.
 -->
 <script lang="ts">
+  import { grupo as grupoDeAmigos } from "../estado/grupo.svelte.js";
   import { untrack } from "svelte";
   import { cubicOut } from "svelte/easing";
   import { scale } from "svelte/transition";
   import { CHAT_GRUPO } from "../../core/partida.js";
   import { juego, mismaPantalla, type Llegada } from "../estado/juego.svelte.js";
   import Avatar from "../mensajeria/Avatar.svelte";
-  import { NOMBRE_GRUPO } from "../mensajeria/rotulos.js";
-
+  
   /** Lo que dura abierta si no llega nada más. */
   const ABIERTA_MS = 4500;
   const quieto = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -45,7 +45,7 @@
     const previo = avisos.find((a) => a.chat === llegada.chat);
     const aviso: Aviso = {
       chat: llegada.chat,
-      titulo: grupo ? NOMBRE_GRUPO : llegada.de,
+      titulo: grupo ? grupoDeAmigos.nombre : llegada.de,
       texto: grupo ? `${llegada.de}: ${llegada.texto}` : llegada.texto,
       cuantos: (previo?.cuantos ?? 0) + 1,
       grupo,

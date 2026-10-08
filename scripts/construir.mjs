@@ -4,6 +4,7 @@
  *   · ventana → Vite (el bundler que va a usar Svelte en la Fase 3)
  */
 import { build as esbuild } from "esbuild";
+import { definiciones } from "./commit.mjs";
 import { build as vite } from "vite";
 import { rm } from "node:fs/promises";
 
@@ -23,6 +24,7 @@ const comun = {
   // Electron lo provee el runtime; steamworks.js trae binarios nativos que no
   // se pueden bundlear: van sueltos en node_modules y se desempaquetan del asar.
   external: ["electron", "steamworks.js"],
+  define: definiciones(),
   logLevel: "info",
 };
 
