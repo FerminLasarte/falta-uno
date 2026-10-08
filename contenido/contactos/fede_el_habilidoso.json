@@ -13,6 +13,15 @@
   "aperturas": [
     {
       "si": {
+        "elegidoA": {
+          "contacto": "el_tano",
+          "opcion": "azuzar"
+        }
+      },
+      "nodo": "azuzado"
+    },
+    {
+      "si": {
         "horaDesde": 1210
       },
       "nodo": "tarde"
@@ -220,6 +229,50 @@
           "siguiente": null
         }
       ]
+    },
+    "azuzado": {
+      "mensajes": [
+        "me contó {el_tano} q le dijiste q me marque a mí",
+        "q me saque las ganas? sos un hijo de puta. ni en pedo voy a q me rompan"
+      ],
+      "opciones": [
+        {
+          "id": "de_nueve",
+          "texto": "jugás de 9 parado, lejos de él. no te toca ni el viento",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -10
+          },
+          "siguiente": "cierra",
+          "requiere": {
+            "escuchado": "fede_rodilla"
+          }
+        },
+        {
+          "id": "pagar",
+          "texto": "te pago la cancha y la birra de después, pero vení",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -2000,
+            "probabilidadBaja": -10,
+            "registrar": "plata"
+          },
+          "siguiente": "cierra",
+          "requiere": {
+            "dineroMin": 2000
+          }
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
     }
   },
   "bajas": [
@@ -235,5 +288,9 @@
       "texto": "me re surgió algo, no llego. perdón posta"
     }
   ],
-  "duda": "uh estoy re fundido. no sé si voy al final eh"
+  "duda": "uh estoy re fundido. no sé si voy al final eh",
+  "excusas": [
+    "hoy no puedo, tengo un cumple en palermo. la semana q viene",
+    "no, me tira el isquio. no me voy a romper por un picado"
+  ]
 }

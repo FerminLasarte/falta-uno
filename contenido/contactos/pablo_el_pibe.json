@@ -106,6 +106,46 @@
         "la plata la pone él cuando llegue... creo"
       ],
       "opciones": []
+    },
+    "casi_todo": {
+      "mensajes": [
+        "vi la lista, ya tenés casi todo",
+        "me quedo en la juntada, no me necesitás. la próxima escribime antes"
+      ],
+      "opciones": [
+        {
+          "id": "sin_nueve",
+          "texto": "no tengo 9, sin vos no hay delantero",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -10
+          },
+          "siguiente": "cierra",
+          "requiere": {
+            "noConfirmado": "santi_el_goleador"
+          }
+        },
+        {
+          "id": "rogar",
+          "texto": "te necesito igual, sos el mejor q tengo arriba",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -4,
+            "probabilidadBaja": 20
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "bueno",
+          "texto": "[Que disfrute la juntada]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
     }
   },
   "bajas": [
@@ -113,5 +153,17 @@
       "texto": "me agarraron con el fernet en la juntada, no salgo más de acá jajaja perdón"
     }
   ],
-  "duda": "estoy en una juntada y me están cebando fernet. salgo eh, salgo"
+  "duda": "estoy en una juntada y me están cebando fernet. salgo eh, salgo",
+  "excusas": [
+    "hoy no, cumple de uno de la facu y ya puse plata para el asado",
+    "no puedo, mañana rindo y no estudié nada"
+  ],
+  "aperturas": [
+    {
+      "si": {
+        "faltanMax": 2
+      },
+      "nodo": "casi_todo"
+    }
+  ]
 }

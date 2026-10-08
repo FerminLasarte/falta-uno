@@ -85,5 +85,9 @@
       "texto": "está lloviendo? acá está re nublado. no voy, perdón"
     }
   ],
-  "duda": "viste el cielo? se viene el agua eh"
+  "duda": "viste el cielo? se viene el agua eh",
+  "excusas": [
+    "hoy no, viene tu vieja a cenar. sí, mi suegra. no me hagas elegir",
+    "no puedo, me torcí el dedo jugando a la play. no te rías"
+  ]
 }

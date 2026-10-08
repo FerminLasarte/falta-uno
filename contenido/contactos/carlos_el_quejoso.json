@@ -15,6 +15,15 @@
   "aperturas": [
     {
       "si": {
+        "elegidoA": {
+          "contacto": "lucho",
+          "opcion": "remis"
+        }
+      },
+      "nodo": "remis_lucho"
+    },
+    {
+      "si": {
         "horaDesde": 1200
       },
       "nodo": "tarde"
@@ -263,6 +272,47 @@
           "siguiente": null
         }
       ]
+    },
+    "remis_lucho": {
+      "mensajes": [
+        "me contó {lucho} q le pagaste el remis",
+        "a él le pagás el remis y a mí me debés 1500 hace un mes. sos un caradura"
+      ],
+      "opciones": [
+        {
+          "id": "pagar",
+          "texto": "tenés razón, perdón. te los paso ya",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -1500,
+            "moral": -2,
+            "probabilidadBaja": -10
+          },
+          "siguiente": [
+            {
+              "si": {
+                "confirmado": "el_sindicalista"
+              },
+              "nodo": "beto"
+            },
+            {
+              "nodo": "cierra"
+            }
+          ],
+          "requiere": {
+            "dineroMin": 1500
+          }
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
     }
   },
   "bajas": [
@@ -278,5 +328,9 @@
       "texto": "mirá no voy a ir. no me pinta ser otra vez el q pone y el q se queda esperando"
     }
   ],
-  "duda": "che no sé si voy eh. estoy re podrido de ser siempre el q pone y nadie me devolvió un mango"
+  "duda": "che no sé si voy eh. estoy re podrido de ser siempre el q pone y nadie me devolvió un mango",
+  "excusas": [
+    "hoy no. me duele la cintura y encima nadie me devolvió la plata de la otra vez",
+    "no puedo, tengo q ir a buscar el auto al mecánico, ese chorro q me afanó la última vez"
+  ]
 }

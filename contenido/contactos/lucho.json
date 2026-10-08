@@ -126,5 +126,9 @@
       "texto": "el 60 no pasa ni en pedo. me vuelvo, perdón"
     }
   ],
-  "duda": "che el 60 no aparece hace 40 min. no sé si llego"
+  "duda": "che el 60 no aparece hace 40 min. no sé si llego",
+  "excusas": [
+    "no tengo cómo llegar, hoy ni el 60 pasa. otra vez será",
+    "hoy no, le prometí a mi vieja q la ayudaba con la mudanza"
+  ]
 }

@@ -99,5 +99,9 @@
       ]
     }
   },
-  "duda": "pibe hay una cola bárbara en el kiosco, no sé a q hora cierro"
+  "duda": "pibe hay una cola bárbara en el kiosco, no sé a q hora cierro",
+  "excusas": [
+    "Hoy no, pibe. No tengo quién me cubra el kiosco.",
+    "No puedo, me toca hacer el inventario. Otro viernes."
+  ]
 }

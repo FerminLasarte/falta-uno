@@ -208,5 +208,9 @@
       "texto": "el perro se comió las zapatillas también. posta. no voy"
     }
   ],
-  "duda": "no encuentro las zapatillas y el perro me mira con culpa"
+  "duda": "no encuentro las zapatillas y el perro me mira con culpa",
+  "excusas": [
+    "hoy no, el perro está enfermo y no lo puedo dejar solo",
+    "no puedo, me agarró la ciática. ni para agacharme a buscar la pelota"
+  ]
 }

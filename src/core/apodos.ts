@@ -97,6 +97,8 @@ export function personalizar(
       nombre: nombres.contactos.get(c.id) ?? c.nombre,
       nodos: Object.fromEntries(Object.entries(c.nodos).map(([id, n]) => [id, nodo(n)])),
       ...(c.bajas ? { bajas: c.bajas.map(baja) } : {}),
+      ...(c.duda ? { duda: t(c.duda) } : {}),
+      ...(c.excusas ? { excusas: c.excusas.map(t) } : {}),
     })),
     grupo: {
       ...partes.grupo,

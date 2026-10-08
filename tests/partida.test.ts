@@ -248,6 +248,47 @@ describe("cada evento sabe a qué chat pertenece", () => {
   });
 });
 
+describe("las excusas de la noche", () => {
+  function conExcusas(min: number, max: number, semilla = "excusas", agenda = agendaCompleta()): Partida {
+    return new Partida({ perfil: PERFIL, agenda, interrupciones: SIN_INTERRUPCIONES, config: { ...CONFIG, excusas: { min, max } }, semilla });
+  }
+  /** A quiénes les tocó no poder: les escribe a todos y mira quién contestó con la excusa. */
+  function excusados(p: Partida): string[] {
+    for (const c of p.contactos()) p.escribir(c.id);
+    alDia(p);
+    return p.bitacora.de("excusa").map((e) => e.contactoId!);
+  }
+
+  it("al que le toca no poder contesta con su excusa y queda afuera", () => {
+    const agenda = agendaCompleta().map((c) => ({ ...c, excusas: [`${c.id} hoy no puede`] }));
+    const p = conExcusas(1, 1, "excusas", agenda);
+    const [id] = excusados(p);
+    expect(id).toBeDefined();
+    expect(p.estadoDe(id!).estado).toBe("rechazado");
+    expect(p.eventos().filter((e) => e.chat === id).map((e) => e.texto)).toContain(`${id} hoy no puede`);
+    expect(p.opcionesDisponibles(id!)).toEqual([]);
+  });
+
+  it("nunca deja la agenda sin margen: con doce para diez, a lo sumo uno", () => {
+    for (const semilla of ["a", "b", "c", "d", "e"]) expect(excusados(conExcusas(5, 5, semilla))).toHaveLength(1);
+  });
+
+  it("nunca le toca al contacto único del perfil", () => {
+    const agenda = [...agendaCompleta(), contacto("el_sindicalista")];
+    for (const semilla of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
+      expect(excusados(conExcusas(2, 2, semilla, agenda))).not.toContain("el_sindicalista");
+    }
+  });
+
+  it("la misma semilla elige a los mismos", () => {
+    expect(excusados(conExcusas(1, 2, "igual"))).toEqual(excusados(conExcusas(1, 2, "igual")));
+  });
+
+  it("sin excusas en la config, nadie tiene una", () => {
+    expect(excusados(nueva())).toEqual([]);
+  });
+});
+
 describe("el aviso del que se está por bajar", () => {
   /** c0 queda caliente (90 contra un umbral de 80): a las 20:30 se baja si nadie hace nada. */
   function caliente(agenda = agendaCompleta()): Partida {

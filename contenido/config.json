@@ -11,6 +11,10 @@
     "torneo": 1230
   },
   "suplentesTorneo": 3,
+  "excusas": {
+    "min": 1,
+    "max": 2
+  },
   "formatos": {
     "f5": {
       "nombre": "Fútbol 5",

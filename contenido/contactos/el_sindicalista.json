@@ -261,5 +261,9 @@
       "texto": "compañero me surgió una asamblea de urgencia. no llego, perdón"
     }
   ],
-  "duda": "compañero te aviso, se está calentando la cosa en el gremio. capaz me llaman de urgencia"
+  "duda": "compañero te aviso, se está calentando la cosa en el gremio. capaz me llaman de urgencia",
+  "excusas": [
+    "compañero hoy no puedo, hay plenario de delegados",
+    "hoy no, me toca quedarme en el local del gremio. la lucha no se toma franco"
+  ]
 }

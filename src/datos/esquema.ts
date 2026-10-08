@@ -45,6 +45,7 @@ export const condicionSchema = z
     noConfirmado: z.string().min(1).optional(),
     confirmadosMin: z.number().int().min(0).optional(),
     faltanMin: z.number().int().min(1).optional(),
+    faltanMax: z.number().int().min(0).optional(),
     elegiste: z.string().min(1).optional(),
     elegidoA: z.object({ contacto: z.string().min(1), opcion: z.string().min(1) }).strict().optional(),
   })
@@ -92,6 +93,7 @@ export const contactoSchema = z
       .array(z.object({ si: condicionSchema.optional(), texto: z.string().min(1), porque: z.string().min(1).optional() }).strict())
       .optional(),
     duda: z.string().min(1).optional(),
+    excusas: z.array(z.string().min(1)).min(1).optional(),
   })
   .strict();
 
@@ -117,6 +119,7 @@ export const frasesSchema = z
     llamada: z.object({ tuya: z.string().min(1), respuesta: z.string().min(1) }).strict(),
     baja: z.string().min(1),
     duda: z.string().min(1),
+    excusa: z.string().min(1),
   })
   .strict();
 
@@ -196,6 +199,10 @@ export const configSchema = z
     umbralBaja: z.object({ partido: z.number().min(0).max(100), torneo: z.number().min(0).max(100) }).strict(),
     minutoRevision: z.object({ partido: z.number().int(), torneo: z.number().int() }).strict(),
     suplentesTorneo: z.number().int().min(0),
+    excusas: z
+      .object({ min: z.number().int().min(0), max: z.number().int().min(0) })
+      .strict()
+      .refine((e) => e.max >= e.min, { message: "excusas.max no puede ser menor que excusas.min" }),
     formatos: z.object(Object.fromEntries(FORMATOS.map((f) => [f, formatoSchema])) as Record<Formato, typeof formatoSchema>).strict(),
   })
   .strict()

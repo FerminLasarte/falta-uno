@@ -83,5 +83,9 @@
       "texto": "entró uno con un tenedor clavado en la mano. literal. no llego"
     }
   ],
-  "duda": "se está poniendo heavy la guardia. si entra alguien más no salgo eh"
+  "duda": "se está poniendo heavy la guardia. si entra alguien más no salgo eh",
+  "excusas": [
+    "me cambiaron la guardia, hoy salgo a las 23. imposible",
+    "hoy no, vengo de 24 horas de guardia. si me siento me duermo"
+  ]
 }

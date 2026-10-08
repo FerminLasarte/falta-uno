@@ -199,5 +199,9 @@
       "texto": "mi hermana me mató. no llego, perdón loco"
     }
   ],
-  "duda": "mi hermana me dejó al nene un toque. ya vuelve igual, creo"
+  "duda": "mi hermana me dejó al nene un toque. ya vuelve igual, creo",
+  "excusas": [
+    "hoy imposible, bautismo de mi sobrino. me matan si falto",
+    "no puedo, me agarró un virus y estoy tirado en la cama"
+  ]
 }

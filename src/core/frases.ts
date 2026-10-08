@@ -16,6 +16,8 @@ export interface Frases {
   readonly baja: string;
   /** Lo que avisa el que se está por bajar, si no tiene una duda propia. */
   readonly duda: string;
+  /** Lo que contesta el que esa noche no puede, si no tiene excusas propias. */
+  readonly excusa: string;
 }
 
 /** Para tests y partidas sin contenido. */
@@ -24,4 +26,5 @@ export const FRASES_POR_DEFECTO: Frases = {
   llamada: { tuya: "📞 Lo llamás a {nombre}.", respuesta: "bueno bueno ya te dije q voy, cortá" },
   baja: "perdón me surgió algo, no llego",
   duda: "che no sé si llego eh, después te confirmo",
+  excusa: "hoy no puedo, perdón. la q viene sí",
 };

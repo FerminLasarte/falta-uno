@@ -103,6 +103,17 @@ describe("los apodos", () => {
     expect(opciones.interrupciones.find((i) => i.id === "grupo_incendiado")!.de).toBe("Grupo Los del Jueves");
   });
 
+  it("los apodos también llegan a la duda y a las excusas", () => {
+    const perfil = contenido.perfiles.find((p) => p.id === "oficinista")!;
+    const conMarcas = contenido.contactos.map((c) =>
+      c.id === "nico_el_cunado" ? { ...c, duda: "no sé si voy, {vos}", excusas: ["hoy no, {vos}"] } : c,
+    );
+    const opciones = opcionesDeViernes({ ...contenido, contactos: conMarcas }, perfil, "apodos", { fecha: 1, dinero: 9000 }, { apodos: { vos: "Fermo" } });
+    const nico = opciones.agenda.find((c) => c.id === "nico_el_cunado")!;
+    expect(nico.duda).toBe("no sé si voy, fermo");
+    expect(nico.excusas).toEqual(["hoy no, fermo"]);
+  });
+
   it("sin apodos, todo queda con los nombres de los personajes", () => {
     const { agenda } = personalizar({ agenda: contenido.contactos, grupo: contenido.grupo, interrupciones: contenido.interrupciones }, undefined, MODO_POR_DEFECTO);
     const fede = agenda.find((c) => c.id === "fede_el_habilidoso")!;

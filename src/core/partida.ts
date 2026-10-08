@@ -137,6 +137,8 @@ type Entrega =
   | { readonly tipo: "falta"; readonly invitado: string; readonly texto: string }
   /** Un confirmado avisa que se está por bajar. */
   | { readonly tipo: "duda"; readonly contacto: string; readonly texto: string }
+  /** El que esa noche no puede contesta con su excusa. */
+  | { readonly tipo: "excusa"; readonly contacto: string; readonly texto: string }
   /** Un mensaje suelto de alguien que no está en la agenda, como la cancha. */
   | { readonly tipo: "texto"; readonly chat: string; readonly de: string; readonly texto: string }
   | {
@@ -223,6 +225,8 @@ export class Partida {
   private readonly dudosos = new Set<string>();
   /** Los avisos que ya llegaron: lo que el jugador pudo leer. */
   private readonly _avisaron: string[] = [];
+  /** Los que esta noche no pueden, con lo que te van a contestar. */
+  private readonly excusas = new Map<string, string>();
 
   private _moral: number;
   private _dinero: number;
@@ -259,6 +263,7 @@ export class Partida {
       });
     }
 
+    this.repartirExcusas(opciones.agenda, opciones.semilla);
     if (opciones.inscripcion) this.inscribir(opciones.inscripcion);
     this.emitir(
       "sistema",
@@ -468,6 +473,11 @@ export class Partida {
       this.emitir("propio", this.frases.saludo, definicion.nombre, id);
       this.consumir(COSTO.mensaje);
       estado.estado = "esperando";
+      const excusa = this.excusas.get(id);
+      if (excusa !== undefined) {
+        this.pulso.tipear(id, definicion.nombre, excusa, { tipo: "excusa", contacto: id, texto: excusa });
+        return this.exito();
+      }
       estado.nodoActual = definicion.aperturas?.find((a) => this.cumple(a.si, id))?.nodo ?? definicion.nodoInicial;
       this.entregarNodo(id);
       return this.exito();
@@ -712,6 +722,7 @@ export class Partida {
     if (c.noConfirmado !== undefined && confirmado(c.noConfirmado)) return false;
     if (c.confirmadosMin !== undefined && this.roster().confirmados < c.confirmadosMin) return false;
     if (c.faltanMin !== undefined && this.config.jugadoresNecesarios - this.roster().confirmados < c.faltanMin) return false;
+    if (c.faltanMax !== undefined && this.config.jugadoresNecesarios - this.roster().confirmados > c.faltanMax) return false;
     if (c.elegiste !== undefined && !this.estadoDe(id).elegidas.includes(c.elegiste)) return false;
     if (c.elegidoA !== undefined && !this.estados.get(c.elegidoA.contacto)?.elegidas.includes(c.elegidoA.opcion)) return false;
     return true;
@@ -793,6 +804,14 @@ export class Partida {
         this.ajustarMoral(-4);
         // La última baja en llegar cierra la revisión con el conteo que quedó.
         if (!this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta")) this.anunciarRevision();
+        return;
+      }
+      case "excusa": {
+        const estado = this.estadoDe(entrega.contacto);
+        estado.estado = "rechazado";
+        estado.historial.push({ texto: entrega.texto, minuto: this.reloj.minutos });
+        this.bitacora.registrar("excusa", this.reloj.minutos, entrega.contacto);
+        this.emitir("mensaje", entrega.texto, this.definicion(entrega.contacto).nombre, entrega.contacto);
         return;
       }
       case "duda": {
@@ -1091,6 +1110,23 @@ export class Partida {
         { tipo: "interrupcion", id: definicion.id },
         LLEGADA_INTERRUPCION,
       );
+    }
+  }
+
+  /**
+   * Esta noche algunos no pueden, hagas lo que hagas: lo decide la semilla, con
+   * su propio azar para no mover nada más. Nunca el contacto único del perfil, y
+   * nunca tantos que no quede margen para llenar la lista.
+   */
+  private repartirExcusas(agenda: readonly DefinicionContacto[], semilla: number | string): void {
+    const rango = this.config.excusas;
+    if (!rango) return;
+    const rng = new Rng(`${semilla}:excusas`);
+    const margen = Math.max(0, agenda.length - this.config.jugadoresNecesarios - 1);
+    const cuantos = Math.min(margen, rng.entero(rango.min, rango.max));
+    const posibles = agenda.filter((c) => c.id !== this.perfil.contactoUnico);
+    for (const c of rng.mezclar(posibles).slice(0, cuantos)) {
+      this.excusas.set(c.id, rng.elegir(c.excusas ?? [this.frases.excusa]));
     }
   }
 

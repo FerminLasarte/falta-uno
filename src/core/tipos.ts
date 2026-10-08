@@ -72,6 +72,7 @@ export const TIPOS_EVENTO = [
   "trajo", // alguien de la agenda trajo a otro que no conocés
   "no_vino", // el que trajo alguien al final no vino
   "duda", // un confirmado te avisó que se está por bajar
+  "excusa", // esa noche no podía, hicieras lo que hicieras
 ] as const;
 export type TipoEvento = (typeof TIPOS_EVENTO)[number];
 
@@ -104,6 +105,8 @@ export interface Condicion {
   readonly confirmadosMin?: number;
   /** Faltan por lo menos tantos para llenar la lista: "si les falta gente, traigo a mi primo". */
   readonly faltanMin?: number;
+  /** Faltan como mucho tantos: la lista está casi llena y se nota. */
+  readonly faltanMax?: number;
   /** A este mismo contacto le contestaste esa respuesta. */
   readonly elegiste?: string;
   /** A otro contacto le contestaste esa respuesta. */
@@ -170,6 +173,8 @@ export interface DefinicionContacto {
   readonly bajas?: readonly Baja[];
   /** Lo que te escribe cuando se está por bajar, antes de las 20:30. Sin esto, la frase común. */
   readonly duda?: string;
+  /** Por qué no puede esta noche, si le toca no poder. Sin esto, la frase común. */
+  readonly excusas?: readonly string[];
 }
 
 /** Los nodos a los que puede llevar una respuesta. null es que la charla termina. */
@@ -212,6 +217,8 @@ export interface Config {
   readonly suplentes: number;
   /** Contra quién se juega, si se sabe: su nivel resta en la probabilidad de ganar. */
   readonly rival?: { readonly nombre: string; readonly nivel: number };
+  /** Cuántos de la agenda no pueden esta noche, pase lo que pase. Sin esto, ninguno. */
+  readonly excusas?: { readonly min: number; readonly max: number };
 }
 
 export interface MensajeRecibido {

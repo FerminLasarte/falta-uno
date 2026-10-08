@@ -233,5 +233,9 @@
       "texto": "me hizo quedar el jefe, la concha de su madre. no llego"
     }
   ],
-  "duda": "el jefe está dando vueltas por mi escritorio. no me gusta nada esto"
+  "duda": "el jefe está dando vueltas por mi escritorio. no me gusta nada esto",
+  "excusas": [
+    "hoy no, cierre de mes. estoy hasta las 23 con el excel del orto",
+    "no puedo, mañana viajo re temprano por laburo. perdón"
+  ]
 }

@@ -67,5 +67,9 @@
       ]
     }
   },
-  "duda": "estimado, se me complicó la agenda. le confirmo en un rato"
+  "duda": "estimado, se me complicó la agenda. le confirmo en un rato",
+  "excusas": [
+    "Querido, hoy imposible: tengo una cena con gente importante.",
+    "Hoy no llego, estimado. Inauguro una plaza."
+  ]
 }

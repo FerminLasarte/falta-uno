@@ -232,7 +232,7 @@ describe("tu voz sale del contenido", () => {
       interrupciones: SIN_INTERRUPCIONES,
       config: CONFIG,
       semilla: "voz",
-      frases: { saludo: "q onda, jugás?", llamada: { tuya: "📞 a {nombre}", respuesta: "ya voy pesado" }, baja: "chau", duda: "ni idea" },
+      frases: { saludo: "q onda, jugás?", llamada: { tuya: "📞 a {nombre}", respuesta: "ya voy pesado" }, baja: "chau", duda: "ni idea", excusa: "hoy no" },
     });
     p.escribir("tano");
     p.llamar("tano");
@@ -251,5 +251,32 @@ describe("tu voz sale del contenido", () => {
     charlar(p, "beto", "si");
     charlar(p, "santi", "si");
     expect(p.eventos().some((e) => e.chat === CHAT_GRUPO && e.texto === "el kukardo de beto")).toBe(true);
+  });
+});
+
+describe("faltan como mucho", () => {
+  it("una apertura con faltanMax solo se abre con la lista casi llena", () => {
+    const pablo: DefinicionContacto = {
+      ...contacto("pablo"),
+      aperturas: [{ si: { faltanMax: 2 }, nodo: "casi_todo" }],
+      nodos: {
+        ...contacto("pablo").nodos,
+        casi_todo: { mensajes: ["ya tenés casi todo"], opciones: [] },
+      },
+    };
+    const temprano = new Partida({ perfil: PERFIL, agenda: [pablo, ...agendaCompleta()], interrupciones: SIN_INTERRUPCIONES, config: CONFIG, semilla: "faltan" });
+    temprano.escribir("pablo");
+    alDia(temprano);
+    expect(temprano.eventos().some((e) => e.texto === "ya tenés casi todo")).toBe(false);
+
+    const tarde = new Partida({ perfil: PERFIL, agenda: [pablo, ...agendaCompleta()], interrupciones: SIN_INTERRUPCIONES, config: CONFIG, semilla: "faltan" });
+    for (let i = 0; i < 8; i++) {
+      tarde.escribir(`c${i}`);
+      alDia(tarde);
+      tarde.responder(`c${i}`, "si");
+    }
+    tarde.escribir("pablo");
+    alDia(tarde);
+    expect(tarde.eventos().some((e) => e.texto === "ya tenés casi todo")).toBe(true);
   });
 });

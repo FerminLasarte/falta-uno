@@ -15,6 +15,15 @@
   "aperturas": [
     {
       "si": {
+        "elegidoA": {
+          "contacto": "nico_el_cunado",
+          "opcion": "confirma_gratis"
+        }
+      },
+      "nodo": "socialismo"
+    },
+    {
+      "si": {
         "horaDesde": 1220
       },
       "nodo": "tarde"
@@ -299,6 +308,36 @@
         "traigo a un pibe del gimnasio, no sabe parar la pelota pero empuja"
       ],
       "opciones": []
+    },
+    "socialismo": {
+      "mensajes": [
+        "vi q a {nico_el_cunado} le pagaste la cuota",
+        "a tu cuñado se la regalás y a mí me cobrás 1500? esto es socialismo para los amigos"
+      ],
+      "opciones": [
+        {
+          "id": "invitar",
+          "texto": "tenés razón, hoy te invito a vos también",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -1500,
+            "probabilidadBaja": -10
+          },
+          "siguiente": "gratis",
+          "requiere": {
+            "dineroMin": 1500
+          }
+        },
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
     }
   },
   "bajas": [
@@ -314,5 +353,9 @@
       "texto": "se me cayó el exchange y estoy re caliente. no voy"
     }
   ],
-  "duda": "el btc está bajando como loco y estoy pegado a la pantalla. no sé si salgo"
+  "duda": "el btc está bajando como loco y estoy pegado a la pantalla. no sé si salgo",
+  "excusas": [
+    "hoy no, sale una cripto nueva y tengo q estar atento a la pantalla",
+    "no puedo, tengo una call con un inversor de dubai. no te puedo decir más"
+  ]
 }

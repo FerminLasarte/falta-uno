@@ -76,5 +76,9 @@
       ]
     }
   },
-  "duda": "me enganché corrigiendo planillas, no sé si llego a horario"
+  "duda": "me enganché corrigiendo planillas, no sé si llego a horario",
+  "excusas": [
+    "Hoy no, mañana tengo intercolegial temprano.",
+    "No puedo, me desgarré dando el ejemplo en clase."
+  ]
 }

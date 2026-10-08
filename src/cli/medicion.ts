@@ -210,6 +210,9 @@ export function medir(opciones: OpcionesPartida, pasos: readonly Paso[], conLine
     if (opciones.length > 0 && opciones.every((o) => o.efectos.estado === "rechazado")) teDijeronQueNo++;
   }
 
+  // El que esa noche no podía también te dijo que no, sin que hubiera nada que elegir.
+  teDijeronQueNo += partida.bitacora.contar("excusa");
+
   const resolucion = resolver(partida);
   const confirmados = partida.roster().confirmados;
   // Las bajas de la revisión: los de la agenda y los invitados que no vinieron.
