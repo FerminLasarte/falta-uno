@@ -73,6 +73,86 @@ export function todosLosRoces(plantel: readonly DefinicionContacto[]): Roce[] {
   return roces;
 }
 
+/** Lo que rinde alguien fuera de su puesto: sabe jugar, pero no ahí. */
+export const PENALIDAD_FUERA_DE_PUESTO = 20;
+/** Lo que ataja uno de campo puesto al arco, sea quien sea. */
+export const HABILIDAD_ARQUERO_IMPROVISADO = 20;
+
+export interface Titular {
+  readonly jugador: DefinicionContacto;
+  /** Dónde juega, que puede no ser su puesto. */
+  readonly puesto: Rol;
+}
+
+/**
+ * Los que arrancan: los mejores de cada puesto, según los titulares del formato.
+ * Un puesto sin nadie se cubre con el mejor de los que sobran, fuera de puesto;
+ * al arco va el peor, que es lo que pasa en cualquier picado. El resto es banco.
+ */
+export function titulares(plantel: readonly DefinicionContacto[], composicion: Readonly<Record<Rol, number>>): Titular[] {
+  // Orden estable: a igual habilidad, el que se anotó primero.
+  const libres = [...plantel].sort((a, b) => b.habilidad - a.habilidad);
+  const elegidos: Titular[] = [];
+  const vacantes: Rol[] = [];
+  for (const rol of ROLES) {
+    for (let i = 0; i < composicion[rol]; i++) {
+      const indice = libres.findIndex((c) => c.rol === rol);
+      if (indice === -1) vacantes.push(rol);
+      else elegidos.push({ jugador: libres.splice(indice, 1)[0]!, puesto: rol });
+    }
+  }
+  for (const rol of vacantes.filter((r) => r !== "arquero")) {
+    const jugador = libres.shift();
+    if (jugador) elegidos.push({ jugador, puesto: rol });
+  }
+  const arcosVacios = vacantes.filter((r) => r === "arquero").length;
+  for (let i = 0; i < arcosVacios; i++) {
+    const jugador = libres.pop();
+    if (jugador) elegidos.push({ jugador, puesto: "arquero" });
+  }
+  return elegidos;
+}
+
+/** Lo que rinde un titular donde juega. */
+export function rinde(t: Titular): number {
+  if (t.puesto === t.jugador.rol) return t.jugador.habilidad;
+  if (t.puesto === "arquero") return HABILIDAD_ARQUERO_IMPROVISADO;
+  return Math.max(0, t.jugador.habilidad - PENALIDAD_FUERA_DE_PUESTO);
+}
+
+/**
+ * La formación como desglose: la habilidad de los que arrancan y lo que se
+ * pierde por poner gente fuera de su puesto. El banco no suma: a quién traés
+ * y para qué puesto es lo que define el partido.
+ */
+export function formacion(plantel: readonly DefinicionContacto[], composicion: Readonly<Record<Rol, number>>): Desglose[] {
+  const once = titulares(plantel, composicion);
+  if (once.length === 0) return [];
+  const n = once.length;
+  const desglose: Desglose[] = [
+    { concepto: "Habilidad de los titulares", valor: Math.round(once.reduce((t, x) => t + x.jugador.habilidad, 0) / n) },
+  ];
+  const perdida = (ts: readonly Titular[]): number => ts.reduce((t, x) => t + x.jugador.habilidad - rinde(x), 0);
+  const improvisados = once.filter((t) => t.puesto === "arquero" && t.jugador.rol !== "arquero");
+  if (improvisados.length > 0) {
+    desglose.push({
+      concepto: `Ningún arquero natural: va ${improvisados.map((t) => t.jugador.nombre).join(" y ")} al arco`,
+      valor: -Math.round(perdida(improvisados) / n),
+    });
+  }
+  const afuera = once.filter((t) => t.puesto !== "arquero" && t.puesto !== t.jugador.rol);
+  if (afuera.length > 0) {
+    desglose.push({
+      concepto:
+        afuera.length === 1
+          ? `${afuera[0]!.jugador.nombre} juega de ${afuera[0]!.puesto} sin serlo`
+          : `${afuera.length} jugando fuera de su puesto`,
+      valor: -Math.round(perdida(afuera) / n),
+    });
+  }
+  return desglose;
+}
+
 /**
  * Química del plantel, como desglose auditable en vez de un número opaco.
  * Que sea inspeccionable es lo que después permite balancear con el bot.
@@ -82,23 +162,9 @@ export function quimica(plantel: readonly DefinicionContacto[], composicion: Rea
   const conteo = contarPorRol(plantel);
   const desglose: Desglose[] = [];
 
-  if (conteo.arquero === 0) {
-    desglose.push({ concepto: "Ningún arquero natural", valor: -18 });
-  } else if (conteo.arquero > composicion.arquero) {
+  // Los puestos los cuenta la formación; acá queda el banco.
+  if (composicion.arquero > 0 && conteo.arquero > composicion.arquero) {
     desglose.push({ concepto: "Arquero de suplente, por si acaso", valor: 2 });
-  }
-
-  const excesoDelanteros = Math.max(0, conteo.delantero - composicion.delantero);
-  if (excesoDelanteros > 0) {
-    desglose.push({
-      concepto: `${excesoDelanteros} delantero(s) de más, nadie marca`,
-      valor: -5 * excesoDelanteros,
-    });
-  }
-
-  const faltaFondo = Math.max(0, composicion.defensor - conteo.defensor);
-  if (faltaFondo > 0) {
-    desglose.push({ concepto: `Falta fondo (${faltaFondo} defensor/es)`, valor: -3 * faltaFondo });
   }
 
   // El bono por roces tiene techo: un partido picado se juega más intenso, pero

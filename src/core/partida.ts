@@ -862,7 +862,7 @@ export class Partida {
       this.traidos.set(traido.id, id);
       this.invitados.set(traido.id, invitado);
       this.ordenLista.push(traido.id);
-      this.bitacora.registrar("trajo", this.reloj.minutos, id, invitado.nombre);
+      this.bitacora.registrar("trajo", this.reloj.minutos, id, invitado.nombre, traido.id);
     }
     // Lo que le llega a otro: Beto se entera de que los equipos los arma Carlos.
     for (const otro of efectos.otros ?? []) {

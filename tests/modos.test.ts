@@ -4,7 +4,7 @@ import { nuevaCampana } from "../src/core/campana.js";
 import { configDeViernes, MODO_POR_DEFECTO, type Modo } from "../src/core/modo.js";
 import { alDia, Partida } from "../src/core/partida.js";
 import { FORMATO_GUARDADO, leerGuardado } from "../src/core/registro.js";
-import { faltantes, quimica } from "../src/core/roster.js";
+import { faltantes, formacion, quimica } from "../src/core/roster.js";
 import { opcionesDeViernes } from "../src/core/viernes.js";
 import { cargarContenido } from "../src/datos/cargar.js";
 import { contacto, PERFIL } from "./ayudas.js";
@@ -39,10 +39,17 @@ describe("los modos", () => {
 
   it("con un arquero alcanza: es tu equipo, no los dos", () => {
     const { composicion } = config(MODO_POR_DEFECTO);
-    const conArquero = [contacto("arq", { rol: "arquero" }), contacto("d", { rol: "defensor" })];
-    const sinArquero = [contacto("d1", { rol: "defensor" }), contacto("d2", { rol: "defensor" })];
-    expect(quimica(conArquero, composicion).some((d) => d.concepto.includes("arquero") && d.valor < 0)).toBe(false);
-    expect(quimica(sinArquero, composicion).some((d) => d.concepto.includes("Ningún arquero"))).toBe(true);
+    const campo = [
+      contacto("d1", { rol: "defensor" }),
+      contacto("d2", { rol: "defensor" }),
+      contacto("m", { rol: "mediocampista" }),
+      contacto("f", { rol: "delantero" }),
+    ];
+    const conArquero = [contacto("arq", { rol: "arquero" }), ...campo];
+    const sinArquero = [contacto("d3", { rol: "defensor" }), ...campo];
+    const todo = (plantel: typeof campo) => [...formacion(plantel, composicion), ...quimica(plantel, composicion)];
+    expect(todo(conArquero).some((d) => d.concepto.includes("arquero") && d.valor < 0)).toBe(false);
+    expect(todo(sinArquero).some((d) => d.concepto.includes("Ningún arquero"))).toBe(true);
   });
 
   it("un partido de fútbol 5 se puede cerrar con cinco", () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { alDia, CHAT_GRUPO, Partida } from "../src/core/partida.js";
+import { resolver } from "../src/core/resolucion.js";
 import type { DefinicionContacto, Invitado } from "../src/core/tipos.js";
 import { agendaCompleta, CONFIG, contacto, interrupcionSegura, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js";
 
@@ -84,6 +85,18 @@ describe("traer a alguien", () => {
     expect(p.eventos().some((e) => e.chat === "tano" && e.texto === "el gringo no viene")).toBe(true);
     expect(p.eventos().some((e) => e.chat === CHAT_GRUPO && e.texto === "El Gringo no viene.")).toBe(true);
     expect(p.bitacora.contar("no_vino")).toBe(1);
+  });
+
+  it("el que no vino no se narra jugando", () => {
+    const p = partida([tano(primo(100)), ...agendaCompleta()]);
+    charlar(p, "tano", "con_primo");
+    for (let i = 0; i < 9; i++) charlar(p, `c${i}`, "si");
+    p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    alDia(p);
+    const resultado = resolver(p);
+    expect(resultado.hayPartido).toBe(true);
+    const textos = resultado.narracion.map((b) => b.texto);
+    expect(textos.some((t) => t.includes("como si los conociera"))).toBe(false);
   });
 });
 

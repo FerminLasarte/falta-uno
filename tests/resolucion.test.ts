@@ -65,7 +65,7 @@ describe("la matemática", () => {
     const r = resolver(p);
     const suma = r.desglose.reduce((t, d) => t + d.valor, 0);
     expect(r.probabilidad).toBe(Math.min(95, Math.max(5, Math.round(suma))));
-    expect(r.desglose[0]?.concepto).toContain("Habilidad promedio");
+    expect(r.desglose[0]?.concepto).toContain("Habilidad de los titulares");
   });
 
   it("la probabilidad nunca es 0% ni 100%", () => {
@@ -87,6 +87,17 @@ describe("la matemática", () => {
       return p;
     };
     expect(resolver(armar(85)).probabilidad).toBeGreaterThan(resolver(armar(35)).probabilidad);
+  });
+
+  it("traer al crack para su puesto cambia el partido", () => {
+    // Doce de la agenda para diez lugares: el que queda afuera decide quién arranca.
+    const armar = (delanteroCrack: boolean): Partida => {
+      const agenda = agendaCompleta().map((c) => (c.id === "c9" ? { ...c, habilidad: delanteroCrack ? 95 : 20 } : c));
+      const p = partida(agenda);
+      confirmar(p, 10);
+      return p;
+    };
+    expect(resolver(armar(true)).probabilidad - resolver(armar(false)).probabilidad).toBeGreaterThanOrEqual(5);
   });
 
   it("las bajas de último momento se cobran en el desglose", () => {

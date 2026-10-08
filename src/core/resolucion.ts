@@ -1,7 +1,7 @@
 import { formatearPesos } from "./formato.js";
 import type { Partida } from "./partida.js";
 import { Rng } from "./rng.js";
-import { habilidadPromedio, quimica, todosLosRoces } from "./roster.js";
+import { formacion, quimica, titulares, todosLosRoces } from "./roster.js";
 import { formatearHora } from "./tiempo.js";
 import type { Desglose, DefinicionContacto, EntradaBitacora } from "./tipos.js";
 
@@ -82,11 +82,7 @@ export function resolver(partida: Partida): Resolucion {
   }
 
   // --- la matemática -------------------------------------------------------
-  const base = habilidadPromedio(plantel);
-  const desglose: Desglose[] = [
-    { concepto: "Habilidad promedio del plantel", valor: Math.round(base) },
-    ...quimica(plantel, config.composicion),
-  ];
+  const desglose: Desglose[] = [...formacion(plantel, config.composicion), ...quimica(plantel, config.composicion)];
 
   if (config.rival && config.rival.nivel > 0) {
     desglose.push({ concepto: `Enfrente: ${config.rival.nombre}`, valor: -config.rival.nivel });
@@ -287,7 +283,7 @@ function narrar(
       .map((e) => e.contactoId),
   );
 
-  /** Un roce entre dos de la agenda solo se cuenta si los dos están en la cancha. */
+  /** Lo que es de dos (un roce, el que trajo a otro) solo se cuenta si los dos están en la cancha. */
   const vinieronLosDos = (entrada: EntradaBitacora): boolean =>
     enPlantel.has(entrada.contactoId ?? "") && enPlantel.has(entrada.otroId ?? "");
 
@@ -378,7 +374,8 @@ function narrar(
         });
         break;
       case "trajo":
-        if (id && enPlantel.has(id)) {
+        // Los dos en la cancha: el que lo trajo y el invitado, que pudo no venir.
+        if (vinieronLosDos(entrada)) {
           candidatos.push({
             texto: `${entrada.detalle ?? "El que trajo"} juega como si los conociera de toda la vida.`,
             porque: `Lo trajo ${nombre(id)} a las ${hora}`,
@@ -450,16 +447,26 @@ function narrar(
     }
   }
 
-  const arqueros = plantel.filter((c) => c.rol === "arquero").length;
-  if (arqueros === 0) {
-    const voluntario = rng.elegir(plantel);
-    candidatos.push({
-      texto: `Nadie quiere ir al arco. Se pone ${voluntario.nombre}, que no ataja ni un centro.`,
-      porque: "No conseguiste arquero",
-      signo: -1,
-      peso: 4,
-      clave: "sin_arquero",
-    });
+  // Lo que se narra de la formación es lo mismo que la cuenta: los que arrancan y dónde.
+  for (const t of titulares(plantel, partida.config.composicion)) {
+    if (t.puesto === t.jugador.rol) continue;
+    candidatos.push(
+      t.puesto === "arquero"
+        ? {
+            texto: `Nadie quiere ir al arco. Se pone ${t.jugador.nombre}, que no ataja ni un centro.`,
+            porque: "No conseguiste arquero",
+            signo: -1,
+            peso: 4,
+            clave: "sin_arquero",
+          }
+        : {
+            texto: `${t.jugador.nombre} juega de ${t.puesto} y no sabe dónde pararse.`,
+            porque: `No conseguiste ${t.puesto}`,
+            signo: -1,
+            peso: 3,
+            clave: "fuera_de_puesto",
+          },
+    );
   }
 
   const roces = todosLosRoces(plantel);

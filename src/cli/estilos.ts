@@ -86,10 +86,13 @@ const razonable: Estilo = {
  */
 const atento: Estilo = {
   id: "atento",
-  descripcion: "como el razonable, más: puestos que faltan primero, usa los audios, atiende la cancha, no miente y cuida la plata",
+  descripcion: "como el razonable, más: puestos que faltan primero y el mejor de cada uno, usa los audios, atiende la cancha, no miente y cuida la plata",
   siguiente(pendientes, partida) {
+    // Lee los retratos: entre los del puesto que falta, primero al mejor.
     const faltan = new Set(partida.roster().faltantes.map((f) => f.rol));
-    return pendientes.find((c) => faltan.has(c.rol)) ?? pendientes[0];
+    const habilidad = (c: VistaContacto): number => partida.definicion(c.id).habilidad;
+    const delPuesto = pendientes.filter((c) => faltan.has(c.rol)).sort((a, b) => habilidad(b) - habilidad(a));
+    return delPuesto[0] ?? pendientes[0];
   },
   elegir(opciones, partida, ctx) {
     // No dice lo que se va a descubrir. Sin la seña asegurada, la plata pesa más

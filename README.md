@@ -243,21 +243,24 @@ misma en todos los modos, así que el formato es la dificultad:
 
 El bot juega miles de viernes contra el núcleo headless, con tres estilos de jugador: **razonable**
 (confirma con la respuesta que menos moral cuesta y calma los roces), **atento** (lo mismo, más lo
-que da prestar atención: escribe primero a los puestos que faltan, usa lo que dijeron los audios,
-atiende a la cancha, no miente sobre lo que la lista va a descubrir y cuida la plata) y **apurado**
-(confirma lo más rápido posible y no atiende a nadie). Con la lista llena atiende lo pendiente y la
-cierra, como en el juego. Lista llena, Oficinista, 500 viernes:
+que da prestar atención: escribe primero al mejor de los puestos que faltan, usa lo que dijeron los
+audios, atiende a la cancha, no miente sobre lo que la lista va a descubrir y cuida la plata) y
+**apurado** (confirma lo más rápido posible y no atiende a nadie). El atento llama a todos los que
+avisan que no saben si llegan; el razonable, a la mitad; el apurado, a ninguno. Con la lista llena
+atiende lo pendiente y la cierra, como en el juego. Lista llena, Oficinista, 500 viernes:
 
 | | razonable | atento | apurado |
 |---|---|---|---|
-| Partido F5 | 80% | 92% | 19% |
-| Partido F6 | 60% | 94% | 4% |
-| Partido F8 | 71% | 75% | 4% |
-| **Torneo F5** (el slice) | **62%** | **88%** | **20%** |
-| Torneo F6 | 24% | 57% | 6% |
-| Torneo F8 | 26% | 33% | 6% |
+| Partido F5 | 94% | 100% | 19% |
+| Partido F6 | 84% | 100% | 4% |
+| Partido F8 | 80% | 100% | 4% |
+| **Torneo F5** (el slice) | **63%** | **88%** | **20%** |
+| Torneo F6 | 29% | 100% | 6% |
+| Torneo F8 | 21% | 40% | 6% |
 
-Se gana entre el 41% y el 53% de los partidos que se juegan: el rival de cada fecha resta su nivel.
+El partido lo deciden los titulares: los mejores de cada puesto según el formato, y el que juega
+fuera de su puesto rinde 20 puntos menos (al arco, sin arquero, va el peor). El banco no suma. El
+razonable gana entre el 39% y el 55% de los partidos que juega; el atento, entre el 58% y el 61%.
 
 Las perillas, en `contenido/config.json` salvo donde se dice:
 
@@ -270,7 +273,7 @@ Las perillas, en `contenido/config.json` salvo donde se dice:
   se va si se va el que lo trajo y falta 60% de las veces.
 - **Interrupciones:** cada una drena hasta un tope y se rinde (`interrupciones.json`), así el que
   las ignora sufre pero puede llegar.
-- **El rival:** su nivel en `torneo.json` (la primera fecha, 20).
+- **El rival:** su nivel en `torneo.json` (la primera fecha, 25).
 
 ### Partidas de personas
 
