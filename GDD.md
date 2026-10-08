@@ -504,18 +504,25 @@ contenido → margen → plata → reloj.
    contacto, en el tono de cada uno. Meta: bajas 0,6–1 por viernes; el atento las ataja, el razonable
    a veces, el apurado nunca. *Hecho: bajas del razonable de 2,3 a 1,5 y del atento de 0,9 a 0,6
    (lo que le queda son invitados que no vienen).*
-4. **Que el "no" aparezca.** Más caminos de rechazo por algo que hiciste, como "hoy armás vos carlos",
-   que cuesta a Beto. Meta: rechazos 1–2 por viernes.
-5. **Repartir las causas.** Que la plata, el reloj y la moral expliquen entre 15% y 30% de los
-   fracasos cada una, y las bajas menos de la mitad. Después, el atento a 75–85%.
+4. ✅ **Que el "no" aparezca.** Excusas de la noche (uno o dos que no pueden, por semilla) y cuatro
+   "no" por algo que hiciste, con un arreglo caro: Carlos (el remis de Lucho), Santi (la cuota de
+   Nico), Pablo (la lista casi llena) y Fede (lo que le dijiste al Tano). *Hecho: 1,7 rechazos por
+   viernes en el razonable y 1,4 en el atento.*
+5. 🟡 **Repartir las causas.** Que la plata, el reloj y la moral expliquen entre 15% y 30% de los
+   fracasos cada una, y las bajas menos de la mitad. Después, el atento a 75–85%. *Hecho: el
+   bolsillo del viernes arranca con tu parte (1500) y el colchón de la campaña completa la seña; los
+   que dudan avisan 20 minutos antes de la revisión; umbral de baja 74. Razonable 55%, atento 86%.
+   Queda: las bajas siguen siendo el 98% de los fracasos del razonable, y el apurado llena el 9%
+   (meta 20–35%), porque se queda sin moral.*
 6. ✅ **Que la formación pese.** Arrancan los mejores de cada puesto; fuera de puesto se rinde 20
    puntos menos y el banco no suma. *Hecho: el atento gana 61% y el razonable 51% (antes 53% y
    51%). Queda: que la habilidad se lea en la escritura, no solo en el retrato.*
 7. ✅ **El relato variado.** `contenido/relato.json`: de tres a seis fraseos por momento y por gol,
    sin repetir dentro del partido.
 8. **Los formatos grandes.** Que en F6 y F8 la diferencia entre jugar bien y jugar más o menos sea
-   igual o mayor que en F5. *Ahora se pasó para el otro lado: en torneo F6 el atento llena la lista
-   el 100% y el razonable el 29%; en los partidos sueltos el atento llega al 100%.*
+   igual o mayor que en F5. *Ahora: torneo F6 24% contra 53%, torneo F8 19% contra 38%; en los
+   partidos sueltos F5 y F6 el atento llega al 100%, y en el partido F8 juega peor que el razonable
+   (27% contra 45%) porque le escribe primero a los cracks, que son los que más se bajan.*
 9. **Para los testers.** Build de Windows, "Exportar partidas" desde el menú y una hoja de
    instrucciones. Cada viernes jugado ya queda en `partidas/` con su build.
 10. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
