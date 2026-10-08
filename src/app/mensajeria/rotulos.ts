@@ -5,14 +5,9 @@
 import type { EventoFeed } from "../../core/partida.js";
 import type { EstadoContacto, Rol } from "../../core/tipos.js";
 
-// TODO(contenido): el grupo y la cancha son de la campaña, no de la interfaz.
-// Cuando exista la gestión semanal tienen que venir de los datos.
+// TODO(contenido): el nombre del grupo es de la campaña, no de la interfaz.
+// El torneo ya viene de contenido/torneo.json.
 export const NOMBRE_GRUPO = "Los Pibes F5";
-export const TITULO_LISTA = "Viernes 21 h · Los Álamos";
-export const NOMBRE_TORNEO = "Torneo Relámpago";
-export const FECHA = "Fecha 1";
-export const CANCHA = "Los Álamos · cancha 3";
-export const RIVAL = "La Vieja Guardia";
 
 /** Abreviado: entra en un renglón y es como se escribe en cualquier lista de fútbol. */
 export const ROL_CORTO: Record<Rol, string> = {

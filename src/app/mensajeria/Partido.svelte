@@ -14,10 +14,12 @@
   import Avatar from "./Avatar.svelte";
   import BotonPrincipal from "./BotonPrincipal.svelte";
   import Cabecera from "./Cabecera.svelte";
-  import { CANCHA, FECHA, NOMBRE_GRUPO, NOMBRE_TORNEO, pesos, resaltarNombres, RIVAL } from "./rotulos.js";
+  import type { Vista } from "../estado/juego.svelte.js";
+  import { NOMBRE_GRUPO, pesos, resaltarNombres } from "./rotulos.js";
 
   let {
     resolucion,
+    torneo,
     colores,
     visto,
     volver,
@@ -25,6 +27,7 @@
     alVolverAlGrupo,
   }: {
     resolucion: Resolucion;
+    torneo: Vista["torneo"];
     /** El color de cada nombre según su estado. */
     colores: ReadonlyMap<string, string>;
     /** Cuántos momentos ya viste antes: esos aparecen de una. */
@@ -86,9 +89,9 @@
 </script>
 
 <div class="pantalla-app">
-  <Cabecera titulo="{NOMBRE_TORNEO} · {FECHA}" subtitulo={CANCHA} {volver}>
+  <Cabecera titulo="{torneo.nombre} · {torneo.fecha}" subtitulo={torneo.cancha} {volver}>
     {#snippet avatar()}
-      <Avatar nombre={FECHA} id="torneo" tam={38} />
+      <Avatar nombre={torneo.fecha} id="torneo" tam={38} />
     {/snippet}
   </Cabecera>
 
@@ -97,7 +100,7 @@
       <div class="equipos">
         <span class="eq">{NOMBRE_GRUPO}</span>
         <span class="goles" aria-label="{nuestros} a {suyos}">{nuestros}<span>–</span>{suyos}</span>
-        <span class="eq rival">{RIVAL}</span>
+        <span class="eq rival">{torneo.rival}</span>
       </div>
       <div class="estado">
         <b>{estado}</b>
@@ -121,6 +124,18 @@
 
   <div class="feed" bind:this={feed}>
     <div class="hilo">
+      <!-- Sin partido también se cuenta: quién faltó y qué hiciste para que faltara. -->
+      {#each resolucion.porQueNo as m, i (i)}
+        <article class="momento motivo">
+          <span class="minuto">{m.hora ?? ""}</span>
+          <p class="texto">
+            {#each resaltarNombres(m.texto, colores) as t, j (j)}
+              {#if t.color}<span class="nombre" style:color={t.color}>{t.texto}</span>{:else}{t.texto}{/if}
+            {/each}
+          </p>
+          {#if m.porque}<p class="causa">{m.porque}</p>{/if}
+        </article>
+      {/each}
       {#each enPantalla as b, i (i)}
         <article class="momento" class:contra={b.signo < 0 && !b.gol} class:gol={b.gol === "favor"} class:final={terminado && i === momentos.length - 1}>
           <span class="minuto">{b.minuto}′{#if b.gol}<small class:de-ellos={b.gol === "contra"}>GOL</small>{/if}</span>
@@ -202,6 +217,9 @@
     box-shadow: 0 1px 0 rgb(21 24 27 / 6%);
     animation: llegar 320ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
   }
+  /* Lo que explica que no hubo partido lleva la hora, que es más ancha que un minuto. */
+  .momento.motivo { grid-template-columns: 40px 1fr; }
+
   /* Lo que salió mal no se pinta de rojo, que es de los jugadores: se apaga. */
   .momento.contra { background: color-mix(in oklab, var(--app-superficie) 55%, var(--app-papel)); box-shadow: none; border: 1px dashed var(--app-linea); }
   .momento.gol .texto, .momento.final .texto { font-weight: 700; }

@@ -1,3 +1,4 @@
+import { formatearPesos } from "./formato.js";
 import type { Partida } from "./partida.js";
 import { Rng } from "./rng.js";
 import { habilidadPromedio, quimica, todosLosRoces } from "./roster.js";
@@ -15,9 +16,19 @@ export interface Beat {
   readonly gol?: "favor" | "contra";
 }
 
+/** Algo que explica por qué no hubo partido: quién faltó y qué hiciste vos para que faltara. */
+export interface Motivo {
+  /** Cuándo pasó, si se sabe. */
+  readonly hora: string | null;
+  readonly texto: string;
+  readonly porque?: string;
+}
+
 export interface Resolucion {
   readonly hayPartido: boolean;
   readonly motivoSinPartido?: string;
+  /** Sin partido, por qué: la narración atribuida de lo que no pasó. */
+  readonly porQueNo: readonly Motivo[];
   readonly plantel: readonly DefinicionContacto[];
   readonly desglose: readonly Desglose[];
   readonly probabilidad: number;
@@ -54,19 +65,19 @@ export function resolver(partida: Partida): Resolucion {
 
   // --- ¿hay partido? -------------------------------------------------------
   if (partida.motivoFin === "moral_agotada") {
-    return sinPartido(plantel, "Colapsaste antes de las 21. No fue nadie porque nadie supo nada.");
+    return sinPartido(partida, "Colapsaste antes de las 21. No fue nadie porque nadie supo nada.");
   }
   if (plantel.length < config.jugadoresNecesarios) {
     const faltan = config.jugadoresNecesarios - plantel.length;
     return sinPartido(
-      plantel,
+      partida,
       `Quedaron ${plantel.length}/${config.jugadoresNecesarios}. Faltando ${faltan}, no hay picadito.`,
     );
   }
   if (partida.dinero < config.senaCancha) {
     return sinPartido(
-      plantel,
-      `Juntaste los ${config.jugadoresNecesarios}, pero no te alcanzó para la seña ($${config.senaCancha}). El complejo largó la cancha.`,
+      partida,
+      `Juntaste los ${config.jugadoresNecesarios}, pero no te alcanzó para la seña (${formatearPesos(config.senaCancha)}). El complejo largó la cancha.`,
     );
   }
 
@@ -95,7 +106,10 @@ export function resolver(partida: Partida): Resolucion {
   const probabilidad = limitar(Math.round(total), 5, 95);
 
   const gano = rng.ocurre(probabilidad);
-  const diferencia = Math.max(1, Math.round(Math.abs(probabilidad - 50) / 14) + rng.entero(0, 1));
+  // La diferencia sale de cuánto favorito era el que ganó: si gana el que tenía
+  // menos chances, gana por poco, no por goleada.
+  const favoritismo = (gano ? probabilidad : 100 - probabilidad) - 50;
+  const diferencia = Math.max(1, Math.round(favoritismo / 14) + rng.entero(0, 1));
   const perdedor = rng.entero(0, 3);
   const golesFavor = gano ? perdedor + diferencia : perdedor;
   const golesContra = gano ? perdedor : perdedor + diferencia;
@@ -108,6 +122,7 @@ export function resolver(partida: Partida): Resolucion {
 
   return {
     hayPartido: true,
+    porQueNo: [],
     plantel,
     desglose,
     probabilidad,
@@ -119,11 +134,12 @@ export function resolver(partida: Partida): Resolucion {
   };
 }
 
-function sinPartido(plantel: readonly DefinicionContacto[], motivo: string): Resolucion {
+function sinPartido(partida: Partida, motivo: string): Resolucion {
   return {
     hayPartido: false,
     motivoSinPartido: motivo,
-    plantel,
+    porQueNo: porQueNoHubo(partida),
+    plantel: partida.plantel(),
     desglose: [],
     probabilidad: 0,
     gano: false,
@@ -132,6 +148,71 @@ function sinPartido(plantel: readonly DefinicionContacto[], motivo: string): Res
     narracion: [],
     recompensa: { dinero: 0, prestigio: -8 },
   };
+}
+
+/** "Gonza", "Gonza y Lucho", "Gonza, Lucho y Darío", "Gonza, Lucho y 3 más". */
+function nombrar(nombres: readonly string[]): string {
+  if (nombres.length <= 1) return nombres[0] ?? "";
+  if (nombres.length > 3) return `${nombres.slice(0, 2).join(", ")} y ${nombres.length - 2} más`;
+  return `${nombres.slice(0, -1).join(", ")} y ${nombres.at(-1)}`;
+}
+
+/**
+ * Sin partido también se cuenta, y con la misma regla: cada cosa con la
+ * decisión tuya que la explica, si hay una. Lo que fue culpa de nadie va sin causa.
+ */
+function porQueNoHubo(partida: Partida): Motivo[] {
+  const config = partida.config;
+  const bitacora = partida.bitacora.todas();
+  const motivos: Motivo[] = [];
+
+  /** Lo último que le hiciste a alguien que explica que no venga. */
+  const decisionCon = (id: string): string | undefined => {
+    const entrada = bitacora.filter((e) => e.contactoId === id && (e.tipo === "apuro" || e.tipo === "ignorado")).at(-1);
+    if (!entrada) return undefined;
+    const hora = formatearHora(entrada.minuto);
+    return entrada.tipo === "apuro"
+      ? `${capitalizar(entrada.detalle ?? "lo apuraste")} a las ${hora}`
+      : `Lo dejaste en visto a las ${hora}`;
+  };
+  const con = (id: string, motivo: Omit<Motivo, "porque">): Motivo => {
+    const porque = decisionCon(id);
+    return porque ? { ...motivo, porque } : motivo;
+  };
+
+  if (partida.motivoFin === "moral_agotada") {
+    motivos.push({ hora: formatearHora(partida.reloj.minutos), texto: "Apagaste el teléfono.", porque: "No diste más" });
+  }
+  const plantel = partida.plantel();
+  if (plantel.length >= config.jugadoresNecesarios && partida.dinero < config.senaCancha) {
+    motivos.push({
+      hora: null,
+      texto: `Faltaron ${formatearPesos(config.senaCancha - partida.dinero)} para la seña.`,
+      porque: `Entre todos juntaron ${formatearPesos(partida.dinero)}`,
+    });
+  }
+
+  const contactos = partida.contactos();
+  for (const c of contactos.filter((x) => x.estado === "bajado")) {
+    const baja = bitacora.find((e) => e.tipo === "baja_tardia" && e.contactoId === c.id);
+    motivos.push(con(c.id, { hora: baja ? formatearHora(baja.minuto) : null, texto: `${c.nombre} se bajó.` }));
+  }
+  for (const c of contactos.filter((x) => x.estado === "rechazado")) {
+    motivos.push(con(c.id, { hora: c.minutoUltimo === null ? null : formatearHora(c.minutoUltimo), texto: `${c.nombre} no viene.` }));
+  }
+  for (const c of contactos.filter((x) => x.estado === "hablando" || x.estado === "esperando")) {
+    motivos.push({ hora: null, texto: `${c.nombre} quedó en el aire.`, porque: "No le cerraste a tiempo" });
+  }
+  const sinEscribir = contactos.filter((x) => x.estado === "sin_contactar").map((x) => x.nombre);
+  if (sinEscribir.length > 0) {
+    const uno = sinEscribir.length === 1;
+    motivos.push({
+      hora: null,
+      texto: `${nombrar(sinEscribir)} ${uno ? "ni se enteró" : "ni se enteraron"}.`,
+      porque: uno ? "No le escribiste" : "No les escribiste",
+    });
+  }
+  return motivos;
 }
 
 /** "lo llamaste por teléfono" → "Lo llamaste por teléfono". */

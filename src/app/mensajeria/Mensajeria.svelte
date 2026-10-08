@@ -89,6 +89,7 @@
       alPagar={(rol) => juego.pagarReemplazo(rol)}
       calmar={vista.calmar && !vista.terminada ? vista.calmar : null}
       alIrALaCancha={vista.terminada ? alIrALaCancha : null}
+      complejo={vista.torneo.complejo}
       alCalmar={() => juego.calmar()}
       escuchados={new Set(vista.audiosEscuchados)}
       alEscuchar={(id) => juego.escuchar(id)}
@@ -110,6 +111,7 @@
   {:else if pantalla.tipo === "partido" && vista.resolucion}
     <Partido
       resolucion={vista.resolucion}
+      torneo={vista.torneo}
       {colores}
       visto={vista.relatoVisto}
       {volver}

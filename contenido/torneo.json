@@ -1,0 +1,14 @@
+{
+  "nombre": "Torneo Relámpago",
+  "complejo": "Los Álamos",
+  "cancha": "cancha 3",
+  "rivales": [
+    "La Vieja Guardia",
+    "Deportivo Fernet",
+    "Los Galácticos de Villa Luro",
+    "Sacachispas del Oeste",
+    "Atlético Sin Rodillas",
+    "Juventud Unida (más o menos)",
+    "Club Social y Asado"
+  ]
+}

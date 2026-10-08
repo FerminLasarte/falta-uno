@@ -15,6 +15,14 @@ import {
   type VistaPuesto,
   type VistaRoster,
 } from "../../core/partida.js";
+import {
+  cerrarFecha,
+  nuevaCampana,
+  rivalDe,
+  semillaDeFecha,
+  type Campana,
+  type CierreFecha,
+} from "../../core/campana.js";
 import { textosDeInscripcion } from "../../core/inscripcion.js";
 import { agendaDe } from "../../core/perfiles.js";
 import type { Tipeo } from "../../core/pulso.js";
@@ -33,7 +41,9 @@ export type Pantalla =
   | { readonly tipo: "contacto"; readonly id: string }
   | { readonly tipo: "interrupcion"; readonly id: string }
   /** Después de las 21:00: el partido, contado. */
-  | { readonly tipo: "partido" };
+  | { readonly tipo: "partido" }
+  /** La campaña terminó: por moral, por deuda o porque el equipo se disolvió. */
+  | { readonly tipo: "fin" };
 
 /** Una interrupción que ya llegó: Sofi, el jefe, la cancha. Es un chat más. */
 export interface VistaInterrupcion {
@@ -94,6 +104,9 @@ export interface Vista {
   readonly resolucion: Resolucion | null;
   /** Cuántos momentos del relato ya viste: al volver, no se repiten. */
   readonly relatoVisto: number;
+  readonly campana: Campana;
+  /** El torneo que se juega, con el rival de esta fecha. */
+  readonly torneo: { readonly nombre: string; readonly fecha: string; readonly cancha: string; readonly complejo: string; readonly rival: string };
 }
 
 /**
@@ -137,11 +150,17 @@ class Juego {
   contenido = $state<Contenido | null>(null);
   vista = $state<Vista | null>(null);
   eleccion = $state<Eleccion | null>(null);
+  /** Cómo cerró la última fecha: lo que se pagó y lo que se ganó. Solo vive hasta que cerrás el juego. */
+  cierre = $state<CierreFecha | null>(null);
   error = $state<string | null>(null);
   pantalla = $state<Pantalla>({ tipo: "grupo" });
 
   #registro: Registro | null = null;
-  #semilla = "";
+  #campana: Campana | null = null;
+  /** La fecha y la plata con las que arrancó el viernes en curso: con eso se arma igual al retomarlo. */
+  #viernes: { readonly fecha: number; readonly dinero: number } | null = null;
+  /** La semilla de la próxima campaña, mientras se elige el perfil. */
+  #semillaNueva = "";
   /** Huella del contenido con el que se juega este viernes. */
   #huella = "";
   #anterior: Pantalla = { tipo: "grupo" };
@@ -186,7 +205,7 @@ class Juego {
       this.#huella = huella(JSON.stringify(contenido));
 
       if (!this.#retomar(contenido, await window.faltaUno.cargar(ARCHIVO))) {
-        this.#semilla = semilla;
+        this.#semillaNueva = semilla;
         this.eleccion = eleccionDe(contenido);
       }
       this.#refrescar();
@@ -211,9 +230,7 @@ class Juego {
     const contenido = this.contenido;
     const perfil = contenido?.perfiles.find((p) => p.id === perfilId);
     if (!contenido || !perfil || !this.eleccion) return;
-    this.#registro = new Registro(new Partida(opcionesDe(contenido, perfil, this.#semilla)));
-    this.#resolucion = null;
-    this.#fuisteALaCancha = false;
+    this.#arrancar(contenido, nuevaCampana(perfil, this.#semillaNueva));
     this.pantalla = { tipo: "interrupcion", id: contenido.inscripcion.chat };
     this.eleccion = null;
     this.#ultimoLatido = performance.now();
@@ -221,15 +238,68 @@ class Juego {
     this.#guardar();
   }
 
-  /** Retoma el viernes guardado, si hay uno que se pueda leer. */
+  /**
+   * Cerrás la fecha que se jugó: se paga la cancha, se cobra el premio y la
+   * campaña pasa al viernes siguiente, o termina.
+   */
+  siguienteFecha(): void {
+    const contenido = this.contenido;
+    const campana = this.#campana;
+    const p = this.#partida;
+    const resolucion = this.#resolucion;
+    if (!contenido || !campana || !p?.terminada || !resolucion || campana.fin) return;
+    const cierre = cerrarFecha(campana, p, resolucion, contenido.config);
+    this.cierre = cierre;
+    if (cierre.campana.fin) {
+      this.#campana = cierre.campana;
+      this.pantalla = { tipo: "fin" };
+    } else {
+      this.#arrancar(contenido, cierre.campana);
+      this.pantalla = { tipo: "grupo" };
+    }
+    this.#refrescar();
+    this.#guardar();
+  }
+
+  /**
+   * Empieza otra campaña: vuelve la charla con la cancha. La que estaba se
+   * pisa recién cuando elegís el perfil; hasta ahí, cerrar el juego la conserva.
+   */
+  campanaNueva(): void {
+    const contenido = this.contenido;
+    if (!contenido) return;
+    this.#registro = null;
+    this.#campana = null;
+    this.#viernes = null;
+    this.vista = null;
+    this.cierre = null;
+    this.#semillaNueva = String(Date.now());
+    this.eleccion = eleccionDe(contenido);
+  }
+
+  /** Arma el viernes de la fecha en la que está la campaña, desde cero. */
+  #arrancar(contenido: Contenido, campana: Campana): void {
+    const perfil = contenido.perfiles.find((p) => p.id === campana.perfil);
+    if (!perfil) throw new Error(`no existe el perfil "${campana.perfil}"`);
+    this.#campana = campana;
+    this.#viernes = { fecha: campana.fecha, dinero: campana.dinero };
+    this.#registro = new Registro(new Partida(opcionesDe(contenido, perfil, campana, this.#viernes)));
+    this.#resolucion = null;
+    this.#fuisteALaCancha = false;
+    this.#leidos = new Leidos();
+    this.#anterior = { tipo: "grupo" };
+    this.#ultimoLatido = performance.now();
+  }
+
+  /** Retoma la campaña guardada, con su viernes donde quedó. */
   #retomar(contenido: Contenido, archivo: { contenido: string | null }): boolean {
     const guardado = archivo.contenido === null ? null : leerGuardado(archivo.contenido);
     if (!guardado) return false;
-    const { viernes } = guardado;
-    const perfil = contenido.perfiles.find((p) => p.id === viernes.perfil);
+    const { campana, viernes } = guardado;
+    const perfil = contenido.perfiles.find((p) => p.id === campana.perfil);
     if (!perfil) return false;
 
-    const { registro, aplicados } = Registro.reproducir(opcionesDe(contenido, perfil, viernes.semilla), viernes.pasos);
+    const { registro, aplicados } = Registro.reproducir(opcionesDe(contenido, perfil, campana, viernes), viernes.pasos);
     if (aplicados < viernes.pasos.length) {
       console.info(
         `[guardado] el contenido cambió (${viernes.contenido} → ${this.#huella}): ` +
@@ -237,9 +307,11 @@ class Juego {
       );
     }
     this.#registro = registro;
+    this.#campana = campana;
+    this.#viernes = { fecha: viernes.fecha, dinero: viernes.dinero };
     this.#resolucion = null;
-    this.#semilla = viernes.semilla;
     this.#restaurarVista(guardado.vista, contenido);
+    if (campana.fin) this.pantalla = { tipo: "fin" };
     return true;
   }
 
@@ -257,12 +329,14 @@ class Juego {
 
   /** Escribe el viernes entero. `ya` espera a que termine: es para cuando se cierra la ventana. */
   #guardar(ya = false): void {
-    const p = this.#partida;
     const registro = this.#registro;
-    if (!p || !registro) return;
+    const campana = this.#campana;
+    const viernes = this.#viernes;
+    if (!registro || !campana || !viernes) return;
     const guardado: Guardado = {
       formato: FORMATO_GUARDADO,
-      viernes: { perfil: p.perfil.id, semilla: this.#semilla, contenido: this.#huella, pasos: registro.pasos },
+      campana,
+      viernes: { ...viernes, contenido: this.#huella, pasos: registro.pasos },
       vista: { pantalla: this.pantalla, leidos: this.#leidos.serializar(), cancha: this.#fuisteALaCancha },
     };
     const texto = JSON.stringify(guardado);
@@ -377,7 +451,8 @@ class Juego {
   #refrescar(): void {
     const p = this.#partida;
     const contenido = this.contenido;
-    if (!p || !contenido) return;
+    const campana = this.#campana;
+    if (!p || !contenido || !campana) return;
 
     // Lo que está en pantalla se da por leído, también lo que llega mientras lo mirás.
     const eventos = p.eventos();
@@ -433,6 +508,8 @@ class Juego {
       motivoFin: p.motivoFin,
       resolucion: this.#resolucion,
       relatoVisto: this.#leidos.visto(RELATO),
+      campana,
+      torneo: torneoDe(contenido, campana.fecha),
     };
   }
 }
@@ -460,15 +537,34 @@ function eleccionDe(contenido: Contenido): Eleccion {
  * Todo lo que hace falta para armar un viernes. Es lo mismo al empezarlo y al
  * retomarlo: si cambiara, el guardado no daría la misma partida.
  */
-function opcionesDe(contenido: Contenido, perfil: DefinicionPerfil, semilla: string): OpcionesPartida {
+function opcionesDe(
+  contenido: Contenido,
+  perfil: DefinicionPerfil,
+  campana: Campana,
+  viernes: { readonly fecha: number; readonly dinero: number },
+): OpcionesPartida {
   return {
     perfil,
     agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
-    inscripcion: contenido.inscripcion,
+    // La charla con la cancha es de la primera fecha: es cuando te anotás.
+    ...(viernes.fecha === 1 ? { inscripcion: contenido.inscripcion } : {}),
+    dineroInicial: viernes.dinero,
+    semilla: semillaDeFecha({ ...campana, fecha: viernes.fecha }),
     interrupciones: contenido.interrupciones,
     grupo: contenido.grupo,
     config: contenido.config,
-    semilla,
+  };
+}
+
+/** El torneo como se lo ve en la app: su nombre, la fecha que se juega y contra quién. */
+function torneoDe(contenido: Contenido, fecha: number): Vista["torneo"] {
+  const { torneo } = contenido;
+  return {
+    nombre: torneo.nombre,
+    fecha: `Fecha ${fecha}`,
+    cancha: `${torneo.complejo} · ${torneo.cancha}`,
+    complejo: torneo.complejo,
+    rival: rivalDe(torneo, fecha),
   };
 }
 
@@ -483,7 +579,7 @@ function horaDelPartido(contenido: Contenido, resolucion: Resolucion | null, vis
 /** El chat que se está leyendo en esa pantalla. La bandeja y el partido no son ninguno. */
 function chatDe(pantalla: Pantalla): string | null {
   if (pantalla.tipo === "grupo") return CHAT_GRUPO;
-  if (pantalla.tipo === "chats" || pantalla.tipo === "partido") return null;
+  if (pantalla.tipo === "chats" || pantalla.tipo === "partido" || pantalla.tipo === "fin") return null;
   return pantalla.id;
 }
 

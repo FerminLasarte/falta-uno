@@ -37,6 +37,8 @@ export interface OpcionesPartida {
   readonly grupo?: DefinicionGrupo;
   /** La charla con la cancha con la que arranca la campaña. Solo el primer viernes la tiene. */
   readonly inscripcion?: DefinicionInscripcion;
+  /** La plata con la que llegás al viernes, si no es la inicial del perfil. Negativa es deuda. */
+  readonly dineroInicial?: number;
 }
 
 /** El chat del grupo del equipo, donde se arma la lista. */
@@ -207,7 +209,7 @@ export class Partida {
     this.interrupcionesPosibles = opciones.interrupciones;
     this.grupo = opciones.grupo ?? GRUPO_QUIETO;
     this._moral = opciones.perfil.moralInicial;
-    this._dinero = opciones.perfil.dineroInicial;
+    this._dinero = opciones.dineroInicial ?? opciones.perfil.dineroInicial;
 
     for (const contacto of opciones.agenda) {
       this.agenda.set(contacto.id, contacto);

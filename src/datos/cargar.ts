@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { z } from "zod";
 import type { DefinicionGrupo } from "../core/grupo.js";
+import type { DefinicionTorneo } from "../core/campana.js";
 import type { DefinicionInscripcion } from "../core/inscripcion.js";
 import type { DefinicionInterrupcion } from "../core/interrupciones.js";
 import type { Config, DefinicionContacto, DefinicionPerfil } from "../core/tipos.js";
@@ -12,6 +13,7 @@ import {
   inscripcionSchema,
   interrupcionSchema,
   perfilSchema,
+  torneoSchema,
 } from "./esquema.js";
 import { revisarGrafo, revisarGrupo, revisarPerfiles, type ProblemaContenido } from "./validar.js";
 
@@ -22,6 +24,7 @@ export interface Contenido {
   readonly interrupciones: readonly DefinicionInterrupcion[];
   readonly grupo: DefinicionGrupo;
   readonly inscripcion: DefinicionInscripcion;
+  readonly torneo: DefinicionTorneo;
 }
 
 export class ErrorDeContenido extends Error {
@@ -64,6 +67,7 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
   const interrupciones = await leer("interrupciones.json", interrupcionSchema.array());
   const grupo = await leer("grupo.json", grupoSchema);
   const inscripcion = await leer("inscripcion.json", inscripcionSchema);
+  const torneo = await leer("torneo.json", torneoSchema);
 
   const dirContactos = join(raiz, "contactos");
   const archivos = (await readdir(dirContactos)).filter((a) => a.endsWith(".json")).sort();
@@ -101,7 +105,7 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
     );
   }
 
-  if (problemas.length > 0 || !config || !perfiles || !interrupciones || !grupo || !inscripcion) {
+  if (problemas.length > 0 || !config || !perfiles || !interrupciones || !grupo || !inscripcion || !torneo) {
     throw new ErrorDeContenido(problemas);
   }
 
@@ -112,5 +116,6 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
     interrupciones: interrupciones as DefinicionInterrupcion[],
     grupo: grupo as DefinicionGrupo,
     inscripcion,
+    torneo,
   };
 }

@@ -4,6 +4,7 @@ import { Partida, type OpcionesPartida } from "../src/core/partida.js";
 import { agendaDe } from "../src/core/perfiles.js";
 import { FORMATO_GUARDADO, huella, leerGuardado, Registro, type Guardado, type Paso } from "../src/core/registro.js";
 import { resolver } from "../src/core/resolucion.js";
+import { nuevaCampana } from "../src/core/campana.js";
 import { Rng } from "../src/core/rng.js";
 import { agendaCompleta, CONFIG, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js";
 
@@ -70,7 +71,8 @@ function foto(p: Partida): unknown {
 function guardarYCargar(registro: Registro, opciones: OpcionesPartida): Registro {
   const guardado: Guardado = {
     formato: FORMATO_GUARDADO,
-    viernes: { perfil: opciones.perfil.id, semilla: String(opciones.semilla), contenido: "x", pasos: registro.pasos },
+    campana: nuevaCampana(opciones.perfil, String(opciones.semilla)),
+    viernes: { fecha: 1, dinero: opciones.perfil.dineroInicial, contenido: "x", pasos: registro.pasos },
   };
   const leido = leerGuardado(JSON.stringify(guardado));
   expect(leido).not.toBeNull();
@@ -170,7 +172,18 @@ describe("retomar un viernes guardado", () => {
 describe("el archivo", () => {
   const valido: Guardado = {
     formato: FORMATO_GUARDADO,
-    viernes: { perfil: "oficinista", semilla: "s", contenido: "abc", pasos: [["t", 10], ["pagar", "arquero"], ["calmar"]] },
+    campana: {
+      perfil: "oficinista",
+      semilla: "s",
+      fecha: 2,
+      dinero: -1500,
+      prestigio: 10,
+      fechasSinPartido: 0,
+      fechasConDeuda: 1,
+      jugadas: [{ fecha: 1, hayPartido: true, gano: true, golesFavor: 3, golesContra: 1 }],
+      fin: null,
+    },
+    viernes: { fecha: 2, dinero: -1500, contenido: "abc", pasos: [["t", 10], ["pagar", "arquero"], ["calmar"]] },
     vista: { pantalla: { tipo: "grupo" } },
   };
 
@@ -185,7 +198,11 @@ describe("el archivo", () => {
     expect(leerGuardado("{nada")).toBeNull();
     expect(leerGuardado("null")).toBeNull();
     expect(leerGuardado(con({ formato: 99 }))).toBeNull();
-    expect(leerGuardado(con({ viernes: { ...valido.viernes, semilla: 4 } }))).toBeNull();
+    expect(leerGuardado(con({ formato: 1 }))).toBeNull();
+    expect(leerGuardado(con({ viernes: { ...valido.viernes, dinero: "mucho" } }))).toBeNull();
+    expect(leerGuardado(con({ campana: { ...valido.campana, perfil: "astronauta" } }))).toBeNull();
+    expect(leerGuardado(con({ campana: { ...valido.campana, fin: "aburrimiento" } }))).toBeNull();
+    expect(leerGuardado(con({ campana: { ...valido.campana, jugadas: [{ fecha: 1 }] } }))).toBeNull();
     expect(leerGuardado(viernes([["t", 1.5]]))).toBeNull();
     expect(leerGuardado(viernes([["t", -1]]))).toBeNull();
     expect(leerGuardado(viernes([["volar", "x"]]))).toBeNull();

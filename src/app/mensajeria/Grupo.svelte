@@ -12,7 +12,7 @@
   import Cabecera from "./Cabecera.svelte";
   import Charla from "./Charla.svelte";
   import ListaGrupo from "./ListaGrupo.svelte";
-  import { COLOR_ESTADO, enumerar, NOMBRE_GRUPO, pesos, ROL_CORTO, TITULO_LISTA } from "./rotulos.js";
+  import { COLOR_ESTADO, enumerar, NOMBRE_GRUPO, pesos, ROL_CORTO } from "./rotulos.js";
 
   let {
     eventos,
@@ -31,6 +31,7 @@
     calmar,
     alCalmar,
     alIrALaCancha,
+    complejo,
     escuchados,
     alEscuchar,
   }: {
@@ -53,6 +54,8 @@
     alCalmar: () => void;
     /** Ya son las 21:00: lo único que queda es ir a la cancha. Null mientras se juega el viernes. */
     alIrALaCancha: (() => void) | null;
+    /** Dónde se juega: va en el título de la lista. */
+    complejo: string;
     escuchados: ReadonlySet<string>;
     alEscuchar: (audioId: string) => void;
   } = $props();
@@ -95,7 +98,7 @@
     {/snippet}
   </Cabecera>
 
-  <ListaGrupo {lista} {enDuda} {roster} {dinero} {sena} titulo={TITULO_LISTA} {alAbrir} />
+  <ListaGrupo {lista} {enDuda} {roster} {dinero} {sena} titulo="Viernes 21 h · {complejo}" {alAbrir} />
 
   <Charla {eventos} {escribiendo} mostrarNombres {colorDe} {escuchados} {alEscuchar} />
 

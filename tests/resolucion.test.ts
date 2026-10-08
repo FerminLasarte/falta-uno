@@ -215,6 +215,57 @@ describe("el relato del partido", () => {
   });
 });
 
+describe("el que no era favorito", () => {
+  // Si gana el que tenía menos chances, gana por poco: no por goleada.
+  it("gana por un gol", () => {
+    let sorpresas = 0;
+    for (let i = 0; i < 80; i++) {
+      for (const habilidad of [25, 85]) {
+        const agenda = agendaCompleta().map((c) => ({ ...c, habilidad }));
+        const p = partida(agenda, PERFIL.dineroInicial, `sorpresa-${i}`);
+        confirmar(p, 10);
+        const r = resolver(p);
+        if (!r.hayPartido) continue;
+        const sorpresa = r.gano ? r.probabilidad < 50 : r.probabilidad > 50;
+        if (!sorpresa) continue;
+        sorpresas++;
+        expect(Math.abs(r.golesFavor - r.golesContra)).toBe(1);
+      }
+    }
+    expect(sorpresas).toBeGreaterThan(0);
+  });
+});
+
+describe("cuando no hubo partido", () => {
+  it("cuenta quién faltó y qué hiciste para que faltara", () => {
+    const p = partida(agendaCompleta());
+    p.escribir("c0");
+    alDia(p);
+    p.responder("c0", "no");
+    p.escribir("c1");
+    alDia(p);
+    confirmar(p, 0);
+    for (const c of p.contactos().slice(2, 8)) {
+      p.escribir(c.id);
+      alDia(p);
+      p.responder(c.id, "si");
+    }
+    const r = resolver(p);
+    expect(r.hayPartido).toBe(false);
+    const textos = r.porQueNo.map((m) => m.texto);
+    expect(textos).toContain("c0 no viene.");
+    expect(textos).toContain("c1 quedó en el aire.");
+    expect(textos.at(-1)).toMatch(/ni se enteraron\.$/);
+    expect(r.porQueNo.find((m) => m.texto.startsWith("c1"))?.porque).toBe("No le cerraste a tiempo");
+  });
+
+  it("con partido no hay nada que explicar", () => {
+    const p = partida(agendaCompleta());
+    confirmar(p, 10);
+    expect(resolver(p).porQueNo).toEqual([]);
+  });
+});
+
 describe("determinismo de la resolución", () => {
   it("la misma partida resuelta dos veces da exactamente lo mismo", () => {
     const jugar = (): Partida => {

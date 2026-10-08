@@ -14,7 +14,8 @@
  */
 import { Partida, type OpcionesPartida, type ResultadoComando } from "./partida.js";
 import { hashTexto } from "./rng.js";
-import { ROLES, type Rol } from "./tipos.js";
+import { FINES_CAMPANA, type Campana, type FechaJugada } from "./campana.js";
+import { PERFILES, ROLES, type Rol } from "./tipos.js";
 
 export type Paso =
   | readonly ["t", number]
@@ -109,11 +110,16 @@ export class Registro {
 
 // ------------------------------------------------------------------ el archivo
 
-export const FORMATO_GUARDADO = 1;
+export const FORMATO_GUARDADO = 2;
 
+/**
+ * El viernes en curso. Guarda lo que necesita para armarse igual que la
+ * primera vez, aunque la campaña ya haya cerrado la fecha y cambiado su plata.
+ */
 export interface ViernesGuardado {
-  readonly perfil: string;
-  readonly semilla: string;
+  readonly fecha: number;
+  /** La plata con la que arrancó. */
+  readonly dinero: number;
   /** Huella del contenido con el que se jugó. Si no coincide, la reproducción puede cortarse antes. */
   readonly contenido: string;
   readonly pasos: readonly Paso[];
@@ -121,6 +127,7 @@ export interface ViernesGuardado {
 
 export interface Guardado {
   readonly formato: typeof FORMATO_GUARDADO;
+  readonly campana: Campana;
   readonly viernes: ViernesGuardado;
   /** Lo que la vista quiere recordar: dónde estabas y qué ya viste. El núcleo no lo interpreta. */
   readonly vista?: unknown;
@@ -157,6 +164,48 @@ function esPaso(x: unknown): x is Paso {
   }
 }
 
+const esNumero = (x: unknown): x is number => typeof x === "number" && Number.isFinite(x);
+const esObjeto = (x: unknown): x is Record<string, unknown> => typeof x === "object" && x !== null;
+
+function esFechaJugada(x: unknown): x is FechaJugada {
+  if (!esObjeto(x)) return false;
+  return (
+    esEntero(x["fecha"]) &&
+    typeof x["hayPartido"] === "boolean" &&
+    typeof x["gano"] === "boolean" &&
+    esEntero(x["golesFavor"]) &&
+    esEntero(x["golesContra"])
+  );
+}
+
+function esCampana(x: unknown): x is Campana {
+  if (!esObjeto(x)) return false;
+  return (
+    (PERFILES as readonly unknown[]).includes(x["perfil"]) &&
+    esTexto(x["semilla"]) &&
+    esEntero(x["fecha"]) &&
+    (x["fecha"] as number) >= 1 &&
+    esNumero(x["dinero"]) &&
+    esNumero(x["prestigio"]) &&
+    esEntero(x["fechasSinPartido"]) &&
+    esEntero(x["fechasConDeuda"]) &&
+    Array.isArray(x["jugadas"]) &&
+    x["jugadas"].every(esFechaJugada) &&
+    (x["fin"] === null || (FINES_CAMPANA as readonly unknown[]).includes(x["fin"]))
+  );
+}
+
+function esViernes(x: unknown): x is ViernesGuardado {
+  if (!esObjeto(x)) return false;
+  return (
+    esEntero(x["fecha"]) &&
+    esNumero(x["dinero"]) &&
+    esTexto(x["contenido"]) &&
+    Array.isArray(x["pasos"]) &&
+    x["pasos"].every(esPaso)
+  );
+}
+
 /** Lee un guardado. Si está roto o es de otro formato, devuelve null y el juego arranca de cero. */
 export function leerGuardado(texto: string): Guardado | null {
   let crudo: unknown;
@@ -165,16 +214,8 @@ export function leerGuardado(texto: string): Guardado | null {
   } catch {
     return null;
   }
-  if (typeof crudo !== "object" || crudo === null) return null;
-  const { formato, viernes, vista } = crudo as Record<string, unknown>;
-  if (formato !== FORMATO_GUARDADO || typeof viernes !== "object" || viernes === null) return null;
-  const v = viernes as Record<string, unknown>;
-  if (!esTexto(v["perfil"]) || !esTexto(v["semilla"]) || !esTexto(v["contenido"])) return null;
-  const pasos = v["pasos"];
-  if (!Array.isArray(pasos) || !pasos.every(esPaso)) return null;
-  return {
-    formato,
-    viernes: { perfil: v["perfil"], semilla: v["semilla"], contenido: v["contenido"], pasos },
-    ...(vista !== undefined ? { vista } : {}),
-  };
+  if (!esObjeto(crudo)) return null;
+  const { formato, campana, viernes, vista } = crudo;
+  if (formato !== FORMATO_GUARDADO || !esCampana(campana) || !esViernes(viernes)) return null;
+  return { formato, campana, viernes, ...(vista !== undefined ? { vista } : {}) };
 }

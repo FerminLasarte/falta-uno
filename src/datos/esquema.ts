@@ -69,6 +69,15 @@ export const perfilSchema = z
   })
   .strict();
 
+export const torneoSchema = z
+  .object({
+    nombre: z.string().min(1),
+    complejo: z.string().min(1),
+    cancha: z.string().min(1),
+    rivales: z.array(z.string().min(1)).min(1),
+  })
+  .strict();
+
 export const inscripcionSchema = z
   .object({
     chat: z.string().min(1),
