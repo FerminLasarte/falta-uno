@@ -1,0 +1,124 @@
+{
+  "gol_favor": [
+    "{x} la empuja abajo del arco.",
+    "{x} le pega de lejos y entra.",
+    "{x} define cruzado.",
+    "{x} la pica por arriba del arquero y sale corriendo a gritarlo.",
+    "Rebote en el área y {x} la manda adentro con lo que tenga.",
+    "{x} entra tirando paredes y la toca a la red."
+  ],
+  "gol_contra": [
+    "Gol de ellos.",
+    "Se la meten por arriba.",
+    "Contra, y gol de ellos.",
+    "Un tiro que se desvía en la rodilla de uno de los nuestros. Gol de ellos.",
+    "Córner, nadie salta, gol de ellos.",
+    "Se duermen en un lateral y les hacen el gol."
+  ],
+  "gano": [
+    "Termina {favor} a {contra}. Ganaron. Alguien propone ir a comer algo.",
+    "Final, {favor} a {contra}. Ganaron, y el grupo va a explotar de stickers.",
+    "Termina {favor} a {contra}. Ganaron. La birra de después sabe a final del mundo."
+  ],
+  "perdio": [
+    "Termina {favor} a {contra}. Perdieron. Nadie habla en el vestuario.",
+    "Final, {favor} a {contra}. Perdieron, y ya hay uno buscando a quién echarle la culpa.",
+    "Termina {favor} a {contra}. Perdieron. El grupo va a estar callado hasta el lunes."
+  ],
+  "apuro": [
+    "{x} vino de mala gana y erra un gol hecho.",
+    "{x} juega con cara de culo todo el partido.",
+    "{x} no corre una. Se nota que vino obligado.",
+    "{x} pide el cambio a los diez minutos, sin lesión ni nada."
+  ],
+  "plata": [
+    "{x} corre como si le fuera la vida.",
+    "{x} juega como el que cobró: no deja una pelota sin pelear.",
+    "{x} mete cada pelota como si le hubieras pagado por gol."
+  ],
+  "plata_comprado": [
+    "El que conseguiste pagando corre como si le fuera la vida.",
+    "El que pagaste no sabe el nombre de nadie, pero corre por tres.",
+    "El pagado juega serio, como si fuera un laburo. Lo es."
+  ],
+  "grupo_caliente": [
+    "Llegan todos calientes de lo que se dijo en el grupo, y en la cancha se nota.",
+    "Lo del grupo sigue en la cancha: nadie se pasa la pelota.",
+    "Se habla más de lo que se dijo en el chat que del partido."
+  ],
+  "roce": [
+    "{par} se gritan todo el partido.",
+    "{par} no se la pasan ni por error.",
+    "{par} casi se agarran a trompadas en un lateral."
+  ],
+  "roce_calmado": [
+    "{par} se cruzan en una dividida y se dan la mano.",
+    "{par} terminan tirando una pared. Quién lo hubiera dicho.",
+    "{par} se miran feo en el saque, y después juegan como si nada."
+  ],
+  "baja": [
+    "Se nota el hueco de {x}. Juegan corriendo de atrás.",
+    "Sin {x} no hay quién la tenga: juegan a los pelotazos.",
+    "Falta {x} y el equipo corre el doble para tapar el agujero."
+  ],
+  "no_vino": [
+    "Falta {x}. Juegan con uno menos de los que esperabas.",
+    "{x} nunca apareció. Un lugar menos en el banco.",
+    "{x} no aparece ni por las tapas. Se arreglan con los que hay."
+  ],
+  "trajo": [
+    "{x} juega como si los conociera de toda la vida.",
+    "{x} no conoce a nadie y es el que mejor la pasa.",
+    "{x}, el invitado, se gana un lugar en el grupo con un caño."
+  ],
+  "favor": [
+    "{x} deja todo adentro de la cancha.",
+    "{x} juega para devolverte el favor, y se nota.",
+    "{x} corre hasta la última pelota. Te la debía."
+  ],
+  "confirmacion_limpia": [
+    "{x} la descose por la banda.",
+    "{x} tiene una noche de las buenas.",
+    "{x} está en todas: tapa, arma y llega."
+  ],
+  "ignorado": [
+    "{x} te lo recuerda toda la noche.",
+    "{x} te pasa la pelota solo cuando no queda otra.",
+    "{x} te saluda con un \"ah, ¿ahora sí me hablás?\"."
+  ],
+  "cancha_ignorada": [
+    "Llegás y en la entrada te miran torcido. Arrancan con la cancha a medio preparar.",
+    "En el complejo te hacen esperar en la puerta. Arrancan tarde y con la red rota.",
+    "El del complejo no te saluda. Les tocan las pelotas más pinchadas."
+  ],
+  "pareja_ignorada": [
+    "No podés dejar de mirar el teléfono. Te comés un caño mirando la pantalla.",
+    "Cada vez que vibra el teléfono en el bolso, perdés una marca.",
+    "Jugás pensando en la discusión que te espera en casa."
+  ],
+  "trabajo_ignorado": [
+    "Suena el teléfono del laburo en pleno partido y salís a atender.",
+    "Tu jefe te llama tres veces. A la tercera salís de la cancha.",
+    "Jugás con un ojo en el mail del laburo. Te la pasan y no estás."
+  ],
+  "sin_arquero": [
+    "Nadie quiere ir al arco. Se pone {x}, que no ataja ni un centro.",
+    "Va {x} al arco porque perdió el pan y queso. Se nota.",
+    "{x} se pone los guantes prestados y reza."
+  ],
+  "fuera_de_puesto": [
+    "{x} juega de {puesto} y no sabe dónde pararse.",
+    "A {x} lo ponen de {puesto} y anda perdido toda la noche.",
+    "{x} de {puesto} es un experimento que no sale."
+  ],
+  "picado": [
+    "El partido se pica en serio. Nadie afloja, y eso también es jugar.",
+    "Se juega con los dientes apretados. Cada pelota es una final.",
+    "Patadas, gritos y una intensidad que no se ve ni en la tele."
+  ],
+  "crack": [
+    "{x} agarra la pelota en la mitad y se lleva a tres.",
+    "{x} tira un caño que todavía se comenta.",
+    "Cuando {x} la agarra, el partido es otro."
+  ]
+}

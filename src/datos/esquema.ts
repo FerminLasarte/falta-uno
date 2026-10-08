@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { FORMATOS, type Formato } from "../core/modo.js";
+import { CLAVES_DEL_RELATO, type ClaveRelato } from "../core/relato.js";
 import { ESTADOS_CONTACTO, PERFILES, RASGOS, ROLES, TIPOS_EVENTO, type Rol } from "../core/tipos.js";
 
 export const efectosSchema = z
@@ -117,6 +118,11 @@ export const frasesSchema = z
     baja: z.string().min(1),
     duda: z.string().min(1),
   })
+  .strict();
+
+/** Cada clave del relato con sus fraseos; las marcas las revisa el validador. */
+export const relatoSchema = z
+  .object(Object.fromEntries(CLAVES_DEL_RELATO.map((c) => [c, z.array(z.string().min(1)).min(1)])) as Record<ClaveRelato, z.ZodArray<z.ZodString>>)
   .strict();
 
 export const torneoSchema = z

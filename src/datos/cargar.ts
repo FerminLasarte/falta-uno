@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { z } from "zod";
 import type { Frases } from "../core/frases.js";
+import type { Relato } from "../core/relato.js";
 import type { DefinicionGrupo } from "../core/grupo.js";
 import type { DefinicionTorneo } from "../core/campana.js";
 import type { DefinicionInscripcion } from "../core/inscripcion.js";
@@ -12,13 +13,22 @@ import {
   configSchema,
   contactoSchema,
   frasesSchema,
+  relatoSchema,
   grupoSchema,
   inscripcionSchema,
   interrupcionSchema,
   perfilSchema,
   torneoSchema,
 } from "./esquema.js";
-import { revisarCondiciones, revisarGrafo, revisarGrupo, revisarMarcas, revisarPerfiles, type ProblemaContenido } from "./validar.js";
+import {
+  revisarCondiciones,
+  revisarGrafo,
+  revisarGrupo,
+  revisarMarcas,
+  revisarPerfiles,
+  revisarRelato,
+  type ProblemaContenido,
+} from "./validar.js";
 
 export interface Contenido {
   readonly config: ConfigContenido;
@@ -29,6 +39,7 @@ export interface Contenido {
   readonly inscripcion: DefinicionInscripcion;
   readonly torneo: DefinicionTorneo;
   readonly frases: Frases;
+  readonly relato: Relato;
 }
 
 export class ErrorDeContenido extends Error {
@@ -73,6 +84,8 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
   const inscripcion = await leer("inscripcion.json", inscripcionSchema);
   const torneo = await leer("torneo.json", torneoSchema);
   const frases = await leer("frases.json", frasesSchema);
+  const relato = await leer("relato.json", relatoSchema);
+  if (relato) problemas.push(...revisarRelato(relato));
 
   const dirContactos = join(raiz, "contactos");
   const archivos = (await readdir(dirContactos)).filter((a) => a.endsWith(".json")).sort();
@@ -112,7 +125,7 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
     );
   }
 
-  if (problemas.length > 0 || !config || !perfiles || !interrupciones || !grupo || !inscripcion || !torneo || !frases) {
+  if (problemas.length > 0 || !config || !perfiles || !interrupciones || !grupo || !inscripcion || !torneo || !frases || !relato) {
     throw new ErrorDeContenido(problemas);
   }
 
@@ -125,5 +138,6 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
     inscripcion,
     torneo,
     frases,
+    relato,
   };
 }

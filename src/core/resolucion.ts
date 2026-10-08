@@ -2,6 +2,7 @@ import { formatearPesos } from "./formato.js";
 import type { Partida } from "./partida.js";
 import { Rng } from "./rng.js";
 import { formacion, quimica, titulares, todosLosRoces } from "./roster.js";
+import { Narrador, type ClaveRelato } from "./relato.js";
 import { formatearHora } from "./tiempo.js";
 import type { Desglose, DefinicionContacto, EntradaBitacora } from "./tipos.js";
 
@@ -41,13 +42,21 @@ export interface Resolucion {
 
 /** Candidato a beat, todavía sin minuto asignado. */
 interface Candidato {
-  readonly texto: string;
+  /** Qué se cuenta: el fraseo se elige recién si el momento entra al relato. */
+  readonly frase: Frase;
   readonly porque?: string;
   readonly signo: -1 | 0 | 1;
   readonly peso: number;
   /** Familia del beat: se usa para no narrar cinco veces lo mismo. */
   readonly clave: string;
 }
+
+interface Frase {
+  readonly clave: ClaveRelato;
+  readonly marcas?: Readonly<Record<string, string>>;
+}
+
+const frase = (clave: ClaveRelato, marcas?: Readonly<Record<string, string>>): Frase => (marcas ? { clave, marcas } : { clave });
 
 function limitar(v: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, v));
@@ -236,8 +245,6 @@ const OLFATO: Record<DefinicionContacto["rol"], number> = {
   delantero: 4,
 };
 
-const GOL_FAVOR = ["{x} la empuja abajo del arco.", "{x} le pega de lejos y entra.", "{x} define cruzado."];
-const GOL_CONTRA = ["Gol de ellos.", "Se la meten por arriba.", "Contra, y gol de ellos."];
 
 /**
  * Cada beat referencia algo que el jugador hizo, con la decisión aparte. Si no
@@ -253,6 +260,7 @@ function narrar(
   rng: Rng,
 ): Beat[] {
   const candidatos: Candidato[] = [];
+  const narrador = new Narrador(partida.relato, rng);
   const enPlantel = new Set(plantel.map((c) => c.id));
   /** El nombre de alguien de la agenda, o lo que la bitácora anotó de quien no lo es. */
   const nombre = (id: string | undefined, detalle?: string): string => {
@@ -296,7 +304,7 @@ function narrar(
       case "apuro":
         if (id && enPlantel.has(id)) {
           candidatos.push({
-            texto: `${nombre(id)} vino de mala gana y erra un gol hecho.`,
+            frase: frase("apuro", { x: nombre(id) }),
             porque: `${capitalizar(entrada.detalle ?? "lo apuraste")} a las ${hora}`,
             signo: -1,
             peso: 3,
@@ -308,7 +316,7 @@ function narrar(
         if (id && enPlantel.has(id)) {
           const comprado = id.startsWith("relleno_");
           candidatos.push({
-            texto: `${comprado ? "El que conseguiste pagando" : nombre(id)} corre como si le fuera la vida.`,
+            frase: comprado ? frase("plata_comprado") : frase("plata", { x: nombre(id) }),
             porque: comprado
               ? `${capitalizar(entrada.detalle ?? "pagaste un reemplazo")} a las ${hora}`
               : `Le pusiste plata para que venga, a las ${hora}`,
@@ -323,7 +331,7 @@ function narrar(
         if (!esContacto(id)) {
           // El grupo que se prendió fuego y nadie apagó: llegan todos calientes.
           candidatos.push({
-            texto: "Llegan todos calientes de lo que se dijo en el grupo, y en la cancha se nota.",
+            frase: frase("grupo_caliente"),
             porque: "Dejaste que el grupo se incendiara",
             signo: -1,
             peso: 2,
@@ -333,7 +341,7 @@ function narrar(
         }
         if (!vinieronLosDos(entrada)) break;
         candidatos.push({
-          texto: `${entrada.detalle ?? "Dos de los tuyos"} se gritan todo el partido.`,
+          frase: frase("roce", { par: entrada.detalle ?? "Dos de los tuyos" }),
           porque: `Se cruzaron en el grupo a las ${hora} y no los calmaste`,
           signo: 0,
           peso: 3,
@@ -343,7 +351,7 @@ function narrar(
       case "roce_calmado":
         if (!vinieronLosDos(entrada)) break;
         candidatos.push({
-          texto: `${entrada.detalle ?? "Los que se peleaban"} se cruzan en una dividida y se dan la mano.`,
+          frase: frase("roce_calmado", { par: entrada.detalle ?? "Los que se peleaban" }),
           porque: `Los calmaste en el grupo a las ${hora}`,
           signo: 1,
           peso: 3,
@@ -356,7 +364,7 @@ function narrar(
           // ese; si no, el aviso que no atajaste.
           const motivo = entrada.detalle ?? avisoDe(partida, id);
           candidatos.push({
-            texto: `Se nota el hueco de ${nombre(id)}. Juegan corriendo de atrás.`,
+            frase: frase("baja", { x: nombre(id) }),
             porque: motivo ? `${motivo}. Se bajó a las ${hora}` : `Se bajó a las ${hora}`,
             signo: -1,
             peso: 3,
@@ -366,7 +374,7 @@ function narrar(
         break;
       case "no_vino":
         candidatos.push({
-          texto: `Falta ${entrada.detalle ?? "uno"}. Juegan con uno menos de los que esperabas.`,
+          frase: frase("no_vino", { x: entrada.detalle ?? "uno" }),
           porque: `Era el que traía ${nombre(id)}: no lo conocías`,
           signo: -1,
           peso: 3,
@@ -377,7 +385,7 @@ function narrar(
         // Los dos en la cancha: el que lo trajo y el invitado, que pudo no venir.
         if (vinieronLosDos(entrada)) {
           candidatos.push({
-            texto: `${entrada.detalle ?? "El que trajo"} juega como si los conociera de toda la vida.`,
+            frase: frase("trajo", { x: entrada.detalle ?? "El que trajo" }),
             porque: `Lo trajo ${nombre(id)} a las ${hora}`,
             signo: 0,
             peso: 2,
@@ -388,7 +396,7 @@ function narrar(
       case "favor":
         if (id && enPlantel.has(id)) {
           candidatos.push({
-            texto: `${nombre(id)} deja todo adentro de la cancha.`,
+            frase: frase("favor", { x: nombre(id) }),
             porque: `Le hiciste un favor a las ${hora}`,
             signo: 1,
             peso: 2,
@@ -399,7 +407,7 @@ function narrar(
       case "confirmacion_limpia":
         if (id && enPlantel.has(id)) {
           candidatos.push({
-            texto: `${nombre(id)} la descose por la banda.`,
+            frase: frase("confirmacion_limpia", { x: nombre(id) }),
             porque: `Dijo que sí a la primera, a las ${hora}`,
             signo: 1,
             peso: 1,
@@ -410,7 +418,7 @@ function narrar(
       case "ignorado":
         if (id && esContacto(id)) {
           candidatos.push({
-            texto: `${nombre(id)} te lo recuerda toda la noche.`,
+            frase: frase("ignorado", { x: nombre(id) }),
             porque: `Lo dejaste en visto a las ${hora}`,
             signo: -1,
             peso: 2,
@@ -418,7 +426,7 @@ function narrar(
           });
         } else if (id) {
           candidatos.push({
-            texto: "Llegás y en la entrada te miran torcido. Arrancan con la cancha a medio preparar.",
+            frase: frase("cancha_ignorada"),
             porque: `No le contestaste a ${entrada.detalle ?? "la cancha"}`,
             signo: -1,
             peso: 2,
@@ -428,7 +436,7 @@ function narrar(
         break;
       case "pareja_ignorada":
         candidatos.push({
-          texto: "No podés dejar de mirar el teléfono. Te comés un caño mirando la pantalla.",
+          frase: frase("pareja_ignorada"),
           porque: `Dejaste a ${entrada.detalle ?? "tu pareja"} esperando`,
           signo: -1,
           peso: 2,
@@ -437,7 +445,7 @@ function narrar(
         break;
       case "trabajo_ignorado":
         candidatos.push({
-          texto: "Suena el teléfono del laburo en pleno partido y salís a atender.",
+          frase: frase("trabajo_ignorado"),
           porque: `No le contestaste al ${entrada.detalle ?? "jefe"}`,
           signo: -1,
           peso: 2,
@@ -453,14 +461,14 @@ function narrar(
     candidatos.push(
       t.puesto === "arquero"
         ? {
-            texto: `Nadie quiere ir al arco. Se pone ${t.jugador.nombre}, que no ataja ni un centro.`,
+            frase: frase("sin_arquero", { x: t.jugador.nombre }),
             porque: "No conseguiste arquero",
             signo: -1,
             peso: 4,
             clave: "sin_arquero",
           }
         : {
-            texto: `${t.jugador.nombre} juega de ${t.puesto} y no sabe dónde pararse.`,
+            frase: frase("fuera_de_puesto", { x: t.jugador.nombre, puesto: t.puesto }),
             porque: `No conseguiste ${t.puesto}`,
             signo: -1,
             peso: 3,
@@ -472,7 +480,7 @@ function narrar(
   const roces = todosLosRoces(plantel);
   if (roces.length >= 2) {
     candidatos.push({
-      texto: "El partido se pica en serio. Nadie afloja, y eso también es jugar.",
+      frase: frase("picado"),
       porque: "Armaste un equipo de gente que se cruza",
       signo: 1,
       peso: 2,
@@ -484,7 +492,7 @@ function narrar(
   if (cracks.length > 0) {
     const crack = rng.elegir(cracks);
     candidatos.push({
-      texto: `${crack.nombre} agarra la pelota en la mitad y se lleva a tres.`,
+      frase: frase("crack", { x: crack.nombre }),
       porque: `Lo trajiste`,
       signo: 1,
       peso: 2,
@@ -499,8 +507,9 @@ function narrar(
   const MAX_POR_FAMILIA = 2;
 
   const vistos = new Set<string>();
+  const unico = (c: Candidato): string => `${c.frase.clave}|${JSON.stringify(c.frase.marcas ?? {})}`;
   const ordenados = candidatos
-    .filter((c) => (vistos.has(c.texto) ? false : (vistos.add(c.texto), true)))
+    .filter((c) => (vistos.has(unico(c)) ? false : (vistos.add(unico(c)), true)))
     .map((c) => {
       const alineado = gano ? c.signo >= 0 : c.signo <= 0;
       return { candidato: c, puntaje: c.peso * 2 + (alineado ? 1 : 0) + rng.siguiente() * RUIDO };
@@ -537,24 +546,22 @@ function narrar(
   let suyos = 0;
   const beats: Beat[] = enOrden.map(({ m, minuto }): Beat => {
     if (m.tipo === "beat") {
-      const { texto, porque, signo } = m.candidato;
-      return { minuto, texto, signo, ...(porque !== undefined ? { porque } : {}) };
+      const { frase, porque, signo } = m.candidato;
+      return { minuto, texto: narrador.decir(frase.clave, frase.marcas), signo, ...(porque !== undefined ? { porque } : {}) };
     }
     if (m.de === "favor") {
       nuestros++;
       const autor = pateadores.length > 0 ? rng.elegir(pateadores) : rng.elegir(plantel);
-      const texto = `${rng.elegir(GOL_FAVOR).replace("{x}", autor.nombre)} ${nuestros} a ${suyos}.`;
+      const texto = `${narrador.decir("gol_favor", { x: autor.nombre })} ${nuestros} a ${suyos}.`;
       return { minuto, texto, signo: 1, gol: "favor" };
     }
     suyos++;
-    return { minuto, texto: `${rng.elegir(GOL_CONTRA)} ${nuestros} a ${suyos}.`, signo: -1, gol: "contra" };
+    return { minuto, texto: `${narrador.decir("gol_contra")} ${nuestros} a ${suyos}.`, signo: -1, gol: "contra" };
   });
 
   beats.push({
     minuto: 40,
-    texto: gano
-      ? `Termina ${golesFavor} a ${golesContra}. Ganaron. Alguien propone ir a comer algo.`
-      : `Termina ${golesFavor} a ${golesContra}. Perdieron. Nadie habla en el vestuario.`,
+    texto: narrador.decir(gano ? "gano" : "perdio", { favor: String(golesFavor), contra: String(golesContra) }),
     signo: gano ? 1 : -1,
   });
 

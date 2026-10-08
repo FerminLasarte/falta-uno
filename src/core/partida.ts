@@ -10,6 +10,7 @@ import {
   type PlantillaRoce,
 } from "./grupo.js";
 import { FRASES_POR_DEFECTO, type Frases } from "./frases.js";
+import { RELATO_POR_DEFECTO, type Relato } from "./relato.js";
 import type { InscripcionResuelta } from "./inscripcion.js";
 import type { DefinicionInterrupcion, InterrupcionActiva } from "./interrupciones.js";
 import { Pulso, type Rango, type Tipeo } from "./pulso.js";
@@ -44,6 +45,8 @@ export interface OpcionesPartida {
   readonly dineroInicial?: number;
   /** Tu voz: el saludo, la llamada, la baja genérica. */
   readonly frases?: Frases;
+  /** Los fraseos del relato del partido. Sin esto, uno por momento. */
+  readonly relato?: Relato;
 }
 
 /** El chat del grupo del equipo, donde se arma la lista. */
@@ -210,6 +213,7 @@ export class Partida {
   private readonly ordenLista: string[] = [];
   private readonly grupo: DefinicionGrupo;
   private readonly frases: Frases;
+  readonly relato: Relato;
   private readonly charlasDisparadas = new Set<string>();
   /** Los audios que ya llegaron al grupo: quién los mandó y si los escuchaste. */
   private readonly audios = new Map<string, { readonly definicion: DefinicionAudio; readonly de: string; escuchado: boolean }>();
@@ -237,6 +241,7 @@ export class Partida {
     this.interrupcionesPosibles = opciones.interrupciones;
     this.grupo = opciones.grupo ?? GRUPO_QUIETO;
     this.frases = opciones.frases ?? FRASES_POR_DEFECTO;
+    this.relato = opciones.relato ?? RELATO_POR_DEFECTO;
     this._moral = opciones.perfil.moralInicial;
     this._dinero = opciones.dineroInicial ?? opciones.perfil.dineroInicial;
 

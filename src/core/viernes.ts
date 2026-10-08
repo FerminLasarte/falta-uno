@@ -7,6 +7,7 @@ import { personalizar, type Apodos } from "./apodos.js";
 import { rivalDeFecha, semillaDeFecha, type DefinicionTorneo } from "./campana.js";
 import { configDeViernes, MODO_POR_DEFECTO, type ConfigContenido, type Modo } from "./modo.js";
 import type { Frases } from "./frases.js";
+import type { Relato } from "./relato.js";
 import type { DefinicionGrupo } from "./grupo.js";
 import { charlaDeInscripcion, type DefinicionInscripcion } from "./inscripcion.js";
 import type { DefinicionInterrupcion } from "./interrupciones.js";
@@ -23,6 +24,7 @@ export interface ContenidoDelViernes {
   readonly grupo: DefinicionGrupo;
   readonly inscripcion: DefinicionInscripcion;
   readonly frases: Frases;
+  readonly relato: Relato;
   readonly torneo: DefinicionTorneo;
 }
 
@@ -60,5 +62,6 @@ export function opcionesDeViernes(
     grupo,
     config,
     frases: contenido.frases,
+    relato: contenido.relato,
   };
 }

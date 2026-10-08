@@ -4,6 +4,7 @@ import type { DefinicionInterrupcion } from "../core/interrupciones.js";
 import { PARES_EN_ROCE } from "../core/roster.js";
 import { MARCAS_FIJAS, marcasDe } from "../core/apodos.js";
 import type { ConfigContenido } from "../core/modo.js";
+import { CLAVES_DEL_RELATO, MARCAS_DEL_RELATO, type Relato } from "../core/relato.js";
 import { destinos, type Condicion, type DefinicionContacto, type DefinicionPerfil } from "../core/tipos.js";
 
 export interface ProblemaContenido {
@@ -302,6 +303,25 @@ export function revisarMarcas(
   for (const m of grupo.calmar.respuestas) for (const t of textosDe(m)) revisar(t, "grupo.json", "calmar", ["a", "b"]);
   for (const i of interrupciones) {
     for (const t of [i.de, i.texto, ...(i.insistencias ?? []).map((x) => x.texto)]) revisar(t, "interrupciones.json", `"${i.id}"`);
+  }
+  return problemas;
+}
+
+/** Cada fraseo del relato usa solo las marcas de su clave: si no, en la app aparece la marca cruda. */
+export function revisarRelato(relato: Relato): ProblemaContenido[] {
+  const problemas: ProblemaContenido[] = [];
+  for (const clave of CLAVES_DEL_RELATO) {
+    const validas: readonly string[] = MARCAS_DEL_RELATO[clave];
+    for (const texto of relato[clave]) {
+      for (const marca of marcasDe(texto)) {
+        if (!validas.includes(marca)) {
+          problemas.push({
+            archivo: "relato.json",
+            detalle: `"${clave}" usa {${marca}}, que no existe ahí (${validas.length > 0 ? validas.map((m) => `{${m}}`).join(", ") : "no lleva marcas"})`,
+          });
+        }
+      }
+    }
   }
   return problemas;
 }
