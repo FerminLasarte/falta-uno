@@ -83,10 +83,10 @@ export function resolver(partida: Partida): Resolucion {
       `Quedaron ${plantel.length}/${config.jugadoresNecesarios}. Faltando ${faltan}, no hay partido.`,
     );
   }
-  if (partida.dinero < config.senaCancha) {
+  if (partida.dinero + Math.max(0, partida.colchon) < config.senaCancha) {
     return sinPartido(
       partida,
-      `Juntaste los ${config.jugadoresNecesarios}, pero no te alcanzó para la seña (${formatearPesos(config.senaCancha)}). El complejo largó la cancha.`,
+      `Juntaste los ${config.jugadoresNecesarios}, pero no te alcanzó para la seña (${formatearPesos(config.senaCancha)}) ni poniendo lo que tenías guardado. El complejo largó la cancha.`,
     );
   }
 
@@ -193,11 +193,15 @@ function porQueNoHubo(partida: Partida): Motivo[] {
     motivos.push({ hora: formatearHora(partida.reloj.minutos), texto: "Apagaste el teléfono.", porque: "No diste más" });
   }
   const plantel = partida.plantel();
-  if (plantel.length >= config.jugadoresNecesarios && partida.dinero < config.senaCancha) {
+  const alcance = partida.dinero + Math.max(0, partida.colchon);
+  if (plantel.length >= config.jugadoresNecesarios && alcance < config.senaCancha) {
     motivos.push({
       hora: null,
-      texto: `Faltaron ${formatearPesos(config.senaCancha - partida.dinero)} para la seña.`,
-      porque: `Entre todos juntaron ${formatearPesos(partida.dinero)}`,
+      texto: `Faltaron ${formatearPesos(config.senaCancha - alcance)} para la seña.`,
+      porque:
+        partida.colchon > 0
+          ? `Entre todos juntaron ${formatearPesos(partida.dinero)} y tenías ${formatearPesos(partida.colchon)} guardados`
+          : `Entre todos juntaron ${formatearPesos(partida.dinero)}`,
     });
   }
 

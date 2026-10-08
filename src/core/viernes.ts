@@ -56,7 +56,9 @@ export function opcionesDeViernes(
     ...(viernes.fecha === 1
       ? { inscripcion: { chat: inscripcion.chat, charla: charlaDeInscripcion(inscripcion, "perfil", modo, config), respuesta: inscripcion.respuesta } }
       : {}),
-    dineroInicial: viernes.dinero,
+    // El viernes arranca con tu parte; lo de la campaña queda de colchón para la seña.
+    dineroInicial: contenido.config.cuota,
+    colchon: viernes.dinero,
     semilla: semillaDeFecha({ semilla: semillaCampana, fecha: viernes.fecha }),
     interrupciones,
     grupo,

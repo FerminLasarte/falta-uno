@@ -101,7 +101,7 @@
     const primera = campana.jugadas.length === 1;
     if (inicial > 0) filas.push({ concepto: primera ? "Tu plata" : "Tenían a favor", monto: pesos(inicial) });
     if (inicial < 0) filas.push({ concepto: "Debían de la fecha anterior", monto: conSigno(inicial) });
-    filas.push({ concepto: "Juntaron entre todos", monto: pesos(juntado - inicial) });
+    filas.push({ concepto: "Juntaron entre todos", monto: pesos(juntado) });
     filas.push({ concepto: resolucion.hayPartido ? "La cancha" : "La cancha, igual", monto: conSigno(-sena) });
     if (premio > 0) filas.push({ concepto: "Premio por ganar", monto: conSigno(premio) });
     const total =

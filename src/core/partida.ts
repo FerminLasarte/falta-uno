@@ -42,7 +42,10 @@ export interface OpcionesPartida {
   /** La charla con la cancha con la que arranca la campaña. Solo el primer viernes la tiene. */
   readonly inscripcion?: InscripcionResuelta;
   /** La plata con la que llegás al viernes, si no es la inicial del perfil. Negativa es deuda. */
+  /** Con cuánto arranca el bolsillo del viernes: tu parte. Sin esto, la plata del perfil. */
   readonly dineroInicial?: number;
+  /** La plata de la campaña: si a las 21:00 el bolsillo no llega a la seña, se completa con esto. */
+  readonly colchon?: number;
   /** Tu voz: el saludo, la llamada, la baja genérica. */
   readonly frases?: Frases;
   /** Los fraseos del relato del partido. Sin esto, uno por momento. */
@@ -230,6 +233,8 @@ export class Partida {
 
   private _moral: number;
   private _dinero: number;
+  /** La plata de la campaña, aparte del bolsillo. Negativa si se arrastra deuda. */
+  readonly colchon: number;
   private _terminada = false;
   private _motivoFin: MotivoFin | null = null;
   private _revisionHecha = false;
@@ -248,6 +253,7 @@ export class Partida {
     this.relato = opciones.relato ?? RELATO_POR_DEFECTO;
     this._moral = opciones.perfil.moralInicial;
     this._dinero = opciones.dineroInicial ?? opciones.perfil.dineroInicial;
+    this.colchon = opciones.colchon ?? 0;
 
     for (const contacto of opciones.agenda) {
       this.agenda.set(contacto.id, contacto);

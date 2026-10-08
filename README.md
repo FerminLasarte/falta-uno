@@ -251,21 +251,31 @@ atiende lo pendiente y la cierra, como en el juego. Lista llena, Oficinista, 500
 
 | | razonable | atento | apurado |
 |---|---|---|---|
-| Partido F5 | 94% | 100% | 19% |
-| Partido F6 | 84% | 100% | 4% |
-| Partido F8 | 80% | 100% | 4% |
-| **Torneo F5** (el slice) | **63%** | **88%** | **20%** |
-| Torneo F6 | 29% | 100% | 6% |
-| Torneo F8 | 21% | 40% | 6% |
+| Partido F5 | 80% | 100% | 15% |
+| Partido F6 | 66% | 100% | 3% |
+| Partido F8 | 45% | 27% | 1% |
+| **Torneo F5** (el slice) | **55%** | **86%** | **9%** |
+| Torneo F6 | 24% | 53% | 2% |
+| Torneo F8 | 19% | 38% | 6% |
 
 El partido lo deciden los titulares: los mejores de cada puesto según el formato, y el que juega
 fuera de su puesto rinde 20 puntos menos (al arco, sin arquero, va el peor). El banco no suma. El
-razonable gana entre el 39% y el 55% de los partidos que juega; el atento, entre el 58% y el 61%.
+razonable gana entre el 39% y el 57% de los partidos que juega; el atento, entre el 45% y el 59%.
+
+La plata del viernes es un bolsillo aparte: arranca con tu parte de la cancha y se llena con lo
+que ponen los que vienen. Los arreglos que cuestan plata se pagan de ahí. Lo de la campaña es el
+colchón: si a las 21:00 el bolsillo no llega a la seña, se completa con él, y la fecha que viene
+se arranca con menos.
 
 Las perillas, en `contenido/config.json` salvo donde se dice:
 
-- **Umbral de baja de las 20:30:** 68 en el torneo, 50 en el partido suelto (la gente se compromete
-  menos). Es un escalón, no una rampa: pocos puntos cambian mucho.
+- **Umbral de baja de las 20:30:** 74 en el torneo, 50 en el partido suelto (la gente se compromete
+  menos). Es un escalón, no una rampa: con 77 el razonable pasa del 55% al 87%.
+- **Aviso de los que dudan:** 20 minutos antes de la revisión (`avisoAntes`). Si dudan varios,
+  llamarlos a todos no siempre entra en el reloj.
+- **Excusas:** uno o dos de la agenda no pueden esa noche, elegidos por la semilla; nunca el
+  contacto único del perfil, y nunca tantos que no quede margen.
+- **Tu parte:** 1500 (`cuota`), con eso arranca el bolsillo de cada viernes.
 - **Revisión:** 20:30; en el partido de fútbol 5 y 6, 20:40, para que las bajas lleguen cuando queda
   poco para reponer.
 - **Fútbol 8** arranca 18:45: más reloj para armar la cancha grande.

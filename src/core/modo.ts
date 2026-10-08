@@ -45,6 +45,8 @@ export interface ConfigContenido {
   readonly minutoRevision: Readonly<Record<Competencia, number>>;
   /** Cuántos suplentes pide el torneo. El partido suelto no lleva. */
   readonly suplentesTorneo: number;
+  /** Tu parte de la cancha: con eso arranca el bolsillo de cada viernes. */
+  readonly cuota: number;
   /** Cuántos minutos antes de la revisión avisan los que dudan: cuanto menos, menos tiempo para llamarlos. */
   readonly avisoAntes: number;
   /** Cuántos de la agenda tienen una excusa esa noche: los elige la semilla. */

@@ -4,13 +4,14 @@
   "costoVacante": 5000,
   "umbralBaja": {
     "partido": 50,
-    "torneo": 68
+    "torneo": 74
   },
   "minutoRevision": {
     "partido": 1230,
     "torneo": 1230
   },
   "suplentesTorneo": 3,
+  "cuota": 1500,
   "avisoAntes": 20,
   "excusas": {
     "min": 1,

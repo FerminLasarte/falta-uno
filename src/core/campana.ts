@@ -81,7 +81,7 @@ export interface CierreFecha {
   readonly campana: Campana;
   /** La plata con la que se llegó a este viernes: lo que había a favor, o la deuda. */
   readonly inicial: number;
-  /** La plata al terminar el viernes, antes de pagar la cancha. */
+  /** Lo que juntó el viernes: tu parte más lo que pusieron, menos lo que gastaste. Antes de pagar la cancha. */
   readonly juntado: number;
   readonly sena: number;
   readonly premio: number;
@@ -118,9 +118,10 @@ export function semillaDeFecha(campana: Pick<Campana, "semilla" | "fecha">): str
  * terminada. La cancha se paga siempre: con partido o sin él.
  */
 export function cerrarFecha(campana: Campana, partida: Partida, resolucion: Resolucion, config: Config): CierreFecha {
+  // Lo que falta para la seña sale del colchón: la fecha que viene se arranca con menos.
   const juntado = partida.dinero;
   const premio = resolucion.recompensa.dinero;
-  const dinero = juntado - config.senaCancha + premio;
+  const dinero = campana.dinero + juntado - config.senaCancha + premio;
   const fechasSinPartido = resolucion.hayPartido ? 0 : campana.fechasSinPartido + 1;
   const fechasConDeuda = dinero < 0 ? campana.fechasConDeuda + 1 : 0;
 

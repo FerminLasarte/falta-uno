@@ -97,14 +97,16 @@ const atento: Estilo = {
   elegir(opciones, partida, ctx) {
     // No dice lo que se va a descubrir. Sin la seña asegurada, la plata pesa más
     // que la tranquilidad; con la seña, no gasta lo que lo dejaría corto de nuevo.
+    // La seña la completa el colchón: lo que cuenta es el bolsillo más lo guardado.
     const sena = partida.config.senaCancha;
+    const alcance = partida.dinero + Math.max(0, partida.colchon);
     const plata = (o: OpcionDialogo): number => (o.efectos.dinero ?? 0) + (o.efectos.dineroAportado ?? 0);
-    const quedaCorto = (o: OpcionDialogo): number => (partida.dinero + plata(o) < sena ? 1 : 0);
+    const quedaCorto = (o: OpcionDialogo): number => (alcance + plata(o) < sena ? 1 : 0);
     const riesgo = (o: OpcionDialogo): number => (ctx.riesgosas.has(o.id) ? 1 : 0);
     // Lo que solo puede contestar porque escuchó el audio: para eso lo escuchó.
     const escucho = (o: OpcionDialogo): number => (o.requiere?.escuchado ? 0 : 1);
     const criterio =
-      partida.dinero < sena
+      alcance < sena
         ? porMenor(riesgo, escucho, (o) => -plata(o), traeMenos, costoMoral, suba)
         : porMenor(riesgo, escucho, quedaCorto, traeMenos, costoMoral, suba);
     return (
