@@ -120,6 +120,8 @@
     hayQuePerder={juego.vista !== null && juego.vista.campana.fin === null}
     alSeguir={() => (juego.pausado = false)}
     alCampanaNueva={() => juego.campanaNueva()}
+    alExportar={() => window.faltaUno.exportarPartidas()}
+    alMostrarExportacion={() => void window.faltaUno.mostrarExportacion()}
     alSalir={() => void window.faltaUno.salir()}
   />
 {/if}

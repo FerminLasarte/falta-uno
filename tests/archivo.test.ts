@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { FORMATO_ARCHIVO, leerArchivado, nombreDeArchivo, type ViernesArchivado } from "../src/core/archivo.js";
+import {
+  armarExportacion,
+  FORMATO_ARCHIVO,
+  leerArchivado,
+  leerExportacion,
+  nombreDeArchivo,
+  nombreDeExportacion,
+  type ViernesArchivado,
+} from "../src/core/archivo.js";
 
 const archivado: ViernesArchivado = {
   formato: FORMATO_ARCHIVO,
@@ -34,5 +42,29 @@ describe("el archivo de viernes jugados", () => {
     expect(leerArchivado(JSON.stringify({ ...archivado, campana: { semilla: "x", perfil: "astronauta" } }))).toBeNull();
     expect(leerArchivado(JSON.stringify({ ...archivado, marcas: [{ ms: -1, paso: 0, pantalla: "grupo" }] }))).toBeNull();
     expect(leerArchivado(JSON.stringify({ ...archivado, viernes: { ...archivado.viernes, pasos: [["volar"]] } }))).toBeNull();
+  });
+});
+
+describe("la exportación para los testers", () => {
+  const ahora = new Date(2026, 9, 31, 22, 15);
+
+  it("se llama con la fecha de la máquina", () => {
+    expect(nombreDeExportacion(ahora)).toBe("falta-uno-partidas-2026-10-31.json");
+  });
+
+  it("trae todos los viernes tal como estaban sueltos", () => {
+    const segundo = { ...archivado, viernes: { ...archivado.viernes, fecha: 2 }, terminado: true };
+    expect(leerExportacion(armarExportacion([archivado, segundo], ahora))).toEqual([archivado, segundo]);
+  });
+
+  it("no se confunde con un viernes suelto, ni al revés", () => {
+    expect(leerArchivado(armarExportacion([archivado], ahora))).toBeNull();
+    expect(leerExportacion(JSON.stringify(archivado))).toBeNull();
+    expect(leerExportacion("no es json")).toBeNull();
+  });
+
+  it("un viernes roto adentro no tira abajo a los demás", () => {
+    const texto = JSON.stringify({ ...JSON.parse(armarExportacion([archivado], ahora)), partidas: [archivado, { formato: 99 }] });
+    expect(leerExportacion(texto)).toEqual([archivado]);
   });
 });

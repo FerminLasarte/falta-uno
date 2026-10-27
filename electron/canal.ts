@@ -20,6 +20,13 @@ export interface ResultadoGuardado {
   readonly nube: boolean;
 }
 
+/** Cómo terminó "Exportar partidas". */
+export type ResultadoExportacion =
+  | { readonly estado: "listo"; readonly cantidad: number; readonly archivo: string; readonly carpeta: string }
+  | { readonly estado: "sin-partidas" }
+  | { readonly estado: "cancelado" }
+  | { readonly estado: "fallo" };
+
 export interface ApiPuente {
   contenido(): Promise<Contenido>;
   versiones(): Promise<Versiones>;
@@ -39,6 +46,10 @@ export interface ApiPuente {
   /** Lo mismo, bloqueando hasta terminar: para cuando se cierra la ventana. */
   archivarYa(nombre: string, contenido: string): boolean;
   archivosEnNube(): Promise<{ nombre: string; bytes: number }[]>;
+  /** Junta los viernes de `partidas/` en un archivo, donde elija el tester con el diálogo del sistema. */
+  exportarPartidas(): Promise<ResultadoExportacion>;
+  /** Abre la carpeta de la última exportación con el archivo marcado. */
+  mostrarExportacion(): Promise<void>;
   /** Cierra el juego. Lo que haya que guardar se guarda al cerrarse la ventana. */
   salir(): Promise<void>;
 }
@@ -56,5 +67,7 @@ export const CANALES = {
   archivar: "partidas:escribir",
   archivarYa: "partidas:escribir-ya",
   archivosEnNube: "guardado:listar",
+  exportarPartidas: "partidas:exportar",
+  mostrarExportacion: "partidas:mostrar",
   salir: "juego:salir",
 } as const;
