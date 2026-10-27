@@ -7,13 +7,34 @@
 
   Dónde cae cada cosa lo dice escena.json, que exporta arte/exportar_capas.py junto con
   las imágenes. Si cambia el render, cambia solo: acá no hay una sola medida a ojo.
+
+  Arriba de todo, la pausa: levantás la vista del celular y mirás la tele, donde va la
+  placa del menú. La mirada que sube son cuadros renderizados (arte/exportar_pausa.py); al
+  volver, los mismos al revés. Se puede dar vuelta a mitad de camino.
 -->
 <script lang="ts">
+  import { untrack, type Snippet } from "svelte";
   import datos from "./capas/escena.json";
   import fondo from "./capas/fondo.webp";
+  import pausa from "./capas/pausa.json";
+  import pausaQuieta from "./capas/pausa.webp";
   import primerPlano from "./capas/primer_plano.webp";
+  import { matrix3d, type Esquinas } from "./perspectiva.js";
 
-  let { children } = $props();
+  let {
+    children,
+    placa,
+    mirandoTele = false,
+    alVolverAlCelu,
+  }: {
+    children?: Snippet;
+    /** Lo que pasa en la pantalla de la tele cuando la mirás: la placa del menú. */
+    placa?: Snippet;
+    /** Levantaste la vista del celular. */
+    mirandoTele?: boolean;
+    /** La mirada volvió al celular: recién ahí sigue el viernes. */
+    alVolverAlCelu?: () => void;
+  } = $props();
 
   /** La app se diseña a este ancho, como un teléfono real, y después se escala al hueco. */
   const ANCHO_LOGICO = 390;
@@ -24,7 +45,68 @@
   );
 
   let anchoCuadro = $state(0);
+  let altoCuadro = $state(0);
   const escala = $derived((anchoCuadro * pantalla.ancho) / ANCHO_LOGICO);
+
+  /** La placa se diseña a este tamaño, en la proporción de la pantalla de la tele, y se lleva a sus esquinas. */
+  const ANCHO_PLACA = 588;
+  const ALTO_PLACA = 336;
+  const matrizPlaca = $derived(
+    matrix3d(ANCHO_PLACA, ALTO_PLACA, pausa.tele.map(([x, y]) => [x! * anchoCuadro, y! * altoCuadro]) as unknown as Esquinas),
+  );
+
+  /** Los cuadros de la mirada que sube, en orden, cargados de entrada para que no titilen. */
+  const cuadrosMirada = Object.entries(
+    import.meta.glob<string>("./capas/transicion/*.webp", { eager: true, import: "default" }),
+  )
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, src]) => {
+      const imagen = new Image();
+      imagen.src = src;
+      void imagen.decode().catch(() => {});
+      return imagen;
+    });
+
+  /** Lo que dura levantar la vista. Los cuadros ya traen la aceleración de la cámara. */
+  const MIRADA_MS = 750;
+  /**
+   * Hasta acá del recorrido, la escena de siempre se funde con los cuadros. En los cuadros
+   * la pantalla del celular es una luz pareja, no la app: el fundido la tapa mientras el
+   * celular todavía está nítido, y cuando se desenfoca ya no se nota.
+   */
+  const FUNDIDO = 0.28;
+  const sinMovimiento = (): boolean => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /** Cuánto subió la mirada: 0 es el celular, 1 la tele. */
+  let avance = $state(0);
+  let lienzo = $state<HTMLCanvasElement>();
+  const enLaTele = $derived(mirandoTele && avance === 1);
+  // Sin movimiento, no hay recorrido: se funde de una toma a la otra.
+  const opacidadPausa = $derived(sinMovimiento() ? avance : Math.min(1, avance / FUNDIDO));
+
+  function dibujar(): void {
+    const contexto = lienzo?.getContext("2d");
+    if (!lienzo || !contexto || cuadrosMirada.length === 0) return;
+    const i = sinMovimiento() ? cuadrosMirada.length - 1 : Math.round(avance * (cuadrosMirada.length - 1));
+    const cuadro = cuadrosMirada[i]!;
+    if (cuadro.complete) contexto.drawImage(cuadro, 0, 0, lienzo.width, lienzo.height);
+  }
+
+  $effect(() => {
+    const hacia = mirandoTele ? 1 : 0;
+    if (untrack(() => avance) === hacia) return;
+    const duracion = sinMovimiento() ? 200 : MIRADA_MS;
+    let antes = performance.now();
+    let pedido = requestAnimationFrame(function cuadro(ahora) {
+      const paso = (ahora - antes) / duracion;
+      antes = ahora;
+      avance = hacia === 1 ? Math.min(1, avance + paso) : Math.max(0, avance - paso);
+      dibujar();
+      if (avance !== hacia) pedido = requestAnimationFrame(cuadro);
+      else if (hacia === 0) alVolverAlCelu?.();
+    });
+    return () => cancelAnimationFrame(pedido);
+  });
 
   /** Fracciones del cuadro a porcentajes para `style`. */
   const pct = (fraccion: number): string => `${fraccion * 100}%`;
@@ -66,7 +148,7 @@
 </script>
 
 <div class="escena">
-  <div class="cuadro" bind:clientWidth={anchoCuadro} style:--proporcion={cuadro.ancho / cuadro.alto}>
+  <div class="cuadro" bind:clientWidth={anchoCuadro} bind:clientHeight={altoCuadro} style:--proporcion={cuadro.ancho / cuadro.alto}>
     <div class="mundo" aria-hidden="true">
       <img src={fondo} alt="" />
       <div
@@ -102,6 +184,16 @@
           <img class="frente" src={primerPlano} alt="" />
         </div>
       </div>
+    </div>
+
+    <div class="pausa" class:oculta={avance === 0} style:opacity={opacidadPausa}>
+      <canvas bind:this={lienzo} width="1280" height="800" aria-hidden="true"></canvas>
+      <img class="quieta" class:llego={enLaTele} src={pausaQuieta} alt="" />
+      {#if enLaTele}
+        <div class="placa" style:width="{ANCHO_PLACA}px" style:height="{ALTO_PLACA}px" style:transform={matrizPlaca}>
+          {@render placa?.()}
+        </div>
+      {/if}
     </div>
   </div>
 </div>
@@ -157,7 +249,8 @@
 
   /* En ultra ancho, los bordes del render se funden con la noche en vez de cortar. */
   @container (aspect-ratio > 1.79) {
-    .mundo {
+    .mundo,
+    .pausa {
       mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
     }
   }
@@ -199,6 +292,35 @@
 
   .hueco {
     position: absolute;
+  }
+
+  /* Mirando la tele: la transición, la toma quieta y la placa, arriba de las manos. */
+  .pausa {
+    position: absolute;
+    inset: 0;
+  }
+  .pausa.oculta { visibility: hidden; }
+  .pausa canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  /* Los cuadros van a media resolución: al llegar, la toma quieta entera. */
+  .quieta { opacity: 0; }
+  .quieta.llego { opacity: 1; transition: opacity 160ms ease-out; }
+
+  .placa {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform-origin: 0 0;
+    animation: encender 220ms ease-out both;
+  }
+
+  @keyframes encender {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   /* La app vive a 390 px lógicos y se escala al hueco: el diseño no depende de la ventana. */

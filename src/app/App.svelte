@@ -1,7 +1,7 @@
 <script lang="ts">
   import { grupo as grupoDeAmigos } from "./estado/grupo.svelte.js";
   import Depurador from "./Depurador.svelte";
-  import Menu from "./Menu.svelte";
+  import Menu, { type Marcador } from "./Menu.svelte";
   import Escena from "./escena/Escena.svelte";
   import Inscripcion from "./mensajeria/Inscripcion.svelte";
   import InfoGrupo from "./mensajeria/InfoGrupo.svelte";
@@ -57,11 +57,22 @@
 
   void juego.iniciar();
 
-  /* Esc abre y cierra el menú. Con el menú abierto, el tiempo real no corre. */
+  /*
+    Esc levanta la vista a la tele, donde está el menú, y la vuelve a bajar. El tiempo real
+    se frena apenas levantás la vista y sigue recién cuando la mirada llegó al celular.
+  */
+  let mirandoTele = $state(false);
+
+  function mirarLaTele(): void {
+    mirandoTele = true;
+    juego.pausado = true;
+  }
+
   function alTeclear(evento: KeyboardEvent): void {
     if (evento.key !== "Escape") return;
     evento.preventDefault();
-    juego.pausado = !juego.pausado;
+    if (mirandoTele) mirandoTele = false;
+    else mirarLaTele();
   }
 
   const estadoDelMenu = $derived.by(() => {
@@ -70,11 +81,35 @@
     if (!vista || !perfil) return "Antes de arrancar";
     return `${perfil.nombre.replace(/^El /, "")} · ${vista.torneo.fecha} · viernes ${vista.hora}`;
   });
+
+  const marcador = $derived.by((): Marcador | null => {
+    const torneo = juego.vista?.torneo;
+    if (!torneo) return null;
+    return { local: grupoDeAmigos.nombre, rival: torneo.rival, competencia: torneo.nombre, fecha: torneo.fecha };
+  });
 </script>
 
 <svelte:window onkeydown={alTeclear} />
 
-<Escena bind:this={escena}>
+<Escena bind:this={escena} {mirandoTele} alVolverAlCelu={() => (juego.pausado = false)}>
+  {#snippet placa()}
+    <Menu
+      estado={estadoDelMenu}
+      {marcador}
+      version={juego.version}
+      puedeEmpezarOtra={juego.vista !== null}
+      hayQuePerder={juego.vista !== null && juego.vista.campana.fin === null}
+      alSeguir={() => (mirandoTele = false)}
+      alCampanaNueva={() => {
+        juego.campanaNueva();
+        mirandoTele = false;
+      }}
+      alExportar={() => window.faltaUno.exportarPartidas()}
+      alMostrarExportacion={() => void window.faltaUno.mostrarExportacion()}
+      alSalir={() => void window.faltaUno.salir()}
+    />
+  {/snippet}
+
   <Pantalla oscura={juego.pantalla.tipo === "semana"}>
     {#if juego.error}
       <div class="falla">
@@ -112,19 +147,6 @@
     {/if}
   </Pantalla>
 </Escena>
-
-{#if juego.pausado}
-  <Menu
-    estado={estadoDelMenu}
-    puedeEmpezarOtra={juego.vista !== null}
-    hayQuePerder={juego.vista !== null && juego.vista.campana.fin === null}
-    alSeguir={() => (juego.pausado = false)}
-    alCampanaNueva={() => juego.campanaNueva()}
-    alExportar={() => window.faltaUno.exportarPartidas()}
-    alMostrarExportacion={() => void window.faltaUno.mostrarExportacion()}
-    alSalir={() => void window.faltaUno.salir()}
-  />
-{/if}
 
 {#if import.meta.env.DEV}
   <Depurador moral={juego.vista?.moral ?? 100} alCambiar={(v) => (moralForzada = v)} />

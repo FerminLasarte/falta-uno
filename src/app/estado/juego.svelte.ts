@@ -241,6 +241,11 @@ class Juego {
   #empezado = "";
   #build: Build = { version: "?", commit: "?", plataforma: "?" };
 
+  /** La versión del build, para el zócalo de la pausa: qué jugó cada tester. */
+  get version(): string {
+    return this.#build.version;
+  }
+
   /** Escuchar lo que llega en tiempo real. Devuelve cómo dejar de escuchar. */
   alLlegar(oyente: (llegada: Llegada) => void): () => void {
     this.#oyentes.add(oyente);

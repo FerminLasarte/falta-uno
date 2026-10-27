@@ -1,15 +1,15 @@
 """
 Exporta la pausa: levantás la vista del celular y mirás la tele. Se corre con living.blend:
 
-  Blender -b arte/living.blend --python arte/exportar_pausa.py -- <carpeta> [cuadros]
+  Blender -b arte/living.blend --python arte/exportar_pausa.py [-- <carpeta>]
 
-Escribe en <carpeta>:
+Escribe en src/app/escena/capas/, al lado de lo que exporta exportar_capas.py (o en <carpeta>):
 
-  pausa.png        Mirando la tele, con el foco en la pantalla. Sin el celular ni las manos.
+  pausa.webp       Mirando la tele, con el foco en la pantalla. Sin el celular ni las manos.
   pausa.json       Las cuatro esquinas de la pantalla de la tele en el cuadro, para poner encima
                    la placa del menú, que es HTML: arriba izq, arriba der, abajo der, abajo izq.
-  transicion/      La mirada que sube, cuadro por cuadro (0000.png…): de los ojos de siempre a los
-                   de la tele. Al volver al celular el juego la pasa al revés.
+  transicion/      La mirada que sube, cuadro por cuadro (0000.webp…), a media resolución: de los
+                   ojos de siempre a los de la tele. Al volver al celular el juego la pasa al revés.
 
 La cámara de la pausa es "Ojos tele". La de siempre, "Ojos", no se toca: exportar_capas.py la
 sigue usando. No guarda el archivo.
@@ -23,9 +23,10 @@ import bpy
 from bpy_extras.object_utils import world_to_camera_view
 from mathutils import Euler, Vector
 
-args = sys.argv[sys.argv.index("--") + 1:]
-SALIDA = args[0]
-CUADROS = int(args[1]) if len(args) > 1 else 18
+RAIZ = os.path.dirname(os.path.dirname(bpy.data.filepath))
+args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
+SALIDA = args[0] if args else os.path.join(RAIZ, "src", "app", "escena", "capas")
+CUADROS = 18
 ANCHO, ALTO = 2560, 1600
 
 escena = bpy.context.scene
@@ -64,11 +65,12 @@ def una_pasada(con_manos):
     arbol.links.new(capa_fondo.outputs["Image"], salida_grupo.inputs[0])
 
 
-def renderizar(ruta, porcentaje):
+def renderizar(ruta, porcentaje, calidad):
     r = escena.render
     r.resolution_x, r.resolution_y, r.resolution_percentage = ANCHO, ALTO, porcentaje
-    r.image_settings.file_format = "PNG"
+    r.image_settings.file_format = "WEBP"
     r.image_settings.color_mode = "RGB"
+    r.image_settings.quality = calidad
     r.filepath = ruta
     bpy.ops.render.render(write_still=True)
 
@@ -88,7 +90,7 @@ def exportar():
     with open(os.path.join(SALIDA, "pausa.json"), "w", encoding="utf-8") as f:
         json.dump({"tele": esquinas(ojos_tele)}, f, indent=2)
         f.write("\n")
-    renderizar(os.path.join(SALIDA, "pausa.png"), 100)
+    renderizar(os.path.join(SALIDA, "pausa.webp"), 100, 90)
 
     # La transición: una cámara que va de unos ojos a los otros. El celular cuelga de "Ojos":
     # se suelta en su lugar y baja un poco, como las manos cuando levantás la vista.
@@ -134,7 +136,8 @@ def exportar():
         celular.location = celular_desde - Vector((0, 0, 0.05 * t))
         celular.rotation_euler.x = inclinacion_desde + math.radians(-12) * t
         bpy.context.view_layer.update()
-        renderizar(os.path.join(SALIDA, "transicion", f"{i:04d}.png"), 50)
+        # Pasa en menos de un segundo y moviéndose: a media resolución no se nota.
+        renderizar(os.path.join(SALIDA, "transicion", f"{i:04d}.webp"), 50, 85)
 
 
 exportar()

@@ -486,7 +486,7 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 ### Estado al 27 de octubre de 2026
 
 Avance hacia el lanzamiento: **44%**, pesando cada fase por el trabajo que lleva (el contenido pesa
-40%). Del plan del vertical slice están cerrados **8 de 10 pasos**.
+40%). Del plan del vertical slice están cerrados **9 de 11 pasos**.
 
 | Fase | Peso | Avance | Estado |
 |---|---|---|---|
@@ -596,7 +596,20 @@ contenido → margen → plata → reloj.
    La hoja es [docs/testers.md](docs/testers.md): instalar, dos viernes del torneo F5 con el
    Oficinista, exportar y mandar. Pendiente de Fermín: verificarlo en una PC con Windows real
    (los pasos están en docs/windows.md).*
-10. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
+10. **El envoltorio.** Lo que rodea al viernes, con una regla: **el celu es el viernes, la tele es
+    todo lo de afuera**. Pausar es levantar la vista del celular y mirar la tele, donde la
+    transmisión pasa una placa de entretiempo (propia, de cable de barrio, sin marcas reales) con
+    el menú. Cómo se juega es la pizarra del programa, más avisos de primera vez en el hilo del
+    chat (acromáticos: la app no tiene color de marca); Ajustes, el menú de un televisor;
+    Créditos, los títulos del cierre de la transmisión; el arranque, la tele con la previa y el
+    celu que vibra. Las figuritas quedan para los logros. *Hecho: la pausa. La tele pasa un
+    partido de viernes a la noche renderizado con jugadores de MPFB (`arte/partido.py`), y
+    `arte/exportar_pausa.py` saca la toma mirando la tele, las esquinas de la pantalla y los 18
+    cuadros de la mirada que sube. Esc la reproduce (y al revés al volver, interrumpible), la
+    placa es HTML en la perspectiva de la tele y el viernes sigue en pausa hasta que la mirada
+    vuelve al celular. La placa tiene Seguir, Campaña nueva, Exportar partidas y Salir. Falta:
+    Cómo se juega, Ajustes, Créditos, los avisos de primera vez y el arranque.*
+11. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
     manden. Es el momento honesto de decidir si el juego funciona (9.8).
 
 ### Después del slice

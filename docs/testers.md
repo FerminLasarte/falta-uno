@@ -39,8 +39,8 @@ viene**: tocalo y jugá la **segunda fecha** del torneo también.
 
 Algunas cosas que conviene saber:
 
-- El tiempo corre de verdad mientras jugás. **Esc** abre el menú y frena el
-  reloj; Esc otra vez vuelve al teléfono.
+- El tiempo corre de verdad mientras jugás. **Esc** levanta la vista a la tele,
+  donde está el menú, y frena el reloj; Esc otra vez vuelve al teléfono.
 - Si cerrás el juego, se guarda solo. La próxima vez seguís donde estabas.
 - Jugalo como lo jugarías en tu casa. No leas esto dos veces ni busques el
   truco: lo que me sirve es ver qué hace alguien que lo juega por primera vez.

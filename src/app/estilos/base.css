@@ -1,5 +1,7 @@
 @import "@fontsource-variable/public-sans/index.css";
-@import "@fontsource-variable/archivo/index.css";
+/* Archivo con el eje de ancho y su cursiva: la placa de la tele es condensada y en cursiva. */
+@import "@fontsource-variable/archivo/wdth.css";
+@import "@fontsource-variable/archivo/wdth-italic.css";
 @import "./tokens.css";
 
 * { box-sizing: border-box; }
