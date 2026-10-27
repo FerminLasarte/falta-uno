@@ -143,9 +143,13 @@ emergencia:
 ### A. Los Recursos
 
 - **Paciencia / Moral.** Tu barra de vida. Se consume al lidiar con quejas, mensajes hostiles o peleas
-  con tu pareja. Si llega a 0, colapsás por estrés.
+  con tu pareja. Si llega a 0, colapsás por estrés. Atender a quien te reclama la recupera y cuesta
+  reloj: **la moral se paga en tiempo**. Mata al que no cuida a nadie; al que la cuida le cuesta
+  minutos (medido en octubre de 2026, paso 5 del slice).
 - **Dinero.** Necesario para pagar la seña del complejo. También sirve para cubrir vacantes de último
-  momento (pagarle a alguien para que venga).
+  momento (pagarle a alguien para que venga). El viernes arranca con tu parte en el bolsillo; lo de
+  la campaña queda de colchón para completar la seña. El torneo cobra la inscripción al anotarte, de
+  ese colchón: la primera fecha llega con poco guardado y cobrar por adelantado es una decisión.
 - **El Reloj.** De 19:00 a 21:00. **Avanza por acción, no en tiempo real.**
 
 ### El Reloj: por qué cambia respecto de la v1
@@ -208,8 +212,18 @@ ignorar las notificaciones.
   mediante opciones de respuesta rápida almacenadas en archivos de contenido.
 - **Modificadores Ocultos.** Cada respuesta altera el estado del NPC (`probabilidad_baja`, `enojo`,
   `dinero_aportado`) y tus propios recursos (`paciencia`).
-- **Cancelaciones Dinámicas.** Un NPC confirmado puede activar un trigger a las 20:30 para bajarse si
-  su `probabilidad_baja` superó el 80% por tus respuestas anteriores.
+- **Cancelaciones a lo largo de la noche** (rehecho en octubre de 2026). Nadie se baja de sorpresa
+  por algo que hiciste, y no se bajan todos juntos:
+  - **El que se calienta avisa.** Cuando un confirmado pasa el umbral de `probabilidad_baja` por tus
+    respuestas, te escribe que no sabe si llega, con su texto. Desde ahí tiene un plazo (20 minutos
+    de reloj): si sigue caliente cuando vence, se baja. Llamarlo lo calma.
+  - **La mentira se descubre** cuando los dos quedan en la lista: le dijiste a Fede que el Tano no
+    venía y el Tano confirma.
+  - **Imprevistos.** A cero o uno por noche le pasa algo que no depende de vos, a una hora al azar.
+    Si está confirmado, se baja sin aviso. Es el riesgo que ni el que juega perfecto controla: se
+    cubre con margen (uno de más, plata para un reemplazo, reloj sin quemar).
+  - **La última revisión, a las 20:30.** Caen los que todavía dudaban y los invitados que se borran:
+    al desconocido no lo podés llamar. Después de las 20:30 ya nadie se baja.
 
 ### C. Sistema de Eventos y Tensiones
 
@@ -439,10 +453,10 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 - **Fase 7 — Pulido y Lanzamiento.** Balance con bots, localización si aplica, página de Steam,
   certificación de Deck, build final.
 
-### Estado al 8 de octubre de 2026
+### Estado al 27 de octubre de 2026
 
-Avance hacia el lanzamiento: **43%**, pesando cada fase por el trabajo que lleva (el contenido pesa
-40%). El vertical slice está en un **70%**.
+Avance hacia el lanzamiento: **44%**, pesando cada fase por el trabajo que lleva (el contenido pesa
+40%). Del plan del vertical slice están cerrados **7 de 10 pasos**.
 
 | Fase | Peso | Avance | Estado |
 |---|---|---|---|
@@ -451,33 +465,32 @@ Avance hacia el lanzamiento: **43%**, pesando cada fase por el trabajo que lleva
 | 3 — Interfaz y audio | 15% | 70% | 🟡 Escena, app, vibración, sonido, modos y apodos. Falta el ambiente del living y el gamepad. |
 | 4 — Integración | 8% | 100% | ✅ Un viernes se juega de punta a punta adentro del teléfono. |
 | 5 — El simulador | 7% | 85% | 🟡 Relato atribuido, cuenta de la fecha y campaña con sus finales. Faltan las pasivas. |
-| 6 — Contenido | 40% | 12% | 🟡 El slice: 12 contactos del Oficinista (8 a fondo, 4 de segunda línea), grupo e interrupciones. |
-| 7 — Pulido | 15% | 5% | ⬜ Solo las herramientas de balance. |
+| 6 — Contenido | 40% | 14% | 🟡 El slice: 12 contactos del Oficinista (8 a fondo, 4 de segunda línea), grupo, interrupciones, avisos, excusas e imprevistos. |
+| 7 — Pulido | 15% | 7% | 🟡 Herramientas de balance: bot con estilos, analizador y valor esperado por respuesta. |
 
-Balance del slice (torneo F5, Oficinista, 1000 viernes): se cumplen 3 de los 7 objetivos.
+Balance del slice (torneo F5, Oficinista, 1000 viernes): se cumplen 5 de los 7 objetivos.
 
 | Objetivo | Meta | Medido |
 |---|---|---|
-| Razonable llena la lista | 55–65% | 60% ✓ |
-| Atento llena la lista | 75–85% | 89% ✗ |
-| Apurado llena la lista | 20–35% | 20% ✓ |
+| Razonable llena la lista | 55–65% | 56% ✓ |
+| Atento llena la lista | 75–85% | 79% ✓ |
+| Apurado llena la lista | 20–35% | 22% ✓ |
 | Gana | 45–55% | 51% ✓ |
-| Bajas por viernes | 0,6–1 | 2,3 ✗ |
-| Rechazos por viernes | 1–2 | 0,7 ✗ |
-| Ninguna causa de fracaso pasa del 50% | <50% | bajas 93–100% ✗ |
+| Bajas por viernes | 0,6–1 | 1,8 ✗ |
+| Rechazos por viernes | 1–2 | 1,5 ✓ |
+| Ninguna causa de fracaso pasa del 50% | <50% | reloj 57% ✗ |
 
 Lo que dicen los números, más allá de los objetivos:
 
-- **La baja no se ve venir.** Se decide a las 20:30 con un umbral sobre una calentura que la pantalla
-  no muestra en ningún lado. El jugador llena la lista a las 19:48 y después espera: cuando alguien se
-  baja se siente mala suerte, no un error propio.
-- **A quién traés casi no cambia el partido.** El razonable gana el 51% y el atento el 53%. La
-  probabilidad sale casi toda del promedio de habilidad, y llevando 8 de 12 ese promedio se mueve
-  poco.
-- **En los formatos grandes jugar bien rinde menos.** En torneo F8 el atento llena la lista 7 puntos
-  más que el razonable; en F5, 27. Tendría que ser al revés.
-- **El relato se repite.** Tres fraseos por gol y uno por cada tipo de momento: en cuatro partidos
-  seguidos sale cuatro veces "vino de mala gana y erra un gol hecho".
+- **Las bajas por viernes ya no miden lo mismo.** Desde que pasan a lo largo de la noche, una baja
+  temprana se repone: son más (1,8) pero pesan menos. La meta de 0,6–1 era para cuando todas caían a
+  las 20:30.
+- **El reloj es la causa principal**, y en parte es moral: el que la cuida atiende a quien le
+  reclama y paga en minutos.
+- **En F8 el atento juega peor que el razonable** (paso 8).
+- **Decisiones:** `npm run valor` encuentra 2 respuestas que convienen siempre, 3 que no convienen
+  nunca y 4 pares que dan lo mismo. Hay que revisarlas una por una: algunas son groserías que pueden
+  quedar como color.
 
 ### Plan para cerrar un viernes
 
@@ -508,21 +521,25 @@ contenido → margen → plata → reloj.
    "no" por algo que hiciste, con un arreglo caro: Carlos (el remis de Lucho), Santi (la cuota de
    Nico), Pablo (la lista casi llena) y Fede (lo que le dijiste al Tano). *Hecho: 1,7 rechazos por
    viernes en el razonable y 1,4 en el atento.*
-5. 🟡 **Repartir las causas.** Que la plata, el reloj y la moral expliquen entre 15% y 30% de los
-   fracasos cada una, y las bajas menos de la mitad. Después, el atento a 75–85%. *Hecho: el
-   bolsillo del viernes arranca con tu parte (1500) y el colchón de la campaña completa la seña; los
-   que dudan avisan 20 minutos antes de la revisión; umbral de baja 74. Razonable 55%, atento 86%.
-   Queda: las bajas siguen siendo el 98% de los fracasos del razonable, y el apurado llena el 9%
-   (meta 20–35%), porque se queda sin moral.*
+5. ✅ **Repartir las causas.** Que el viernes no tenga una sola forma de perder, y el atento a
+   75–85%. *Hecho: las bajas pasan a lo largo de la noche (sección 4.B) y la causa "bajas" cuenta
+   solo las de la revisión, porque las de antes se pudieron reponer; la inscripción del torneo
+   achica el colchón de la primera fecha a $3.000 (con $9.000, cobrar los 1500 o no daba lo mismo en
+   7 de 8 contactos); imprevistos; el bot atento juega como una persona atenta y no como quien leyó
+   el contenido. Razonable 56%, atento 79%, apurado 22%; el razonable falla por reloj 57%, bajas
+   34% y plata 7%. La meta de que la moral explique un 15–30% se cambió: ninguna perilla lleva al
+   razonable ni al atento a 0, porque atender a quien reclama devuelve moral a cambio de reloj. La
+   moral se paga en tiempo y mata al apurado (80% de sus fracasos).*
 6. ✅ **Que la formación pese.** Arrancan los mejores de cada puesto; fuera de puesto se rinde 20
    puntos menos y el banco no suma. *Hecho: el atento gana 61% y el razonable 51% (antes 53% y
    51%). Queda: que la habilidad se lea en la escritura, no solo en el retrato.*
 7. ✅ **El relato variado.** `contenido/relato.json`: de tres a seis fraseos por momento y por gol,
    sin repetir dentro del partido.
 8. **Los formatos grandes.** Que en F6 y F8 la diferencia entre jugar bien y jugar más o menos sea
-   igual o mayor que en F5. *Ahora: torneo F6 24% contra 53%, torneo F8 19% contra 38%; en los
-   partidos sueltos F5 y F6 el atento llega al 100%, y en el partido F8 juega peor que el razonable
-   (27% contra 45%) porque le escribe primero a los cracks, que son los que más se bajan.*
+   igual o mayor que en F5. *Ahora (razonable contra atento): torneo F5 56% y 79%, torneo F6 30% y
+   48%, torneo F8 25% y 8%; partido F8 72% y 47%. En F8 el atento juega peor que el razonable: ve
+   solo la mitad de las mentiras y en F8 confirma a más gente, así que se le descubren más; después
+   pesan los avisos que no ataja y los imprevistos. Escuchar todos los audios no es la causa.*
 9. **Para los testers.** Build de Windows, "Exportar partidas" desde el menú y una hoja de
    instrucciones. Cada viernes jugado ya queda en `partidas/` con su build.
 10. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
