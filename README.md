@@ -104,7 +104,7 @@ npm install
 | `npm run validar` | Valida todo el contenido y reporta el volumen escrito. |
 | `npm run bot -- 500` | Corre 500 viernes headless por perfil y por estilo de jugador, y reporta balance. Acepta `--perfil oficinista`, `--estilo razonable,atento` y `--modo torneo-f5,partido-f8` (o `--modo todos`). |
 | `npm run bot -- 1 --narrar` | Imprime un partido completo con su desglose y narración. |
-| `npm run bot -- 2000 --decisiones` | Contesta al azar y busca decisiones falsas: respuestas que siempre convienen. |
+| `npm run valor -- 300` | Valor esperado de cada respuesta: rejuega cada decisión del bot con las otras respuestas, en la misma situación, y lista las que convienen siempre, las que no convienen nunca y las que dan lo mismo. Acepta `--estilo atento`, `--plata` (detalle de las charlas con plata), `--todo` y `--colchon 3000`. |
 | `npm run analizar -- carpeta` | Reproduce viernes jugados por personas (`partidas/` o un guardado) y saca el mismo informe que el bot, con la línea de tiempo de cada uno (`--linea`). |
 | `npm test` | Corre la suite. |
 | `npm run typecheck` | `tsc --noEmit` estricto, para el lado Node y para la ventana. |
@@ -152,8 +152,8 @@ src/core/        Núcleo de simulación. TypeScript puro, cero DOM.
   campana.ts     Un viernes detrás de otro: plata, prestigio, deuda y cómo termina.
   bitacora.ts    Registro de por qué pasó cada cosa.
 src/datos/       Schema, validador de grafo y carga de contenido.
-src/cli/         Herramientas de consola: jugar, validar, bot y analizar.
-  estilos.ts     Cómo juega el bot: razonable, atento, apurado y el explorador de decisiones.
+src/cli/         Herramientas de consola: jugar, validar, bot, valor y analizar.
+  estilos.ts     Cómo juega el bot: razonable, atento y apurado.
   medicion.ts    Medir un viernes: lo que reportan el bot y el analizador, con la misma vara.
 contenido/       Los datos del juego. Un archivo por contacto, más el grupo (grupo.json).
 arte/            La escena en Blender, el script que la exporta y los créditos de assets.

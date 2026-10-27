@@ -577,8 +577,8 @@ del jugador, claramente marcado como experimental. Nunca en la v1, nunca como ca
 
 ### 9.5 Bot de balanceo
 
-**Hecho en la Fase 1** (`npm run bot`). Queda acá porque su alcance completo, contactos que nunca se
-usan y decisiones falsas, sigue abierto.
+**Hecho en la Fase 1** (`npm run bot`). Las decisiones falsas las mide `npm run valor` desde octubre
+de 2026: rejuega cada respuesta con las otras en la misma situación y las compara de a pares.
 
 Un agente que juegue diez mil partidas contra el núcleo headless y reporte: porcentaje de victoria por
 perfil, contactos que nunca se usan, decisiones que son siempre óptimas (o sea, decisiones falsas).

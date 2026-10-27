@@ -8,7 +8,8 @@
  *   npm run bot -- 500 --perfil oficinista --estilo razonable,apurado
  *   npm run bot -- 500 --modo partido-f5,torneo-f8      (o --modo todos; sin --modo, el del slice)
  *   npm run bot -- 1 --narrar
- *   npm run bot -- 2000 --perfil oficinista --decisiones
+ *
+ * Qué rinde cada respuesta lo mide `npm run valor`.
  */
 import { MODO_POR_DEFECTO, nombreDelModo, TODOS_LOS_MODOS, type Modo } from "../core/modo.js";
 import { Registro } from "../core/registro.js";
@@ -16,7 +17,7 @@ import { resolver } from "../core/resolucion.js";
 import { opcionesDeViernes } from "../core/viernes.js";
 import { cargarContenido } from "../datos/cargar.js";
 import type { DefinicionPerfil } from "../core/tipos.js";
-import { ESTILOS, ESTILOS_DE_JUGADOR, jugarViernes, type Estilo } from "./estilos.js";
+import { ESTILOS, jugarViernes, type Estilo } from "./estilos.js";
 import { imprimirTabla, medir, type Medicion } from "./medicion.js";
 
 const argumentos = process.argv.slice(2);
@@ -26,7 +27,6 @@ const valor = (nombre: string): string | undefined => {
 };
 const CORRIDAS = Number(argumentos.find((a) => /^\d+$/.test(a)) ?? 500);
 const NARRAR = argumentos.includes("--narrar");
-const DECISIONES = argumentos.includes("--decisiones");
 
 /**
  * Lo que se busca en el vertical slice (GDD §9.8), para el Oficinista en la
@@ -61,9 +61,7 @@ const modos: Modo[] =
     : elegidos(TODOS_LOS_MODOS.map((m) => ({ ...m, id: clave(m) })), valor("--modo"), "Modo").filter(
         (m) => valor("--modo") || m.id === clave(MODO_POR_DEFECTO),
       );
-const estilos = DECISIONES
-  ? [ESTILOS.find((e) => e.id === "explorador")!]
-  : elegidos(ESTILOS, valor("--estilo"), "Estilo").filter((e) => valor("--estilo") || ESTILOS_DE_JUGADOR.includes(e));
+const estilos = elegidos(ESTILOS, valor("--estilo"), "Estilo");
 
 /** El primer viernes de una campaña con esa semilla, como lo arma el juego. */
 function opcionesPara(perfil: DefinicionPerfil, semilla: string, modo: Modo = MODO_POR_DEFECTO) {
@@ -105,98 +103,6 @@ function narrar(perfil: DefinicionPerfil, estilo: Estilo, modo: Modo): void {
   console.log(`\n  ${r.gano ? "GANARON" : "PERDIERON"} ${r.golesFavor}-${r.golesContra}\n`);
 }
 
-/**
- * Decisiones falsas: con el explorador contestando al azar, cuánto termina
- * jugando cada contacto según la respuesta que se le dio. Una respuesta que
- * convence más y no cuesta más moral, reloj ni plata que las otras no es una
- * decisión: es la respuesta correcta.
- */
-function informarDecisiones(mediciones: readonly Medicion[]): void {
-  interface Conteo {
-    texto: string;
-    moral: number;
-    reloj: number;
-    /** La plata que entra (o sale, si es negativa) con esta respuesta. */
-    plata: number;
-    veces: number;
-    juega: number;
-  }
-  const nodos = new Map<string, Map<string, Conteo>>();
-  for (const m of mediciones) {
-    for (const d of m.decisiones) {
-      const clave = `${d.contacto} · ${d.nodo}`;
-      const delNodo = nodos.get(clave) ?? new Map<string, Conteo>();
-      nodos.set(clave, delNodo);
-      const opcion = d.disponibles.find((o) => o.id === d.opcion);
-      if (!opcion) continue;
-      const c = delNodo.get(d.opcion) ?? {
-        texto: opcion.texto,
-        moral: opcion.efectos.moral ?? 0,
-        reloj: opcion.costoReloj,
-        plata: (opcion.efectos.dinero ?? 0) + (opcion.efectos.dineroAportado ?? 0),
-        veces: 0,
-        juega: 0,
-      };
-      c.veces++;
-      if (m.finales[d.contacto] === "confirmado") c.juega++;
-      delNodo.set(d.opcion, c);
-    }
-  }
-
-  const MUESTRA = 30;
-  const MARGEN = 5;
-  let revisados = 0;
-  const falsas: string[] = [];
-  const conCostoAfuera: string[] = [];
-  const afuera = costosEnOtros();
-  for (const [nodo, opciones] of [...nodos].sort()) {
-    const medibles = [...opciones].filter(([, c]) => c.veces >= MUESTRA);
-    if (medibles.length < 2) continue;
-    revisados++;
-    const tasa = (c: Conteo): number => (c.juega / c.veces) * 100;
-    const orden = medibles.sort((a, b) => tasa(b[1]) - tasa(a[1]));
-    const [id, mejor] = orden[0]!;
-    const resto = orden.slice(1).map(([, c]) => c);
-    const convenceMas = resto.every((c) => tasa(mejor) >= tasa(c) + MARGEN);
-    const noCuestaMas = resto.every((c) => mejor.moral >= c.moral && mejor.reloj <= c.reloj && mejor.plata >= c.plata);
-    if (!convenceMas || !noCuestaMas) continue;
-    const otras = resto.map((c) => `${tasa(c).toFixed(0)}%`).join(", ");
-    const renglon = `    ${nodo.padEnd(34)} ${id.padEnd(16)} juega ${tasa(mejor).toFixed(0)}% contra ${otras}  «${mejor.texto}»`;
-    // Lo que cuesta en otro de la agenda no lo ve esta medición: se lista aparte.
-    const contacto = nodo.split(" · ")[0]!;
-    const quien = afuera.get(`${contacto}.${id}`);
-    if (quien) conCostoAfuera.push(`${renglon}  → ${quien}`);
-    else falsas.push(renglon);
-  }
-  console.log(`\n  Decisiones falsas: ${falsas.length} de ${revisados} nodos con más de una respuesta medible`);
-  console.log(`  (la respuesta convence ${MARGEN} puntos más que todas las otras y no cuesta más moral, reloj ni plata)\n`);
-  for (const f of falsas) console.log(f);
-  if (conCostoAfuera.length > 0) {
-    console.log(`\n  Con costo en otro contacto, que esta medición no ve (revisarlas a mano):\n`);
-    for (const f of conCostoAfuera) console.log(f);
-  }
-  console.log("");
-}
-
-/** Respuestas que le cuestan algo a otro: las que mueven a otro (`otros`) o lo hacen bajarse (`elegidoA`). Por "contacto.opcion". */
-function costosEnOtros(): Map<string, string> {
-  const costos = new Map<string, string>();
-  const anotar = (clave: string, quien: string): void => {
-    const previo = costos.get(clave);
-    costos.set(clave, previo ? `${previo}, ${quien}` : quien);
-  };
-  for (const c of contenido.contactos) {
-    for (const nodo of Object.values(c.nodos)) {
-      for (const o of nodo.opciones) for (const otro of o.efectos.otros ?? []) anotar(`${c.id}.${o.id}`, otro.contacto);
-    }
-    for (const baja of c.bajas ?? []) {
-      const e = baja.si?.elegidoA;
-      if (e) anotar(`${e.contacto}.${e.opcion}`, `${c.id} se baja`);
-    }
-  }
-  return costos;
-}
-
 // ------------------------------------------------------------------ corrida
 
 console.log(`\n  ${CORRIDAS} viernes por perfil, modo y estilo · primera fecha\n`);
@@ -214,7 +120,7 @@ for (const perfil of perfiles) {
     const filas = estilos.map((estilo) => ({ nombre: estilo.id, mediciones: correr(perfil, estilo, modo) }));
     imprimirTabla(filas);
     for (const f of filas) todas.push(...f.mediciones);
-    if (perfil.id === PERFIL_DEL_SLICE && clave(modo) === clave(MODO_POR_DEFECTO) && !DECISIONES) {
+    if (perfil.id === PERFIL_DEL_SLICE && clave(modo) === clave(MODO_POR_DEFECTO)) {
       const marcas = filas.flatMap(({ nombre, mediciones }) => {
         const objetivo = OBJETIVOS[nombre];
         if (!objetivo) return [];
@@ -227,8 +133,6 @@ for (const perfil of perfiles) {
     console.log("");
   }
 }
-
-if (DECISIONES) informarDecisiones(todas);
 
 // Un contacto que nadie usa nunca es contenido muerto: hay que arreglarlo o sacarlo.
 const conteo = new Map<string, number>();

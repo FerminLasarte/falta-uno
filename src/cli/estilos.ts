@@ -152,30 +152,7 @@ const apurado: Estilo = {
   atiendeAntesDeCerrar: false,
 };
 
-/**
- * Elige al azar entre las respuestas que siguen la charla. No mide a un jugador:
- * sirve para ver qué consecuencia tiene cada respuesta, y encontrar las que
- * siempre convienen (decisiones falsas).
- */
-const explorador: Estilo = {
-  id: "explorador",
-  descripcion: "contesta al azar entre las que siguen la charla; para medir decisiones",
-  siguiente: (pendientes) => pendientes[0],
-  elegir(opciones, _p, ctx) {
-    const posibles = opciones.filter((o) => o.efectos.estado !== "rechazado");
-    return posibles.length > 0 ? ctx.rng.elegir(posibles) : undefined;
-  },
-  calma: (_p, ctx) => ctx.rng.ocurre(50),
-  escucha: (_a, _p, ctx) => ctx.rng.ocurre(50),
-  atiende: (_i, _p, ctx) => ctx.rng.ocurre(30),
-  ataja: (_id, _p, ctx) => ctx.rng.ocurre(50),
-  paga: () => false,
-  atiendeAntesDeCerrar: true,
-};
-
-export const ESTILOS: readonly Estilo[] = [razonable, atento, apurado, explorador];
-/** Los que miden a un jugador. El explorador queda aparte: mide respuestas, no jugadores. */
-export const ESTILOS_DE_JUGADOR: readonly Estilo[] = [razonable, atento, apurado];
+export const ESTILOS: readonly Estilo[] = [razonable, atento, apurado];
 
 function audiosUtiles(opciones: OpcionesPartida): Set<string> {
   const utiles = new Set<string>();
@@ -210,6 +187,16 @@ function cancha(opciones: OpcionesPartida): string | null {
   return chat && opciones.interrupciones.some((i) => i.id === chat) ? chat : null;
 }
 
+/**
+ * Una respuesta forzada: en la decisión número `decision` (desde 0, en el orden
+ * en que el bot contesta) se elige `opcion` en vez de lo que diría el estilo.
+ * Todo lo anterior se juega igual, así que mide qué habría pasado con otra respuesta.
+ */
+export interface Desvio {
+  readonly decision: number;
+  readonly opcion: string;
+}
+
 /** Charlas por contacto antes de pasar al siguiente: los árboles no son más largos que esto. */
 const MAX_RESPUESTAS = 8;
 
@@ -219,7 +206,7 @@ const MAX_RESPUESTAS = 8;
  * que quede de la agenda. Sin nada más para hacer, cierra igual, que es como
  * termina el viernes en la ventana.
  */
-export function jugarViernes(opciones: OpcionesPartida, estilo: Estilo, semilla: string): readonly Paso[] {
+export function jugarViernes(opciones: OpcionesPartida, estilo: Estilo, semilla: string, desvio?: Desvio): readonly Paso[] {
   const registro = new Registro(new Partida(opciones));
   const partida = registro.partida;
   const { config } = opciones;
@@ -238,6 +225,8 @@ export function jugarViernes(opciones: OpcionesPartida, estilo: Estilo, semilla:
     }
   };
   const lleno = (): boolean => partida.roster().confirmados >= config.jugadoresNecesarios;
+  /** Cuántas respuestas dio: cuenta las decisiones para el desvío. */
+  let decisiones = 0;
   /** Cuántos avisos ya leyó, los haya atajado o no. Uno puede avisar dos veces. */
   let leidos = 0;
   const atenderTodo = (): void => {
@@ -285,8 +274,13 @@ export function jugarViernes(opciones: OpcionesPartida, estilo: Estilo, semilla:
     hacer(["escribir", contacto.id]);
     alDia();
     for (let i = 0; i < MAX_RESPUESTAS && !partida.terminada; i++) {
-      const elegida = estilo.elegir(partida.opcionesDisponibles(contacto.id), partida, ctx);
+      const disponibles = partida.opcionesDisponibles(contacto.id);
+      const elegida =
+        decisiones === desvio?.decision
+          ? disponibles.find((o) => o.id === desvio.opcion)
+          : estilo.elegir(disponibles, partida, ctx);
       if (!elegida || !hacer(["responder", contacto.id, elegida.id])) break;
+      decisiones++;
       alDia();
       atenderTodo();
     }
