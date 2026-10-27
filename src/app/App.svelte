@@ -101,11 +101,7 @@
       />
     {:else if juego.vista && juego.contenido}
       <BarraEstado hora={juego.vista.hora} restante={juego.vista.restante} />
-      <Mensajeria
-        vista={juego.vista}
-        sena={juego.vista.sena}
-        costoReemplazo={juego.contenido.config.costoVacante}
-      />
+      <Mensajeria vista={juego.vista} sena={juego.vista.sena} />
       <Isla />
       <!-- El teléfono se apaga una vez: cuando prende, ya es después del partido. -->
       {#if juego.vista.motivoFin === "moral_agotada" && !juego.vista.fuisteALaCancha}

@@ -136,6 +136,8 @@ export interface Vista {
   readonly calmar: { readonly texto: string; readonly costoReloj: number; readonly entre: readonly string[] } | null;
   /** Cerrar la lista: con los diez, o cuando ya no queda nada por hacer. Cuesta lo que falta para las 21:00. */
   readonly cerrar: { readonly texto: string; readonly costoReloj: number; readonly completa: boolean } | null;
+  /** Pagar un reemplazo: lo que cuesta y entre qué puestos elegir. Null si no se puede. */
+  readonly pagar: { readonly costo: number; readonly costoReloj: number; readonly puestos: readonly Rol[] } | null;
   readonly terminada: boolean;
   /** Por qué terminó el viernes, si terminó. */
   readonly motivoFin: MotivoFin | null;
@@ -688,6 +690,7 @@ class Juego {
       audiosEscuchados: eventos.flatMap((e) => (e.audio && p.escuchado(e.audio.id) ? [e.audio.id] : [])),
       calmar: p.accionCalmar,
       cerrar: p.accionCerrar,
+      pagar: p.accionPagar,
       terminada: p.terminada,
       motivoFin: p.motivoFin,
       resolucion: this.#resolucion,

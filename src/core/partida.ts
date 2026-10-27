@@ -30,6 +30,7 @@ import type {
   Rasgo,
   Rol,
 } from "./tipos.js";
+import { ROLES } from "./tipos.js";
 
 export interface OpcionesPartida {
   readonly perfil: DefinicionPerfil;
@@ -428,6 +429,19 @@ export class Partida {
   }
 
   /**
+   * Pagar un reemplazo: entra un desconocido del puesto que elijas. Se puede
+   * mientras falte gente y el bolsillo llegue. Si lo que falta son suplentes,
+   * sirve cualquier puesto. Null si no se puede.
+   */
+  get accionPagar(): { costo: number; costoReloj: number; puestos: Rol[] } | null {
+    if (this._terminada || this._dinero < this.config.costoVacante) return null;
+    const roster = this.roster();
+    if (roster.confirmados >= roster.necesarios) return null;
+    const puestos = roster.faltantes.length > 0 ? roster.faltantes.map((f) => f.rol) : [...ROLES];
+    return { costo: this.config.costoVacante, costoReloj: COSTO.pagarVacante, puestos };
+  }
+
+  /**
    * Cerrar la lista: con los diez, o cuando ya no queda nada por hacer para
    * llegar (nadie a quien escribirle, nadie con quien seguir, ni plata para un
    * reemplazo). Cuesta lo que falta para las 21:00. Null si todavía no se puede.
@@ -441,7 +455,7 @@ export class Partida {
 
   /** Si todavía se puede hacer algo para llenar la lista. */
   private quedaAlgoPorHacer(): boolean {
-    if (this._dinero >= this.config.costoVacante) return true;
+    if (this.accionPagar) return true;
     return [...this.estados.values()].some(
       (e) => e.estado === "sin_contactar" || this.enCamino(e.id) || this.opcionesDisponibles(e.id).length > 0,
     );

@@ -540,6 +540,28 @@ describe("plata", () => {
     expect(p.pagarVacante("arquero").ok).toBe(false);
     expect(p.roster().confirmados).toBe(0);
   });
+
+  it("si solo faltan suplentes, se paga de cualquier puesto: sin eso no quedaba nada que tocar", () => {
+    const p = new Partida({
+      perfil: PERFIL,
+      agenda: agendaCompleta().slice(0, 10),
+      interrupciones: SIN_INTERRUPCIONES,
+      config: { ...CONFIG, jugadoresNecesarios: 11, suplentes: 1 },
+      semilla: "suplente",
+    });
+    for (const c of p.contactos()) {
+      p.escribir(c.id);
+      alDia(p);
+      p.responder(c.id, "si");
+    }
+    expect(p.roster().faltantes).toEqual([]);
+    expect(p.roster().suplentes).toBe(1);
+    expect(p.accionPagar?.puestos).toEqual(["arquero", "defensor", "mediocampista", "delantero"]);
+    expect(p.accionCerrar).toBeNull();
+    expect(p.pagarVacante("delantero").ok).toBe(true);
+    expect(p.accionPagar).toBeNull();
+    expect(p.accionCerrar?.completa).toBe(true);
+  });
 });
 
 describe("condiciones de fin", () => {

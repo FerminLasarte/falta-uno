@@ -21,7 +21,7 @@
   import { rivalDe } from "../../core/campana.js";
   import { COLOR_ESTADO, ROTULO_ESTADO, type AccionChat } from "./rotulos.js";
 
-  let { vista, sena, costoReemplazo }: { vista: Vista; sena: number; costoReemplazo: number } = $props();
+  let { vista, sena }: { vista: Vista; sena: number } = $props();
 
   const pantalla = $derived(juego.pantalla);
   /** Quién escribe en cada chat ahora mismo. */
@@ -84,7 +84,7 @@
       roster={vista.roster}
       dinero={vista.dinero}
       {sena}
-      {costoReemplazo}
+      pagar={vista.pagar}
       {sinLeerAfuera}
       alVolver={() => juego.volver()}
       alAbrir={abrirContacto}

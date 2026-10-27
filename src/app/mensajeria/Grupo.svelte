@@ -6,7 +6,6 @@
 <script lang="ts">
   import { grupo as grupoDeAmigos } from "../estado/grupo.svelte.js";
   import type { EventoFeed, VistaContacto, VistaPuesto, VistaRoster } from "../../core/partida.js";
-  import { COSTO } from "../../core/tiempo.js";
   import type { Rol } from "../../core/tipos.js";
   import Avatar from "./Avatar.svelte";
   import BotonPrincipal from "./BotonPrincipal.svelte";
@@ -23,7 +22,7 @@
     roster,
     dinero,
     sena,
-    costoReemplazo,
+    pagar,
     sinLeerAfuera,
     alVolver,
     alAbrir,
@@ -47,7 +46,8 @@
     roster: VistaRoster;
     dinero: number;
     sena: number;
-    costoReemplazo: number;
+    /** Pagar un reemplazo: lo que cuesta y entre qué puestos elegir. Null si no se puede. */
+    pagar: { readonly costo: number; readonly costoReloj: number; readonly puestos: readonly Rol[] } | null;
     sinLeerAfuera: number;
     alVolver: () => void;
     alAbrir: (id: string) => void;
@@ -86,13 +86,9 @@
     return estado ? COLOR_ESTADO[estado] : null;
   };
 
-  /* Con los diez ya no hay reemplazo que pagar, aunque falte alguien de un puesto: sería el undécimo. */
-  const puedePagar = $derived(
-    roster.confirmados < roster.necesarios && roster.faltantes.length > 0 && dinero >= costoReemplazo,
-  );
   let eligiendoPuesto = $state(false);
 
-  function pagar(rol: Rol): void {
+  function pagarPuesto(rol: Rol): void {
     eligiendoPuesto = false;
     alPagar(rol);
   }
@@ -131,11 +127,11 @@
   <div class="acciones">
     {#if alIrALaCancha}
       <BotonPrincipal accion={{ texto: "Ir a la cancha" }} alTocar={alIrALaCancha} />
-    {:else if eligiendoPuesto}
+    {:else if eligiendoPuesto && pagar}
       <span class="pregunta">¿Qué puesto pagás?</span>
       <div class="fila">
-        {#each roster.faltantes as f (f.rol)}
-          <button class="accion" onclick={() => pagar(f.rol)}>{ROL_CORTO[f.rol]}</button>
+        {#each pagar.puestos as rol (rol)}
+          <button class="accion" onclick={() => pagarPuesto(rol)}>{ROL_CORTO[rol]}</button>
         {/each}
         <button class="accion tenue" onclick={() => (eligiendoPuesto = false)}>Cancelar</button>
       </div>
@@ -145,9 +141,9 @@
       {/if}
       <div class="fila">
         <button class="accion" onclick={alEscribirAAlguien}>Escribir a alguien</button>
-        {#if puedePagar}
+        {#if pagar}
           <button class="accion" onclick={() => (eligiendoPuesto = true)}>
-            Pagar reemplazo <span class="costo">{pesos(costoReemplazo)} · {COSTO.pagarVacante} min</span>
+            Pagar reemplazo <span class="costo">{pesos(pagar.costo)} · {pagar.costoReloj} min</span>
           </button>
         {/if}
       </div>
