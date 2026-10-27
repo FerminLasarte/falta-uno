@@ -36,6 +36,8 @@ export interface Estilo {
   atiende(interrupcion: InterrupcionActiva, partida: Partida, ctx: Contexto): boolean;
   /** Si llama al que avisó que no sabe si llega. Se decide una vez por aviso. */
   ataja(id: string, partida: Partida, ctx: Contexto): boolean;
+  /** Sin nadie más a quien escribirle, si paga un reemplazo. Solo se pregunta cuando se puede pagar. */
+  paga(partida: Partida): boolean;
   /** Antes de cerrar la lista atiende lo pendiente: después ya no tiene otra cosa que hacer. */
   readonly atiendeAntesDeCerrar: boolean;
 }
@@ -46,6 +48,9 @@ const confirma = (o: OpcionDialogo): boolean => o.efectos.estado === "confirmado
 /** Cuántos más entran a la lista con esta respuesta: los que trae. Más es mejor cuando falta gente. */
 const traeMenos = (o: OpcionDialogo): number => -(o.efectos.trae?.length ?? 0);
 const avanza = (o: OpcionDialogo): boolean => o.siguiente !== null && o.efectos.estado === undefined;
+/** Si después de pagar un reemplazo la seña sigue cubierta, contando lo guardado. */
+const alcanzaDespuesDePagar = (partida: Partida): boolean =>
+  partida.dinero - partida.config.costoVacante + Math.max(0, partida.colchon) >= partida.config.senaCancha;
 const porMenor =
   <T>(...criterios: ((x: T) => number)[]) =>
   (a: T, b: T): number => {
@@ -75,6 +80,8 @@ const razonable: Estilo = {
   atiende: (_i, partida) => partida.moral < 45,
   // Lee los avisos a veces: el que avisa en medio de otra charla se le pasa.
   ataja: (_id, _p, ctx) => ctx.rng.ocurre(50),
+  // Ve el botón y lo toca: no hace la cuenta de la seña.
+  paga: () => true,
   atiendeAntesDeCerrar: true,
 };
 
@@ -121,6 +128,7 @@ const atento: Estilo = {
   escucha: (audioId, _p, ctx) => ctx.audiosUtiles.has(audioId),
   atiende: (i, partida, ctx) => i.definicion.id === ctx.cancha || partida.moral < 45,
   ataja: () => true,
+  paga: alcanzaDespuesDePagar,
   atiendeAntesDeCerrar: true,
 };
 
@@ -140,6 +148,7 @@ const apurado: Estilo = {
   escucha: () => false,
   atiende: () => false,
   ataja: () => false,
+  paga: () => true,
   atiendeAntesDeCerrar: false,
 };
 
@@ -160,6 +169,7 @@ const explorador: Estilo = {
   escucha: (_a, _p, ctx) => ctx.rng.ocurre(50),
   atiende: (_i, _p, ctx) => ctx.rng.ocurre(30),
   ataja: (_id, _p, ctx) => ctx.rng.ocurre(50),
+  paga: () => false,
   atiendeAntesDeCerrar: true,
 };
 
@@ -282,9 +292,9 @@ export function jugarViernes(opciones: OpcionesPartida, estilo: Estilo, semilla:
     }
   }
 
-  // Con plata en el bolsillo y lugares abiertos, se tapan los agujeros.
-  while (!partida.terminada && !lleno() && partida.dinero >= config.costoVacante + config.senaCancha) {
-    if (!hacer(["pagar", partida.roster().faltantes[0]?.rol ?? "mediocampista"])) break;
+  // Sin nadie más, se tapan los agujeros pagando, si el estilo quiere.
+  for (let pagar = partida.accionPagar; pagar && estilo.paga(partida); pagar = partida.accionPagar) {
+    if (!hacer(["pagar", pagar.puestos[0]!])) break;
   }
 
   // Sin nada más para hacer, cierra igual: es como termina el viernes en la ventana.
