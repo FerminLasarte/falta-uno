@@ -87,5 +87,9 @@
   "excusas": [
     "me cambiaron la guardia, hoy salgo a las 23. imposible",
     "hoy no, vengo de 24 horas de guardia. si me siento me duermo"
+  ],
+  "imprevistos": [
+    "entró un choque múltiple a la guardia. no me dejan salir ni a palos",
+    "me llamaron de urgencia, falta un enfermero en terapia. perdón loco"
   ]
 }

@@ -94,6 +94,7 @@ export const contactoSchema = z
       .optional(),
     duda: z.string().min(1).optional(),
     excusas: z.array(z.string().min(1)).min(1).optional(),
+    imprevistos: z.array(z.string().min(1)).min(1).optional(),
   })
   .strict();
 
@@ -120,6 +121,7 @@ export const frasesSchema = z
     baja: z.string().min(1),
     duda: z.string().min(1),
     excusa: z.string().min(1),
+    imprevisto: z.string().min(1),
   })
   .strict();
 
@@ -141,6 +143,13 @@ export const torneoSchema = z
 const respuestaInscripcionSchema = z
   .object({ respuesta: z.string().min(1), titulo: z.string().min(1), resumen: z.string().min(1) })
   .strict();
+/** Cuántos, entre un mínimo y un máximo. */
+const rango = (nombre: string) =>
+  z
+    .object({ min: z.number().int().min(0), max: z.number().int().min(0) })
+    .strict()
+    .refine((e) => e.max >= e.min, { message: `${nombre}.max no puede ser menor que ${nombre}.min` });
+
 const porCompetencia = <T extends z.ZodTypeAny>(t: T) => z.object({ partido: t, torneo: t }).strict();
 
 export const inscripcionSchema = z
@@ -202,10 +211,8 @@ export const configSchema = z
     suplentesTorneo: z.number().int().min(0),
     cuota: z.number().int().min(0),
     plazoDuda: z.number().int().min(1),
-    excusas: z
-      .object({ min: z.number().int().min(0), max: z.number().int().min(0) })
-      .strict()
-      .refine((e) => e.max >= e.min, { message: "excusas.max no puede ser menor que excusas.min" }),
+    excusas: rango("excusas"),
+    imprevistos: rango("imprevistos"),
     formatos: z.object(Object.fromEntries(FORMATOS.map((f) => [f, formatoSchema])) as Record<Formato, typeof formatoSchema>).strict(),
   })
   .strict()

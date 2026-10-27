@@ -16,8 +16,6 @@ import type { OpcionDialogo } from "../core/tipos.js";
 export interface Contexto {
   readonly opciones: OpcionesPartida;
   readonly rng: Rng;
-  /** Los audios del grupo que importan: habilitan una respuesta o enfrían a quien los mandó. */
-  readonly audiosUtiles: ReadonlySet<string>;
   /** El chat de la cancha: ignorarla puede costar la cancha. */
   readonly cancha: string | null;
   /** Respuestas que pueden volverse en contra: alguien se baja por haberlas elegido ("contacto.opcion"). */
@@ -87,13 +85,15 @@ const razonable: Estilo = {
 
 /**
  * Juega como el razonable, más lo que da prestar atención: escribe primero a los
- * puestos que faltan, escucha los audios que importan y usa lo que dijeron, no
- * deja esperando a la cancha, no dice lo que la lista va a descubrir y mira la
- * plata: si no llega a la seña, cobra por adelantado y no regala.
+ * puestos que faltan, escucha los audios y usa lo que dijeron, no deja esperando
+ * a la cancha, casi siempre ataja al que avisa y mira la plata: si no llega a la
+ * seña, cobra por adelantado y no regala. Juega como una persona atenta, no como
+ * quien leyó el contenido: no sabe qué audio importa hasta escucharlo, y de las
+ * mentiras que la lista va a descubrir se da cuenta de la mitad.
  */
 const atento: Estilo = {
   id: "atento",
-  descripcion: "como el razonable, más: puestos que faltan primero y el mejor de cada uno, usa los audios, atiende la cancha, no miente y cuida la plata",
+  descripcion: "como el razonable, más: puestos que faltan primero y el mejor de cada uno, escucha los audios, atiende la cancha, ve la mitad de las mentiras, ataja casi todos los avisos y cuida la plata",
   siguiente(pendientes, partida) {
     // Lee los retratos: entre los del puesto que falta, primero al mejor.
     const faltan = new Set(partida.roster().faltantes.map((f) => f.rol));
@@ -102,14 +102,15 @@ const atento: Estilo = {
     return delPuesto[0] ?? pendientes[0];
   },
   elegir(opciones, partida, ctx) {
-    // No dice lo que se va a descubrir. Sin la seña asegurada, la plata pesa más
+    // No dice lo que ve que se va a descubrir. Sin la seña asegurada, la plata pesa más
     // que la tranquilidad; con la seña, no gasta lo que lo dejaría corto de nuevo.
     // La seña la completa el colchón: lo que cuenta es el bolsillo más lo guardado.
     const sena = partida.config.senaCancha;
     const alcance = partida.dinero + Math.max(0, partida.colchon);
     const plata = (o: OpcionDialogo): number => (o.efectos.dinero ?? 0) + (o.efectos.dineroAportado ?? 0);
     const quedaCorto = (o: OpcionDialogo): number => (alcance + plata(o) < sena ? 1 : 0);
-    const riesgo = (o: OpcionDialogo): number => (ctx.riesgosas.has(o.id) ? 1 : 0);
+    const ve = new Set(opciones.filter((o) => ctx.riesgosas.has(o.id) && ctx.rng.ocurre(50)).map((o) => o.id));
+    const riesgo = (o: OpcionDialogo): number => (ve.has(o.id) ? 1 : 0);
     // Lo que solo puede contestar porque escuchó el audio: para eso lo escuchó.
     const escucho = (o: OpcionDialogo): number => (o.requiere?.escuchado ? 0 : 1);
     const criterio =
@@ -125,9 +126,10 @@ const atento: Estilo = {
     );
   },
   calma: () => true,
-  escucha: (audioId, _p, ctx) => ctx.audiosUtiles.has(audioId),
+  escucha: () => true,
   atiende: (i, partida, ctx) => i.definicion.id === ctx.cancha || partida.moral < 45,
-  ataja: () => true,
+  // Uno de cada cinco avisos le llega en medio de otra charla y se le pasa.
+  ataja: (_id, _p, ctx) => ctx.rng.ocurre(80),
   paga: alcanzaDespuesDePagar,
   atiendeAntesDeCerrar: true,
 };
@@ -153,19 +155,6 @@ const apurado: Estilo = {
 };
 
 export const ESTILOS: readonly Estilo[] = [razonable, atento, apurado];
-
-function audiosUtiles(opciones: OpcionesPartida): Set<string> {
-  const utiles = new Set<string>();
-  for (const charla of opciones.grupo?.charlas ?? []) {
-    for (const m of charla.mensajes) if (m.audio?.enfriaPorAccion) utiles.add(m.audio.id);
-  }
-  for (const c of opciones.agenda) {
-    for (const nodo of Object.values(c.nodos)) {
-      for (const o of nodo.opciones) if (o.requiere?.escuchado) utiles.add(o.requiere.escuchado);
-    }
-  }
-  return utiles;
-}
 
 /**
  * Las respuestas por las que alguien se baja a las 20:30: las mentiras que la
@@ -213,7 +202,6 @@ export function jugarViernes(opciones: OpcionesPartida, estilo: Estilo, semilla:
   const ctx: Contexto = {
     opciones,
     rng: new Rng(`${semilla}-${estilo.id}`),
-    audiosUtiles: audiosUtiles(opciones),
     cancha: cancha(opciones),
     riesgosas: riesgosas(opciones),
   };

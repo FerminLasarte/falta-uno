@@ -18,6 +18,8 @@ export interface Frases {
   readonly duda: string;
   /** Lo que contesta el que esa noche no puede, si no tiene excusas propias. */
   readonly excusa: string;
+  /** Lo que dice el que se baja por un imprevisto, si no tiene uno propio. */
+  readonly imprevisto: string;
 }
 
 /** Para tests y partidas sin contenido. */
@@ -27,4 +29,5 @@ export const FRASES_POR_DEFECTO: Frases = {
   baja: "perdón me surgió algo, no llego",
   duda: "che no sé si llego eh, después te confirmo",
   excusa: "hoy no puedo, perdón. la q viene sí",
+  imprevisto: "uh me surgió un quilombo de verdad, no llego. perdón posta",
 };

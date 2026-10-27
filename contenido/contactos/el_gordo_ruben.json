@@ -212,5 +212,9 @@
   "excusas": [
     "hoy no, el perro está enfermo y no lo puedo dejar solo",
     "no puedo, me agarró la ciática. ni para agacharme a buscar la pelota"
+  ],
+  "imprevistos": [
+    "me resbalé en la ducha y tengo el codo como una berenjena. no voy, perdón",
+    "se me escapó el perro. estoy dando vueltas a la manzana con la correa en la mano. no llego"
   ]
 }

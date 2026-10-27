@@ -434,6 +434,46 @@ describe("lo que se baja sin avisar", () => {
   });
 });
 
+describe("los imprevistos", () => {
+  it("al que le toca y está confirmado se baja a esa hora, sin aviso y sin culpa tuya", () => {
+    const agenda = agendaCompleta().slice(0, 3);
+    const p = new Partida({
+      perfil: PERFIL,
+      agenda,
+      interrupciones: SIN_INTERRUPCIONES,
+      config: { ...CONFIG, imprevistos: { min: 1, max: 1 } },
+      semilla: "imprevisto",
+    });
+    for (const c of p.contactos()) {
+      p.escribir(c.id);
+      alDia(p);
+      p.responder(c.id, "si");
+    }
+    // De a poco, leyendo lo que llega: la baja cuenta cuando llega el mensaje.
+    while (p.reloj.minutos < CONFIG.minutoRevision) {
+      p.esperar(2);
+      alDia(p);
+    }
+    const bajas = p.bitacora.de("baja_tardia");
+    expect(bajas).toHaveLength(1);
+    expect(bajas[0]!.minuto).toBeLessThan(CONFIG.minutoRevision);
+    expect(bajas[0]!.detalle).toMatch(/imprevisto/);
+    expect(p.avisaron).toEqual([]);
+  });
+
+  it("sin imprevistos en la config, nadie tiene uno", () => {
+    const p = nueva(agendaCompleta().slice(0, 3));
+    for (const c of p.contactos()) {
+      p.escribir(c.id);
+      alDia(p);
+      p.responder(c.id, "si");
+    }
+    p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    alDia(p);
+    expect(p.bitacora.contar("baja_tardia")).toBe(0);
+  });
+});
+
 describe("la revisión de las 20:30", () => {
   it("baja a los que quedaron calientes y deja a los demás", () => {
     const p = nueva();

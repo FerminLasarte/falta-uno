@@ -89,5 +89,9 @@
   "excusas": [
     "hoy no, viene tu vieja a cenar. sí, mi suegra. no me hagas elegir",
     "no puedo, me torcí el dedo jugando a la play. no te rías"
+  ],
+  "imprevistos": [
+    "mi suegra se descompuso en la cena, vamos a la guardia. esta vez es posta, no te miento",
+    "me quedé afuera de casa sin llaves y el cerrajero tarda una hora. no llego"
   ]
 }

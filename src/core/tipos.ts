@@ -175,6 +175,14 @@ export interface DefinicionContacto {
   readonly duda?: string;
   /** Por qué no puede esta noche, si le toca no poder. Sin esto, la frase común. */
   readonly excusas?: readonly string[];
+  /** Lo que le pasa de golpe, ya confirmado, si le toca un imprevisto. Sin esto, la frase común. */
+  readonly imprevistos?: readonly string[];
+}
+
+/** Cuántos, entre un mínimo y un máximo: lo elige la semilla. */
+export interface Rango {
+  readonly min: number;
+  readonly max: number;
 }
 
 /** Los nodos a los que puede llevar una respuesta. null es que la charla termina. */
@@ -220,7 +228,9 @@ export interface Config {
   /** Cuántos minutos de reloj pasan entre que uno avisa que duda y se baja. Sin esto, se baja en la revisión. */
   readonly plazoDuda?: number;
   /** Cuántos de la agenda no pueden esta noche, pase lo que pase. Sin esto, ninguno. */
-  readonly excusas?: { readonly min: number; readonly max: number };
+  readonly excusas?: Rango;
+  /** Cuántos de la agenda tienen un imprevisto esa noche, y a qué hora le toca a cada uno. Sin esto, ninguno. */
+  readonly imprevistos?: Rango;
 }
 
 export interface MensajeRecibido {

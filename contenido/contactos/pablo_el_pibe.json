@@ -158,6 +158,10 @@
     "hoy no, cumple de uno de la facu y ya puse plata para el asado",
     "no puedo, mañana rindo y no estudié nada"
   ],
+  "imprevistos": [
+    "se me rompió la cadena de la bici en la mitad de la avenida. estoy a 40 cuadras",
+    "mi viejo se quedó con el auto en la ruta y lo tengo q ir a buscar. perdón"
+  ],
   "aperturas": [
     {
       "si": {

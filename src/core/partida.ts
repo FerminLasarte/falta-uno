@@ -164,6 +164,11 @@ const LLEGADA_INTERRUPCION: Rango = [1500, 5000];
 const CLAMP_MORAL = { min: 0, max: 100 } as const;
 
 /** Moral que cuesta una pelea en el grupo. Se cobra una vez por confirmación. */
+/** Cuántos minutos después de las 19:00 puede empezar a pasar un imprevisto: antes nadie confirmó. */
+const DESDE_IMPREVISTO = 20;
+/** Por qué se bajó el del imprevisto, para el relato de las 21:00. */
+const POR_IMPREVISTO = "Un imprevisto: no dependía de vos";
+
 const COSTO_MORAL_POR_ROCE = 3;
 
 /**
@@ -238,6 +243,8 @@ export class Partida {
   private readonly _avisaron: string[] = [];
   /** Los que esta noche no pueden, con lo que te van a contestar. */
   private readonly excusas = new Map<string, string>();
+  /** A quiénes les pasa algo esta noche, a qué hora y lo que te escriben. Si a esa hora están confirmados, se bajan. */
+  private readonly imprevistos = new Map<string, { readonly minuto: number; readonly texto: string }>();
 
   private _moral: number;
   private _dinero: number;
@@ -278,6 +285,7 @@ export class Partida {
     }
 
     this.repartirExcusas(opciones.agenda, opciones.semilla);
+    this.repartirImprevistos(opciones.agenda, opciones.semilla);
     if (opciones.inscripcion) this.inscribir(opciones.inscripcion);
     this.emitir(
       "sistema",
@@ -1157,6 +1165,24 @@ export class Partida {
   }
 
   /**
+   * A alguno le pasa algo esta noche que no depende de vos: se tuerce el tobillo,
+   * lo retienen en el laburo. Lo decide la semilla, con su propio azar, como las
+   * excusas: quién y a qué hora, entre las 19:20 y la revisión. Si a esa hora
+   * está confirmado, se baja sin aviso; si no, no pasa nada. Es el riesgo que ni
+   * el que juega perfecto controla: se cubre con margen, no con charla.
+   */
+  private repartirImprevistos(agenda: readonly DefinicionContacto[], semilla: number | string): void {
+    const rango = this.config.imprevistos;
+    if (!rango) return;
+    const rng = new Rng(`${semilla}:imprevistos`);
+    const posibles = agenda.filter((c) => !this.excusas.has(c.id));
+    for (const c of rng.mezclar(posibles).slice(0, rng.entero(rango.min, rango.max))) {
+      const minuto = rng.entero(this.config.horaInicio + DESDE_IMPREVISTO, this.config.minutoRevision - 1);
+      this.imprevistos.set(c.id, { minuto, texto: rng.elegir(c.imprevistos ?? [this.frases.imprevisto]) });
+    }
+  }
+
+  /**
    * Las bajas pasan a lo largo de la noche, no todas a las 20:30: el que duda
    * avisa y se baja cuando se le vence el plazo, y la mentira se descubre cuando
    * los dos quedan en la lista. La revisión de las 20:30 se lleva lo que quede
@@ -1167,6 +1193,15 @@ export class Partida {
     this.avisarDudas();
     this.vencerDudas();
     this.descubrirMentiras();
+    this.cumplirImprevistos();
+  }
+
+  private cumplirImprevistos(): void {
+    for (const [id, { minuto, texto }] of this.imprevistos) {
+      if (this.reloj.minutos < minuto) continue;
+      this.imprevistos.delete(id);
+      if (this.estadoDe(id).estado === "confirmado") this.programarBaja(id, { texto, porque: POR_IMPREVISTO });
+    }
   }
 
   /**

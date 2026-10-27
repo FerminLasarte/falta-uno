@@ -4,7 +4,7 @@
  * formato (uno al arco); en el torneo, además, los suplentes, del puesto que
  * sean. La agenda es la misma en todos los modos: el formato es la dificultad.
  */
-import type { Config, Rol } from "./tipos.js";
+import type { Config, Rango, Rol } from "./tipos.js";
 
 export const FORMATOS = ["f5", "f6", "f8"] as const;
 export type Formato = (typeof FORMATOS)[number];
@@ -50,7 +50,9 @@ export interface ConfigContenido {
   /** Cuántos minutos de reloj tiene el que duda antes de bajarse: el tiempo para llamarlo o reemplazarlo. */
   readonly plazoDuda: number;
   /** Cuántos de la agenda tienen una excusa esa noche: los elige la semilla. */
-  readonly excusas: { readonly min: number; readonly max: number };
+  readonly excusas: Rango;
+  /** Cuántos de la agenda tienen un imprevisto esa noche: si a esa hora están confirmados, se bajan sin aviso. */
+  readonly imprevistos: Rango;
   readonly formatos: Readonly<Record<Formato, DefinicionFormato>>;
 }
 
@@ -70,6 +72,7 @@ export function configDeViernes(base: ConfigContenido, modo: Modo): Config {
     suplentes,
     plazoDuda: base.plazoDuda,
     excusas: base.excusas,
+    imprevistos: base.imprevistos,
   };
 }
 
