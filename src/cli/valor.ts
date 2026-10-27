@@ -19,6 +19,7 @@
  * Después de la respuesta distinta el azar se separa (quién interrumpe, si atajás
  * un aviso), así que hay ruido parejo para los dos lados: "nunca" es casi nunca.
  */
+import { nuevaCampana } from "../core/campana.js";
 import { MODO_POR_DEFECTO } from "../core/modo.js";
 import { opcionesDeViernes } from "../core/viernes.js";
 import { cargarContenido } from "../datos/cargar.js";
@@ -72,7 +73,8 @@ const nodos = new Map<string, Map<string, Conteo>>();
 
 for (let i = 0; i < CORRIDAS; i++) {
   const semilla = `bot-${i}`;
-  const dinero = COLCHON === undefined ? perfil.dineroInicial : Number(COLCHON);
+  const campana = nuevaCampana(perfil, semilla, { modo: MODO_POR_DEFECTO, torneo: contenido.torneo });
+  const dinero = COLCHON === undefined ? campana.dinero : Number(COLCHON);
   const opciones = opcionesDeViernes(contenido, perfil, semilla, { fecha: 1, dinero }, { modo: MODO_POR_DEFECTO });
   const base = medir(opciones, jugarViernes(opciones, estilo, semilla));
   base.decisiones.forEach((d, k) => {

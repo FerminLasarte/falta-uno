@@ -11,6 +11,7 @@
  *
  * Qué rinde cada respuesta lo mide `npm run valor`.
  */
+import { nuevaCampana } from "../core/campana.js";
 import { MODO_POR_DEFECTO, nombreDelModo, TODOS_LOS_MODOS, type Modo } from "../core/modo.js";
 import { Registro } from "../core/registro.js";
 import { resolver } from "../core/resolucion.js";
@@ -65,7 +66,7 @@ const estilos = elegidos(ESTILOS, valor("--estilo"), "Estilo");
 
 /** El primer viernes de una campaña con esa semilla, como lo arma el juego. */
 function opcionesPara(perfil: DefinicionPerfil, semilla: string, modo: Modo = MODO_POR_DEFECTO) {
-  return opcionesDeViernes(contenido, perfil, semilla, { fecha: 1, dinero: perfil.dineroInicial }, { modo });
+  return opcionesDeViernes(contenido, perfil, semilla, nuevaCampana(perfil, semilla, { modo, torneo: contenido.torneo }), { modo });
 }
 
 function correr(perfil: DefinicionPerfil, estilo: Estilo, modo: Modo): Medicion[] {

@@ -17,7 +17,7 @@ export interface RespuestaInscripcion {
   readonly resumen: string;
 }
 
-/** La charla tal como está en `contenido/inscripcion.json`. `{sena}` es la seña. */
+/** La charla tal como está en `contenido/inscripcion.json`. `{sena}` es la seña y `{inscripcion}`, lo que cuesta el torneo. */
 export interface DefinicionInscripcion {
   /** El id de la interrupción cuyo chat comparte. */
   readonly chat: string;
@@ -58,6 +58,7 @@ export function charlaDeInscripcion(
   paso: PasoInscripcion,
   modo?: Partial<Modo>,
   config?: Pick<Config, "senaCancha">,
+  inscripcion = 0,
 ): RenglonInscripcion[] {
   const charla: RenglonInscripcion[] = [{ tuyo: false, texto: def.saludo }];
   if (paso === "competencia" || !modo?.competencia) return charla;
@@ -66,6 +67,7 @@ export function charlaDeInscripcion(
   if (paso === "formato" || !modo.formato) return charla;
   charla.push({ tuyo: true, texto: def.formatos[modo.formato] });
   const sena = config ? formatearPesos(config.senaCancha) : "";
-  for (const texto of def.confirmacion[modo.competencia]) charla.push({ tuyo: false, texto: texto.replaceAll("{sena}", sena) });
+  const completar = (texto: string): string => texto.replaceAll("{sena}", sena).replaceAll("{inscripcion}", formatearPesos(inscripcion));
+  for (const texto of def.confirmacion[modo.competencia]) charla.push({ tuyo: false, texto: completar(texto) });
   return charla;
 }

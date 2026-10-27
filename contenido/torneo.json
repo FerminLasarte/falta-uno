@@ -2,6 +2,7 @@
   "nombre": "Torneo Relámpago",
   "complejo": "Los Álamos",
   "cancha": "cancha 3",
+  "inscripcion": 6000,
   "rivales": [
     { "nombre": "La Vieja Guardia", "nivel": 25 },
     { "nombre": "Deportivo Fernet", "nivel": 23 },

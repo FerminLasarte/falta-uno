@@ -321,6 +321,7 @@ class Juego {
     const campana = nuevaCampana(perfil, this.#semillaNueva, {
       modo: { competencia: modo.competencia, formato: modo.formato },
       apodos,
+      torneo: contenido.torneo,
     });
     this.#arrancar(contenido, campana);
     this.#mostrar({ tipo: "interrupcion", id: contenido.inscripcion.chat });
@@ -719,7 +720,7 @@ function eleccionDe(contenido: Contenido, elegido: { modo: Partial<Modo>; perfil
   const paso: Eleccion["paso"] = !modo.competencia ? "competencia" : !modo.formato ? "formato" : !perfil ? "perfil" : "grupo";
   const completo = modo.competencia && modo.formato ? { competencia: modo.competencia, formato: modo.formato } : null;
   const configModo = completo ? configDeViernes(config, completo) : undefined;
-  const charla = charlaDeInscripcion(inscripcion, paso === "grupo" ? "perfil" : paso, modo, configModo);
+  const charla = charlaDeInscripcion(inscripcion, paso === "grupo" ? "perfil" : paso, modo, configModo, contenido.torneo.inscripcion);
   const eventos: EventoFeed[] = charla.map((r) => ({
     minuto: hora,
     de: r.tuyo ? "Vos" : de,

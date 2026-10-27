@@ -30,6 +30,8 @@ export interface DefinicionTorneo {
   readonly nombre: string;
   readonly complejo: string;
   readonly cancha: string;
+  /** Lo que cuesta anotarse. Se paga al arrancar, de la plata de la campaña: la primera fecha llega con menos guardado. */
+  readonly inscripcion: number;
   /** Uno por fecha, en orden. Si la campaña dura más, se vuelve a empezar: es la segunda rueda. */
   readonly rivales: readonly Rival[];
 }
@@ -88,18 +90,24 @@ export interface CierreFecha {
   readonly prestigio: number;
 }
 
+/**
+ * La campaña recién empezada. En el torneo ya se pagó la inscripción (si se
+ * pasa `torneo`); el partido suelto no la paga.
+ */
 export function nuevaCampana(
   perfil: DefinicionPerfil,
   semilla: string,
-  ajustes: { readonly modo?: Modo; readonly apodos?: Apodos } = {},
+  ajustes: { readonly modo?: Modo; readonly apodos?: Apodos; readonly torneo?: Pick<DefinicionTorneo, "inscripcion"> } = {},
 ): Campana {
+  const modo = ajustes.modo ?? MODO_POR_DEFECTO;
+  const inscripcion = modo.competencia === "torneo" ? (ajustes.torneo?.inscripcion ?? 0) : 0;
   return {
     perfil: perfil.id,
-    modo: ajustes.modo ?? MODO_POR_DEFECTO,
+    modo,
     ...(ajustes.apodos ? { apodos: ajustes.apodos } : {}),
     semilla,
     fecha: 1,
-    dinero: perfil.dineroInicial,
+    dinero: perfil.dineroInicial - inscripcion,
     prestigio: 0,
     fechasSinPartido: 0,
     fechasConDeuda: 0,

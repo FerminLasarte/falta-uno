@@ -133,6 +133,7 @@ export const torneoSchema = z
     nombre: z.string().min(1),
     complejo: z.string().min(1),
     cancha: z.string().min(1),
+    inscripcion: z.number().int().min(0),
     rivales: z.array(z.object({ nombre: z.string().min(1), nivel: z.number().min(0).max(60) }).strict()).min(1),
   })
   .strict();

@@ -43,6 +43,14 @@ describe("la campaña", () => {
     expect(c).toMatchObject({ fecha: 1, dinero: PERFIL.dineroInicial, prestigio: 0, fin: null, jugadas: [] });
   });
 
+  it("en el torneo arranca con la inscripción pagada; el partido suelto no la paga", () => {
+    const torneo = { inscripcion: 6000 };
+    const enTorneo = nuevaCampana(PERFIL, "camp", { modo: { competencia: "torneo", formato: "f5" }, torneo });
+    const suelto = nuevaCampana(PERFIL, "camp", { modo: { competencia: "partido", formato: "f5" }, torneo });
+    expect(enTorneo.dinero).toBe(PERFIL.dineroInicial - 6000);
+    expect(suelto.dinero).toBe(PERFIL.dineroInicial);
+  });
+
   it("cada fecha tiene su semilla, y la primera es la de la campaña", () => {
     const c = nuevaCampana(PERFIL, "camp");
     expect(semillaDeFecha(c)).toBe("camp");

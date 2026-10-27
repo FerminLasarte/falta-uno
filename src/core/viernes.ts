@@ -54,7 +54,7 @@ export function opcionesDeViernes(
     agenda,
     // La charla con la cancha es de la primera fecha: es cuando te anotás.
     ...(viernes.fecha === 1
-      ? { inscripcion: { chat: inscripcion.chat, charla: charlaDeInscripcion(inscripcion, "perfil", modo, config), respuesta: inscripcion.respuesta } }
+      ? { inscripcion: { chat: inscripcion.chat, charla: charlaDeInscripcion(inscripcion, "perfil", modo, config, contenido.torneo.inscripcion), respuesta: inscripcion.respuesta } }
       : {}),
     // El viernes arranca con tu parte; lo de la campaña queda de colchón para la seña.
     dineroInicial: contenido.config.cuota,
