@@ -87,7 +87,7 @@
                 "rol": "mediocampista",
                 "habilidad": 50,
                 "noViene": {
-                  "probabilidad": 60,
+                  "probabilidad": 50,
                   "texto": "el chino no viene, se tomó un fernet más y quedó tirado"
                 }
               }

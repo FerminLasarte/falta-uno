@@ -176,7 +176,7 @@
                 "rol": "defensor",
                 "habilidad": 48,
                 "noViene": {
-                  "probabilidad": 60,
+                  "probabilidad": 50,
                   "texto": "che el gringo al final no viene, se quedó dormido en el sillón. es un animal"
                 }
               }

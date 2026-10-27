@@ -63,7 +63,7 @@
                 "rol": "mediocampista",
                 "habilidad": 52,
                 "noViene": {
-                  "probabilidad": 60,
+                  "probabilidad": 50,
                   "texto": "mi hermano se fue con el auto a lo de la novia. me tomo el 60, llego igual"
                 }
               }

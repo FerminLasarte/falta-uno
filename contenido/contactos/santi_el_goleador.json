@@ -229,7 +229,7 @@
                 "rol": "defensor",
                 "habilidad": 53,
                 "noViene": {
-                  "probabilidad": 60,
+                  "probabilidad": 50,
                   "texto": "el del gimnasio no viene, tenía día de piernas. prioridades"
                 }
               }

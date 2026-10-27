@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { FRASES_POR_DEFECTO } from "../src/core/frases.js";
 import { alDia, CHAT_GRUPO, costoDeLeer, Partida } from "../src/core/partida.js";
 import { resolver } from "../src/core/resolucion.js";
-import type { EstadoDeContacto } from "../src/core/tipos.js";
+import type { Config, EstadoDeContacto } from "../src/core/tipos.js";
 import {
   agendaCompleta,
   CONFIG,
@@ -435,30 +435,47 @@ describe("lo que se baja sin avisar", () => {
 });
 
 describe("los imprevistos", () => {
-  it("al que le toca y está confirmado se baja a esa hora, sin aviso y sin culpa tuya", () => {
-    const agenda = agendaCompleta().slice(0, 3);
+  /** Confirma a todos los que puede y deja correr el reloj hasta la revisión, leyendo lo que llega. */
+  function hastaLaRevision(config: Partial<Config>, agenda = agendaCompleta().slice(0, 3)): Partida {
     const p = new Partida({
       perfil: PERFIL,
       agenda,
       interrupciones: SIN_INTERRUPCIONES,
-      config: { ...CONFIG, imprevistos: { min: 1, max: 1 } },
+      config: { ...CONFIG, imprevistos: { min: 1, max: 1 }, ...config },
       semilla: "imprevisto",
     });
     for (const c of p.contactos()) {
       p.escribir(c.id);
       alDia(p);
-      p.responder(c.id, "si");
+      if (p.estadoDe(c.id).estado !== "rechazado") p.responder(c.id, "si");
     }
     // De a poco, leyendo lo que llega: la baja cuenta cuando llega el mensaje.
     while (p.reloj.minutos < CONFIG.minutoRevision) {
       p.esperar(2);
       alDia(p);
     }
+    return p;
+  }
+
+  it("al que le toca y está confirmado se baja a esa hora, sin aviso y sin culpa tuya", () => {
+    // Tres para uno: hay margen para un imprevisto.
+    const p = hastaLaRevision({ jugadoresNecesarios: 1 });
     const bajas = p.bitacora.de("baja_tardia");
     expect(bajas).toHaveLength(1);
     expect(bajas[0]!.minuto).toBeLessThan(CONFIG.minutoRevision);
     expect(bajas[0]!.detalle).toMatch(/imprevisto/);
     expect(p.avisaron).toEqual([]);
+  });
+
+  it("nunca más de los que el margen aguanta: con tres para diez, ninguno", () => {
+    expect(hastaLaRevision({}).bitacora.contar("baja_tardia")).toBe(0);
+  });
+
+  it("el margen descuenta las excusas: con doce para diez, uno; con una excusa, ninguno", () => {
+    expect(hastaLaRevision({}, agendaCompleta()).bitacora.contar("baja_tardia")).toBe(1);
+    const p = hastaLaRevision({ excusas: { min: 1, max: 1 } }, agendaCompleta());
+    expect(p.bitacora.contar("excusa")).toBe(1);
+    expect(p.bitacora.contar("baja_tardia")).toBe(0);
   });
 
   it("sin imprevistos en la config, nadie tiene uno", () => {

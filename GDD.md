@@ -221,9 +221,11 @@ ignorar las notificaciones.
     venía y el Tano confirma.
   - **Imprevistos.** A cero o uno por noche le pasa algo que no depende de vos, a una hora al azar.
     Si está confirmado, se baja sin aviso. Es el riesgo que ni el que juega perfecto controla: se
-    cubre con margen (uno de más, plata para un reemplazo, reloj sin quemar).
-  - **La última revisión, a las 20:30.** Caen los que todavía dudaban y los invitados que se borran:
-    al desconocido no lo podés llamar. Después de las 20:30 ya nadie se baja.
+    cubre con margen (uno de más, plata para un reemplazo, reloj sin quemar). Por eso, como las
+    excusas, nunca más de los que el margen aguanta: en el torneo F8, donde van 11 de 12, no hay.
+  - **La última revisión, a las 20:30.** Caen los que todavía dudaban y los invitados que se borran
+    (cada uno, la mitad de las veces): al desconocido no lo podés llamar. Después de las 20:30 ya
+    nadie se baja.
 
 ### C. Sistema de Eventos y Tensiones
 
@@ -456,7 +458,7 @@ clavo es más graciosa que una excusa plausible generada. Eso es el producto.
 ### Estado al 27 de octubre de 2026
 
 Avance hacia el lanzamiento: **44%**, pesando cada fase por el trabajo que lleva (el contenido pesa
-40%). Del plan del vertical slice están cerrados **7 de 10 pasos**.
+40%). Del plan del vertical slice están cerrados **8 de 10 pasos**.
 
 | Fase | Peso | Avance | Estado |
 |---|---|---|---|
@@ -472,13 +474,13 @@ Balance del slice (torneo F5, Oficinista, 1000 viernes): se cumplen 5 de los 7 o
 
 | Objetivo | Meta | Medido |
 |---|---|---|
-| Razonable llena la lista | 55–65% | 56% ✓ |
-| Atento llena la lista | 75–85% | 79% ✓ |
+| Razonable llena la lista | 55–65% | 58% ✓ |
+| Atento llena la lista | 75–85% | 81% ✓ |
 | Apurado llena la lista | 20–35% | 22% ✓ |
-| Gana | 45–55% | 51% ✓ |
+| Gana | 45–55% | 52% ✓ |
 | Bajas por viernes | 0,6–1 | 1,8 ✗ |
 | Rechazos por viernes | 1–2 | 1,5 ✓ |
-| Ninguna causa de fracaso pasa del 50% | <50% | reloj 57% ✗ |
+| Ninguna causa de fracaso pasa del 50% | <50% | reloj 60% ✗ |
 
 Lo que dicen los números, más allá de los objetivos:
 
@@ -487,8 +489,8 @@ Lo que dicen los números, más allá de los objetivos:
   las 20:30.
 - **El reloj es la causa principal**, y en parte es moral: el que la cuida atiende a quien le
   reclama y paga en minutos.
-- **En los formatos grandes jugar bien ya rinde más que jugar más o menos**, salvo en el torneo F8,
-  donde la diferencia (+18 en "se juega") queda por debajo de la de F5 (+24) (paso 8).
+- **En los formatos grandes jugar bien rinde igual o más que en F5** (paso 8), pero en el torneo F8
+  por poco: +25 contra +24. Un cambio de contenido puede volver a dejarlo abajo; el bot lo avisa.
 - **Decisiones:** `npm run valor` encuentra 2 respuestas que convienen siempre, 3 que no convienen
   nunca y 4 pares que dan lo mismo. Hay que revisarlas una por una: algunas son groserías que pueden
   quedar como color.
@@ -536,23 +538,26 @@ contenido → margen → plata → reloj.
    51%). Queda: que la habilidad se lea en la escritura, no solo en el retrato.*
 7. ✅ **El relato variado.** `contenido/relato.json`: de tres a seis fraseos por momento y por gol,
    sin repetir dentro del partido.
-8. **Los formatos grandes.** Que en F6 y F8 la diferencia entre jugar bien y jugar más o menos sea
-   igual o mayor que en F5, en la misma competencia. Se mide en "se juega" y no en "lista llena": en
-   F8 el razonable llena pagando reemplazos y después no le alcanza la seña. El bot lo imprime al
-   final. *Antes (razonable contra atento, lista llena): torneo F5 56% y 79%, torneo F6 30% y 48%,
-   torneo F8 25% y 8%; partido F8 72% y 47%. La causa era el orden: el atento le escribía primero
-   al mejor de cada puesto, así que abría siempre con Fede y Santi, justo cuando todavía se puede
-   decir "el Tano no va" o "Beto no va". En F8 los dos terminan en la lista, así que la mentira se
-   descubría siempre: Fede y Santi se le bajaban la mitad de los viernes, sin aviso y sin margen
-   para reponerlos. Elegir al mejor primero no rendía ni en F5, porque la formación ya pone a los
-   mejores. Hecho: el atento escribe en el orden de la agenda y ve una mentira según lo obvio que es
-   que el otro va a estar (los que hacen falta sobre la agenda: 67% en torneo F5, 92% en torneo F8).
-   Atento menos razonable en "se juega": torneo F5 +24, F6 +28 ✓, F8 +18 ✗; partido F6 +16 ✓, F8
-   +19 ✓ (partido F5 +4, con los dos casi al 100%). El objetivo del slice en F5 sigue (79%). Queda
-   el torneo F8: el atento pierde por bajas (49%) y reloj (48%), porque en 11 de 12 no hay margen y
-   cualquier baja se repone solo con invitados. Arrancar F8 más temprano no sirve: el razonable gana
-   más lista que el atento (repone pagando) y después pierde por plata. Tampoco premia elegir a quién
-   escribirle primero; que eso pese es tema de contenido.*
+8. ✅ **Los formatos grandes.** Que en F6 y F8 la diferencia entre jugar bien y jugar más o menos
+   sea igual o mayor que en F5, en la misma competencia. Se mide en "se juega" y no en "lista
+   llena": en F8 el razonable llena pagando reemplazos y después no le alcanza la seña. El bot lo
+   imprime al final. *Antes (razonable contra atento, lista llena): torneo F5 56% y 79%, torneo F6
+   30% y 48%, torneo F8 25% y 8%; partido F8 72% y 47%. La causa era el orden: el atento le
+   escribía primero al mejor de cada puesto, así que abría siempre con Fede y Santi, justo cuando
+   todavía se puede decir "el Tano no va" o "Beto no va". En F8 los dos terminan en la lista, así
+   que la mentira se descubría siempre: Fede y Santi se le bajaban la mitad de los viernes, sin
+   aviso y sin margen para reponerlos. Elegir al mejor primero no rendía ni en F5, porque la
+   formación ya pone a los mejores. Hecho: el atento escribe en el orden de la agenda y ve una
+   mentira según lo obvio que es que el otro va a estar (los que hacen falta sobre la agenda: 67%
+   en torneo F5, 92% en torneo F8). En el torneo F8 quedaba un 28% de viernes perdidos solo porque
+   un invitado faltaba en la revisión, sin aviso ni nada que hacer: los invitados faltan la mitad
+   de las veces en vez de 60%, y los imprevistos tienen el mismo tope de margen que las excusas, así
+   que en 11 de 12 no hay. Atento menos razonable en "se juega": torneo F5 +24, F6 +31, F8 +25;
+   partido F6 +16, F8 +18 (partido F5 +4, con los dos casi al 100%). Probado y descartado: arrancar
+   F8 más temprano (el razonable gana más lista que el atento, porque repone pagando, y después
+   pierde por plata), dos suplentes en F8 (lo mismo), traer invitados con menos faltantes (levanta
+   al razonable) y más plazo para el que duda (no cambia nada). Queda: que elegir a quién
+   escribirle primero pese, que es tema de contenido.*
 9. **Para los testers.** Build de Windows, "Exportar partidas" desde el menú y una hoja de
    instrucciones. Cada viernes jugado ya queda en `partidas/` con su build.
 10. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que

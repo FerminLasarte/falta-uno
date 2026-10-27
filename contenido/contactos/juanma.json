@@ -164,7 +164,7 @@
                 "rol": "delantero",
                 "habilidad": 55,
                 "noViene": {
-                  "probabilidad": 60,
+                  "probabilidad": 50,
                   "texto": "el de chacarita se borró, dice q le duele la rodilla. inferiores de qué, decime"
                 }
               }

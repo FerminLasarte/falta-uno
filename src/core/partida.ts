@@ -1148,6 +1148,14 @@ export class Partida {
   }
 
   /**
+   * Cuántos más de la agenda pueden faltar esta noche y que la lista todavía se
+   * pueda llenar, dejando uno de colchón y descontando a los que ya tienen excusa.
+   */
+  private margen(agenda: readonly DefinicionContacto[]): number {
+    return Math.max(0, agenda.length - this.config.jugadoresNecesarios - 1 - this.excusas.size);
+  }
+
+  /**
    * Esta noche algunos no pueden, hagas lo que hagas: lo decide la semilla, con
    * su propio azar para no mover nada más. Nunca el contacto único del perfil, y
    * nunca tantos que no quede margen para llenar la lista.
@@ -1156,8 +1164,7 @@ export class Partida {
     const rango = this.config.excusas;
     if (!rango) return;
     const rng = new Rng(`${semilla}:excusas`);
-    const margen = Math.max(0, agenda.length - this.config.jugadoresNecesarios - 1);
-    const cuantos = Math.min(margen, rng.entero(rango.min, rango.max));
+    const cuantos = Math.min(this.margen(agenda), rng.entero(rango.min, rango.max));
     const posibles = agenda.filter((c) => c.id !== this.perfil.contactoUnico);
     for (const c of rng.mezclar(posibles).slice(0, cuantos)) {
       this.excusas.set(c.id, rng.elegir(c.excusas ?? [this.frases.excusa]));
@@ -1169,14 +1176,16 @@ export class Partida {
    * lo retienen en el laburo. Lo decide la semilla, con su propio azar, como las
    * excusas: quién y a qué hora, entre las 19:20 y la revisión. Si a esa hora
    * está confirmado, se baja sin aviso; si no, no pasa nada. Es el riesgo que ni
-   * el que juega perfecto controla: se cubre con margen, no con charla.
+   * el que juega perfecto controla: se cubre con margen, no con charla. Por eso,
+   * como las excusas, nunca más de los que el margen aguanta: donde hace falta
+   * casi toda la agenda (el torneo F8) no hay.
    */
   private repartirImprevistos(agenda: readonly DefinicionContacto[], semilla: number | string): void {
     const rango = this.config.imprevistos;
     if (!rango) return;
     const rng = new Rng(`${semilla}:imprevistos`);
     const posibles = agenda.filter((c) => !this.excusas.has(c.id));
-    for (const c of rng.mezclar(posibles).slice(0, rng.entero(rango.min, rango.max))) {
+    for (const c of rng.mezclar(posibles).slice(0, Math.min(this.margen(agenda), rng.entero(rango.min, rango.max)))) {
       const minuto = rng.entero(this.config.horaInicio + DESDE_IMPREVISTO, this.config.minutoRevision - 1);
       this.imprevistos.set(c.id, { minuto, texto: rng.elegir(c.imprevistos ?? [this.frases.imprevisto]) });
     }
