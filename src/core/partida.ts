@@ -18,6 +18,7 @@ import { Rng } from "./rng.js";
 import { faltantes, habilidadPromedio, rocesAlSumar, type Roce } from "./roster.js";
 import { COSTO, formatearHora, Reloj } from "./tiempo.js";
 import type {
+  Baja,
   Condicion,
   Config,
   DefinicionContacto,
@@ -215,6 +216,8 @@ export class Partida {
   private readonly invitados = new Map<string, Invitado>();
   /** Los invitados que al final no vinieron. */
   private readonly faltaron = new Set<string>();
+  /** Los que ya tienen la baja en camino: se bajan una sola vez. */
+  private readonly bajasEnCamino = new Set<string>();
   /** Ids en el orden en que entraron a la lista. Puede tener bajas: lista() las filtra. */
   private readonly ordenLista: string[] = [];
   private readonly grupo: DefinicionGrupo;
@@ -225,9 +228,13 @@ export class Partida {
   private readonly audios = new Map<string, { readonly definicion: DefinicionAudio; readonly de: string; escuchado: boolean }>();
   /** Los que se están peleando en el grupo hasta que alguien los calme. */
   private rocesActivos: Roce[] = [];
-  /** Los confirmados que ya avisaron que dudan, o tienen el aviso en camino. Avisa una vez cada uno. */
-  private readonly dudosos = new Set<string>();
-  /** Los avisos que ya llegaron: lo que el jugador pudo leer. */
+  /**
+   * Los confirmados que avisaron que dudan, o tienen el aviso en camino, con el
+   * minuto en que se calentaron: desde ahí corre su plazo. El que se calma sale
+   * de acá, y si se vuelve a calentar avisa de nuevo.
+   */
+  private readonly dudosos = new Map<string, number>();
+  /** Los avisos que ya llegaron, en orden: lo que el jugador pudo leer. Uno puede avisar más de una vez. */
   private readonly _avisaron: string[] = [];
   /** Los que esta noche no pueden, con lo que te van a contestar. */
   private readonly excusas = new Map<string, string>();
@@ -413,7 +420,7 @@ export class Partida {
   }
 
   /** Calmar al grupo, si hay alguien peleándose, y quiénes son. Null si no hay nada que calmar. */
-  /** Los que te escribieron que no saben si llegan, en el orden en que avisaron. */
+  /** Los que te escribieron que no saben si llegan, en el orden en que avisaron, una vez por aviso. */
   get avisaron(): readonly string[] {
     return this._avisaron;
   }
@@ -717,7 +724,7 @@ export class Partida {
     }
     const desde = this.feed.length;
     const resultado = accion();
-    this.avisarDudas();
+    this.vigilarBajas();
     this.verificarFin();
     return { ...resultado, nuevos: this.feed.slice(desde) };
   }
@@ -822,8 +829,7 @@ export class Partida {
         this.emitir("alerta", entrega.texto, definicion.nombre, estado.id);
         this.emitir("alerta", `${definicion.nombre} se bajó de la lista.`, "Sistema", CHAT_GRUPO);
         this.ajustarMoral(-4);
-        // La última baja en llegar cierra la revisión con el conteo que quedó.
-        if (!this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta")) this.anunciarRevision();
+        this.cerrarRevisionSiFalta();
         return;
       }
       case "excusa": {
@@ -851,7 +857,7 @@ export class Partida {
         this.emitir("alerta", entrega.texto, de, quien);
         this.emitir("alerta", `${invitado.nombre} no viene.`, "Sistema", CHAT_GRUPO);
         this.ajustarMoral(-3);
-        if (!this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta")) this.anunciarRevision();
+        this.cerrarRevisionSiFalta();
         return;
       }
     }
@@ -993,7 +999,7 @@ export class Partida {
     this.enfriarPorEspera();
     this.dispararInterrupciones();
     this.dispararCharlas();
-    this.avisarDudas();
+    this.vigilarBajas();
     this.revisarBajas();
   }
 
@@ -1151,31 +1157,92 @@ export class Partida {
   }
 
   /**
-   * El que ya se bajaría a las 20:30 te avisa antes, una sola vez y con su
-   * texto: la baja se ve venir. Avisa sobre la hora (`avisoAntes`), así que
-   * llamar a todos los que dudan no siempre entra en el reloj. Las bajas por algo
-   * que hiciste (la mentira que se descubre) no avisan: esas no son calentura.
+   * Las bajas pasan a lo largo de la noche, no todas a las 20:30: el que duda
+   * avisa y se baja cuando se le vence el plazo, y la mentira se descubre cuando
+   * los dos quedan en la lista. La revisión de las 20:30 se lleva lo que quede
+   * pendiente y a los invitados que se borran: a esos no los conocés, no avisan antes.
+   */
+  private vigilarBajas(): void {
+    if (this._revisionHecha) return;
+    this.avisarDudas();
+    this.vencerDudas();
+    this.descubrirMentiras();
+  }
+
+  /**
+   * El confirmado que se calienta te avisa apenas pasa el umbral, con su texto:
+   * la baja se ve venir. Desde ahí corre su plazo (`plazoDuda`). Las bajas por
+   * algo que hiciste (la mentira que se descubre) no avisan: esas no son calentura.
+   * Después de la revisión ya nadie duda: el que fue a las 20:30, va.
    */
   private avisarDudas(): void {
     if (this._revisionHecha || this.reloj.minutos >= this.config.minutoRevision) return;
-    // Avisan sobre la hora: el que duda no lo dice apenas se calienta.
-    const { avisoAntes } = this.config;
-    if (avisoAntes !== undefined && this.reloj.minutos < this.config.minutoRevision - avisoAntes) return;
     for (const estado of this.estados.values()) {
       if (estado.estado !== "confirmado" || this.dudosos.has(estado.id)) continue;
       if (estado.probabilidadBaja <= this.config.umbralBaja) continue;
       const definicion = this.definicion(estado.id);
       const texto = definicion.duda ?? this.frases.duda;
-      this.dudosos.add(estado.id);
+      this.dudosos.set(estado.id, this.reloj.minutos);
       this.pulso.tipear(estado.id, definicion.nombre, texto, { tipo: "duda", contacto: estado.id, texto });
     }
   }
 
   /**
-   * A las 20:30 los que quedaron calientes se bajan, y también los que tienen un
-   * motivo propio que se cumplió (la mentira que se descubrió), aunque estén
-   * tranquilos. Quién se baja se decide en ese minuto; el mensaje llega por el
-   * pulso y la baja cuenta cuando llega.
+   * El que duda se baja cuando se le vence el plazo, si sigue caliente: no
+   * espera a las 20:30. Así la baja temprana se repone con tiempo y la tardía
+   * aprieta. El que se calmó (lo llamaste) deja de dudar. Sin `plazoDuda`, el
+   * plazo es la revisión.
+   */
+  private vencerDudas(): void {
+    if (this._revisionHecha) return;
+    const { plazoDuda } = this.config;
+    for (const [id, desde] of this.dudosos) {
+      const estado = this.estadoDe(id);
+      if (estado.estado !== "confirmado") continue;
+      if (estado.probabilidadBaja <= this.config.umbralBaja) {
+        this.dudosos.delete(id);
+        continue;
+      }
+      if (plazoDuda === undefined || this.reloj.minutos < desde + plazoDuda) continue;
+      this.dudosos.delete(id);
+      this.programarBaja(id);
+    }
+  }
+
+  /** La mentira se descubre en cuanto se cumple su motivo: él se baja sin avisar, que no es calentura. */
+  private descubrirMentiras(): void {
+    for (const estado of this.estados.values()) {
+      if (estado.estado !== "confirmado") continue;
+      const motivo = this.motivoDeBaja(estado.id);
+      if (motivo) this.programarBaja(estado.id, motivo);
+    }
+  }
+
+  private motivoDeBaja(id: string): Baja | undefined {
+    return this.definicion(id).bajas?.find((b) => b.si && this.cumple(b.si, id));
+  }
+
+  /** El mensaje con el que se baja: el de su motivo si lo hay, o el suyo de siempre. Cuenta cuando llega. */
+  private programarBaja(id: string, motivo?: Baja): void {
+    if (this.bajasEnCamino.has(id)) return;
+    this.bajasEnCamino.add(id);
+    this.dudosos.delete(id);
+    const definicion = this.definicion(id);
+    const baja = motivo ?? definicion.bajas?.find((b) => !b.si);
+    const texto = baja?.texto ?? this.frases.baja;
+    this.pulso.tipear(id, definicion.nombre, texto, {
+      tipo: "baja",
+      contacto: id,
+      texto,
+      ...(baja?.porque ? { porque: baja.porque } : {}),
+    });
+  }
+
+  /**
+   * La última revisión, a las 20:30: se bajan los que todavía dudaban, aunque no
+   * se les haya vencido el plazo, y los que tienen un motivo propio que se
+   * cumplió (la mentira que se descubrió), aunque estén tranquilos. Quién se
+   * baja se decide en ese minuto; el mensaje llega por el pulso y la baja cuenta cuando llega.
    */
   private revisarBajas(): void {
     if (this._revisionHecha) return;
@@ -1184,18 +1251,10 @@ export class Partida {
 
     let hayBajas = false;
     for (const estado of this.estados.values()) {
-      if (estado.estado !== "confirmado") continue;
-      const definicion = this.definicion(estado.id);
-      const motivo = definicion.bajas?.find((b) => b.si && this.cumple(b.si, estado.id));
+      if (estado.estado !== "confirmado" || this.bajasEnCamino.has(estado.id)) continue;
+      const motivo = this.motivoDeBaja(estado.id);
       if (!motivo && estado.probabilidadBaja <= this.config.umbralBaja) continue;
-      const baja = motivo ?? definicion.bajas?.find((b) => !b.si);
-      const texto = baja?.texto ?? this.frases.baja;
-      this.pulso.tipear(estado.id, definicion.nombre, texto, {
-        tipo: "baja",
-        contacto: estado.id,
-        texto,
-        ...(baja?.porque ? { porque: baja.porque } : {}),
-      });
+      this.programarBaja(estado.id, motivo);
       hayBajas = true;
     }
     // Los invitados de los que vienen: no los conocés, y alguno avisa que no viene.
@@ -1210,7 +1269,13 @@ export class Partida {
       });
       hayBajas = true;
     }
-    if (!hayBajas) this.anunciarRevision();
+    if (!hayBajas) this.cerrarRevisionSiFalta();
+  }
+
+  /** Pasada la revisión, la última baja en llegar la cierra con el conteo que quedó. Antes, una baja es solo una baja. */
+  private cerrarRevisionSiFalta(): void {
+    if (!this._revisionHecha || this.pulso.alguna((e) => e.tipo === "baja" || e.tipo === "falta")) return;
+    this.anunciarRevision();
   }
 
   private anunciarRevision(): void {

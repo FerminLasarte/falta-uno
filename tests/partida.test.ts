@@ -315,16 +315,49 @@ describe("el aviso del que se está por bajar", () => {
     expect(delChat(caliente(agenda), "c0")).toContain("no sé si llego, está lloviendo");
   });
 
-  it("con avisoAntes, avisa recién sobre la hora de la revisión", () => {
-    const p = new Partida({ perfil: PERFIL, agenda: agendaCompleta(), interrupciones: SIN_INTERRUPCIONES, config: { ...CONFIG, avisoAntes: 20 }, semilla: "test" });
-    p.escribir("c0");
-    alDia(p);
-    p.responder("c0", "apurar");
-    alDia(p);
-    expect(p.avisaron).toEqual([]);
-    p.esperar(CONFIG.minutoRevision - 20 - p.reloj.minutos);
-    alDia(p);
-    expect(p.avisaron).toEqual(["c0"]);
+  describe("con plazo", () => {
+    const conPlazo = (): Partida => {
+      const p = new Partida({ perfil: PERFIL, agenda: agendaCompleta(), interrupciones: SIN_INTERRUPCIONES, config: { ...CONFIG, plazoDuda: 20 }, semilla: "test" });
+      p.escribir("c0");
+      alDia(p);
+      p.responder("c0", "apurar");
+      alDia(p);
+      return p;
+    };
+
+    it("se baja cuando se le vence, sin esperar a las 20:30", () => {
+      const p = conPlazo();
+      expect(p.avisaron).toEqual(["c0"]);
+      p.esperar(18);
+      alDia(p);
+      expect(p.estadoDe("c0").estado).toBe("confirmado");
+      p.esperar(2);
+      alDia(p);
+      expect(p.estadoDe("c0").estado).toBe("bajado");
+      expect(p.reloj.minutos).toBeLessThan(CONFIG.minutoRevision);
+      // Una baja temprana no es la revisión: esa se anuncia a las 20:30.
+      expect(p.eventos().some((e) => e.texto.includes("última revisión"))).toBe(false);
+    });
+
+    it("si lo llamás antes, deja de dudar y no se baja", () => {
+      const p = conPlazo();
+      p.llamar("c0");
+      p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+      alDia(p);
+      expect(p.estadoDe("c0").estado).toBe("confirmado");
+    });
+
+    it("la revisión le recorta el plazo al que se calentó tarde", () => {
+      const p = new Partida({ perfil: PERFIL, agenda: agendaCompleta(), interrupciones: SIN_INTERRUPCIONES, config: { ...CONFIG, plazoDuda: 20 }, semilla: "test" });
+      p.esperar(CONFIG.minutoRevision - 10 - p.reloj.minutos);
+      p.escribir("c0");
+      alDia(p);
+      p.responder("c0", "apurar");
+      alDia(p);
+      p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+      alDia(p);
+      expect(p.estadoDe("c0").estado).toBe("bajado");
+    });
   });
 
   it("el tranquilo no avisa", () => {
@@ -361,6 +394,43 @@ describe("el aviso del que se está por bajar", () => {
     expect(p.estadoDe("c0").estado).toBe("bajado");
     const motivo = resolver(p).porQueNo.find((m) => m.texto.includes("c0 se bajó"));
     expect(motivo?.porque).toMatch(/^Te avisó a las \d\d:\d\d que no sabía si llegaba$/);
+  });
+});
+
+describe("lo que se baja sin avisar", () => {
+  it("la mentira se descubre cuando los dos quedan en la lista, no a las 20:30", () => {
+    const agenda = agendaCompleta().map((c) =>
+      c.id === "c0" ? { ...c, bajas: [{ si: { elegiste: "si", confirmado: "c1" }, texto: "me mentiste" }] } : c,
+    );
+    const p = nueva(agenda);
+    p.escribir("c0");
+    alDia(p);
+    p.responder("c0", "si");
+    p.esperar(10);
+    alDia(p);
+    expect(p.estadoDe("c0").estado).toBe("confirmado");
+    p.escribir("c1");
+    alDia(p);
+    p.responder("c1", "si");
+    p.esperar(2);
+    alDia(p);
+    expect(p.estadoDe("c0").estado).toBe("bajado");
+    expect(p.reloj.minutos).toBeLessThan(CONFIG.minutoRevision);
+  });
+
+  it("el invitado que no viene avisa a las 20:30: no lo conocés, no te avisa antes", () => {
+    const trae = [{ nombre: "El primo", rol: "defensor" as const, habilidad: 50, noViene: { probabilidad: 100, texto: "el primo no viene" } }];
+    const agenda = agendaCompleta().map((c) => (c.id === "c0" ? contacto("c0", { alConfirmar: { trae } }) : c));
+    const p = nueva(agenda);
+    p.escribir("c0");
+    alDia(p);
+    p.responder("c0", "si");
+    expect(p.roster().confirmados).toBe(2);
+    p.esperar(CONFIG.minutoRevision - p.reloj.minutos);
+    alDia(p);
+    const falta = p.bitacora.de("no_vino")[0];
+    expect(falta?.minuto).toBe(CONFIG.minutoRevision);
+    expect(p.roster().confirmados).toBe(1);
   });
 });
 

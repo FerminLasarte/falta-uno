@@ -200,7 +200,7 @@ export const configSchema = z
     minutoRevision: z.object({ partido: z.number().int(), torneo: z.number().int() }).strict(),
     suplentesTorneo: z.number().int().min(0),
     cuota: z.number().int().min(0),
-    avisoAntes: z.number().int().min(0),
+    plazoDuda: z.number().int().min(1),
     excusas: z
       .object({ min: z.number().int().min(0), max: z.number().int().min(0) })
       .strict()

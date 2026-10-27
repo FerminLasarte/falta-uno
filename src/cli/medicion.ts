@@ -13,7 +13,8 @@ import type { EstadoContacto, OpcionDialogo, PerfilId } from "../core/tipos.js";
  * Por qué no hubo partido, en orden de precedencia:
  *   · moral: te quedaste sin moral;
  *   · plata: la lista estaba llena y no alcanzó la seña;
- *   · bajas: sin las bajas de las 20:30 la lista estaba llena;
+ *   · bajas: sin las bajas de la revisión de las 20:30 la lista estaba llena. Las de
+ *     antes no cuentan acá: hubo tiempo de reponerlas, y si no se pudo, faltó otra cosa;
  *   · agenda: no quedaba nadie a quien escribirle ni nadie con quien seguir hablando;
  *   · reloj: quedaba gente y no hubo tiempo.
  */
@@ -215,8 +216,10 @@ export function medir(opciones: OpcionesPartida, pasos: readonly Paso[], conLine
 
   const resolucion = resolver(partida);
   const confirmados = partida.roster().confirmados;
-  // Las bajas de la revisión: los de la agenda y los invitados que no vinieron.
-  const bajas = partida.bitacora.contar("baja_tardia") + partida.bitacora.contar("no_vino");
+  // Las bajas de la noche: los de la agenda y los invitados que no vinieron.
+  const deLaNoche = [...partida.bitacora.de("baja_tardia"), ...partida.bitacora.de("no_vino")];
+  const bajas = deLaNoche.length;
+  const bajasDeLaRevision = deLaNoche.filter((e) => e.minuto >= opciones.config.minutoRevision).length;
   const contactos = partida.contactos();
   const finales = Object.fromEntries(contactos.map((c) => [c.id, c.estado]));
 
@@ -227,7 +230,7 @@ export function medir(opciones: OpcionesPartida, pasos: readonly Paso[], conLine
     );
     if (partida.motivoFin === "moral_agotada") causa = "moral";
     else if (confirmados >= jugadoresNecesarios) causa = "plata";
-    else if (bajas > 0 && confirmados + bajas >= jugadoresNecesarios) causa = "bajas";
+    else if (bajasDeLaRevision > 0 && confirmados + bajasDeLaRevision >= jugadoresNecesarios) causa = "bajas";
     else if (!quedaGente) causa = "agenda";
     else causa = "reloj";
   }

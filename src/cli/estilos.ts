@@ -238,13 +238,13 @@ export function jugarViernes(opciones: OpcionesPartida, estilo: Estilo, semilla:
     }
   };
   const lleno = (): boolean => partida.roster().confirmados >= config.jugadoresNecesarios;
-  /** Los avisos que ya leyó, los haya atajado o no. */
-  const leidos = new Set<string>();
+  /** Cuántos avisos ya leyó, los haya atajado o no. Uno puede avisar dos veces. */
+  let leidos = 0;
   const atenderTodo = (): void => {
     if (partida.terminada) return;
-    for (const id of partida.avisaron) {
-      if (partida.terminada || leidos.has(id)) continue;
-      leidos.add(id);
+    for (const id of partida.avisaron.slice(leidos)) {
+      if (partida.terminada) break;
+      leidos++;
       if (partida.estadoDe(id).estado === "confirmado" && estilo.ataja(id, partida, ctx) && hacer(["llamar", id])) alDia();
     }
     if (partida.accionCalmar && estilo.calma(partida, ctx) && hacer(["calmar"])) alDia();

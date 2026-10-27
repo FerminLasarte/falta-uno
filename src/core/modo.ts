@@ -47,8 +47,8 @@ export interface ConfigContenido {
   readonly suplentesTorneo: number;
   /** Tu parte de la cancha: con eso arranca el bolsillo de cada viernes. */
   readonly cuota: number;
-  /** Cuántos minutos antes de la revisión avisan los que dudan: cuanto menos, menos tiempo para llamarlos. */
-  readonly avisoAntes: number;
+  /** Cuántos minutos de reloj tiene el que duda antes de bajarse: el tiempo para llamarlo o reemplazarlo. */
+  readonly plazoDuda: number;
   /** Cuántos de la agenda tienen una excusa esa noche: los elige la semilla. */
   readonly excusas: { readonly min: number; readonly max: number };
   readonly formatos: Readonly<Record<Formato, DefinicionFormato>>;
@@ -68,7 +68,7 @@ export function configDeViernes(base: ConfigContenido, modo: Modo): Config {
     senaCancha: formato.sena,
     composicion: formato.titulares,
     suplentes,
-    avisoAntes: base.avisoAntes,
+    plazoDuda: base.plazoDuda,
     excusas: base.excusas,
   };
 }

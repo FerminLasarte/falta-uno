@@ -217,8 +217,8 @@ export interface Config {
   readonly suplentes: number;
   /** Contra quién se juega, si se sabe: su nivel resta en la probabilidad de ganar. */
   readonly rival?: { readonly nombre: string; readonly nivel: number };
-  /** Cuántos minutos antes de la revisión avisan los que dudan. Sin esto, apenas se calientan. */
-  readonly avisoAntes?: number;
+  /** Cuántos minutos de reloj pasan entre que uno avisa que duda y se baja. Sin esto, se baja en la revisión. */
+  readonly plazoDuda?: number;
   /** Cuántos de la agenda no pueden esta noche, pase lo que pase. Sin esto, ninguno. */
   readonly excusas?: { readonly min: number; readonly max: number };
 }

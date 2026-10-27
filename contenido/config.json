@@ -12,7 +12,7 @@
   },
   "suplentesTorneo": 3,
   "cuota": 1500,
-  "avisoAntes": 20,
+  "plazoDuda": 20,
   "excusas": {
     "min": 1,
     "max": 2
