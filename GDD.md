@@ -123,6 +123,27 @@ material ya visto y quema el contenido a una velocidad brutal.
 No hay tutorial explícito. El primer partido es un **amistoso** con pocos contactos disponibles y
 consecuencias suaves, que enseña el reloj, el chat y los recursos jugando.
 
+### Quién sos y cómo se habla (decidido en octubre de 2026)
+
+Sos un pibe de 25 años que organiza el fútbol de sus amigos, y el juego se escribe como escriben
+ellos en WhatsApp. El chiste es la escritura (sección 7): el tono es parte del diseño, no decoración.
+
+- **El registro.** Minúsculas, "q", "re", "posta", "ni en pedo". Según el personaje y el momento,
+  tranquilo, prepotente o caliente. El jugador habla igual: sus opciones se escriben en el mismo
+  registro que los contactos.
+- **Puteadas sí, slurs no.** Boludo, forro, pelotudo, garca, hijo de puta, la concha de tu madre,
+  todo vale. Nada homofóbico, racista ni por discapacidad.
+- **La política es un roce, para todos los lados.** Es un rasgo del personaje y una fuente de peleas
+  en el grupo, con burlas a kukas, gorilas y libertarios por igual, siempre sobre el personaje y sin
+  nombrar políticos reales. Beto es peronista y sindicalista, Santi libertario cripto, Carlos un
+  gorila quejoso y el Tano se burla de todos.
+- **Apodos.** Al arrancar la campaña, quien juega le pone a cada contacto el apodo de un amigo suyo,
+  elige cómo le dicen a él (por defecto "capi") y le pone nombre al grupo (por defecto "Los Pibes"
+  más el formato). El personaje no cambia, solo el nombre: Fede se sigue haciendo rogar aunque se
+  llame como tu amigo. Los textos nombran a los demás con marcas (`{el_tano}`, `{vos}`, `{grupo}`)
+  que se completan con esos apodos (`src/core/apodos.ts`). Los nombres de los archivos ("Carlos el
+  quejoso", "Fede el habilidoso") son ids y retratos para escribir, no lo que se ve en el chat.
+
 ---
 
 ## 3. Clases y Perfiles (El Trasfondo)
@@ -135,6 +156,13 @@ emergencia:
 | **El Acomodado** | Empieza con mucho Dinero. | Poca Moral inicial (presión social). | Político / Presidente (al arco). |
 | **El Pibe de Barrio** | Moral alta y química de equipo. | Dinero inicial muy bajo. | Kiosquero. |
 | **El Oficinista** | Balance medio. | El Jefe interrumpe un 50% más. | Sindicalista (anula pasivas rivales). |
+
+> **A pulir más adelante.** Los perfiles quedaron de la v1 y no se revisaron con el tono nuevo. Hoy
+> son el mismo pibe de 25 con otra moral y otra plata de arranque, un contacto propio y, en el
+> Oficinista, más interrupciones del jefe. Falta decidir qué hace distinto jugar con cada uno, cómo
+> se presentan en el registro del juego y si los nombres siguen siendo estos. La tabla tampoco
+> coincide con el contenido: el Político figura "al arco" y en `contenido/contactos/el_politico.json`
+> es delantero. El slice juega solo con el Oficinista.
 
 ---
 
@@ -568,6 +596,7 @@ contenido → margen → plata → reloj.
 - **Deuda:** texto por claves completo, gamepad, Windows y una Deck real, Steamworks.
 - **El concepto completo:** la gestión semanal (paso 1 del bucle, sección 2), el amistoso que hace de
   tutorial, las pasivas del Sindicalista y del Político, y los otros dos perfiles con su contenido.
+  Antes de escribirlos, repensar los perfiles (sección 3).
 - **Contenido (fase 6):** todas las fechas del torneo, los contactos del Acomodado y del Pibe de
   Barrio, los eventos de la semana. Es cerca del 88% del texto que falta.
 - **Pulido (fase 7):** balance de la campaña entera, logros (9.6), página de Steam, certificación de
