@@ -84,23 +84,21 @@ const razonable: Estilo = {
 };
 
 /**
- * Juega como el razonable, más lo que da prestar atención: escribe primero a los
- * puestos que faltan, escucha los audios y usa lo que dijeron, no deja esperando
- * a la cancha, casi siempre ataja al que avisa y mira la plata: si no llega a la
- * seña, cobra por adelantado y no regala. Juega como una persona atenta, no como
- * quien leyó el contenido: no sabe qué audio importa hasta escucharlo, y de las
- * mentiras que la lista va a descubrir se da cuenta de la mitad.
+ * Juega como el razonable, más lo que da prestar atención: escucha los audios y
+ * usa lo que dijeron, no deja esperando a la cancha, casi siempre ataja al que
+ * avisa y mira la plata: si no llega a la seña, cobra por adelantado y no regala.
+ * Juega como una persona atenta, no como quien leyó el contenido: no sabe qué
+ * audio importa hasta escucharlo, y una mentira que la lista va a descubrir la ve
+ * según lo obvio que es que el otro va a estar: más cuanto más gente hace falta.
+ *
+ * No elige a quién escribirle primero: escribir antes a los puestos que faltan, o
+ * al mejor de cada uno, no rinde en ningún formato, y en F8 lo hace abrir siempre
+ * con los mismos, justo cuando la mentira sobre otro todavía se puede decir.
  */
 const atento: Estilo = {
   id: "atento",
-  descripcion: "como el razonable, más: puestos que faltan primero y el mejor de cada uno, escucha los audios, atiende la cancha, ve la mitad de las mentiras, ataja casi todos los avisos y cuida la plata",
-  siguiente(pendientes, partida) {
-    // Lee los retratos: entre los del puesto que falta, primero al mejor.
-    const faltan = new Set(partida.roster().faltantes.map((f) => f.rol));
-    const habilidad = (c: VistaContacto): number => partida.definicion(c.id).habilidad;
-    const delPuesto = pendientes.filter((c) => faltan.has(c.rol)).sort((a, b) => habilidad(b) - habilidad(a));
-    return delPuesto[0] ?? pendientes[0];
-  },
+  descripcion: "como el razonable, más: escucha los audios, atiende la cancha, ve las mentiras según cuánta gente hace falta, ataja casi todos los avisos y cuida la plata",
+  siguiente: (pendientes) => pendientes[0],
   elegir(opciones, partida, ctx) {
     // No dice lo que ve que se va a descubrir. Sin la seña asegurada, la plata pesa más
     // que la tranquilidad; con la seña, no gasta lo que lo dejaría corto de nuevo.
@@ -109,7 +107,9 @@ const atento: Estilo = {
     const alcance = partida.dinero + Math.max(0, partida.colchon);
     const plata = (o: OpcionDialogo): number => (o.efectos.dinero ?? 0) + (o.efectos.dineroAportado ?? 0);
     const quedaCorto = (o: OpcionDialogo): number => (alcance + plata(o) < sena ? 1 : 0);
-    const ve = new Set(opciones.filter((o) => ctx.riesgosas.has(o.id) && ctx.rng.ocurre(50)).map((o) => o.id));
+    // Si hacen falta casi todos, "fulano no va" se descubre seguro, y se nota.
+    const obvia = (100 * partida.config.jugadoresNecesarios) / ctx.opciones.agenda.length;
+    const ve = new Set(opciones.filter((o) => ctx.riesgosas.has(o.id) && ctx.rng.ocurre(obvia)).map((o) => o.id));
     const riesgo = (o: OpcionDialogo): number => (ve.has(o.id) ? 1 : 0);
     // Lo que solo puede contestar porque escuchó el audio: para eso lo escuchó.
     const escucho = (o: OpcionDialogo): number => (o.requiere?.escuchado ? 0 : 1);

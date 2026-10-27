@@ -41,6 +41,15 @@ const OBJETIVOS: Readonly<Record<string, readonly [number, number]>> = {
 };
 const PERFIL_DEL_SLICE = "oficinista";
 
+/**
+ * La meta de los formatos grandes (paso 8 del slice): en F6 y F8 la diferencia
+ * entre el atento y el razonable es igual o mayor que en F5, en la misma
+ * competencia. Se mide con "se juega" y no con "lista llena": en F8 el razonable
+ * llena pagando reemplazos y después no le alcanza la seña.
+ */
+const BIEN = "atento";
+const MAS_O_MENOS = "razonable";
+
 const contenido = await cargarContenido();
 
 function elegidos<T extends { id: string }>(todos: readonly T[], filtro: string | undefined, que: string): T[] {
@@ -114,6 +123,9 @@ if (NARRAR) {
 }
 
 const todas: Medicion[] = [];
+const seJuega = (ms: readonly Medicion[]): number => Math.round((ms.filter((m) => m.hayPartido).length / ms.length) * 100);
+/** Cuánto le saca el que juega bien al que juega más o menos en cada modo del perfil del slice, en puntos de "se juega". */
+const diferencias = new Map<string, number>();
 for (const perfil of perfiles) {
   for (const modo of modos) {
     const necesarios = opcionesPara(perfil, "x", modo).config.jugadoresNecesarios;
@@ -131,8 +143,28 @@ for (const perfil of perfiles) {
       });
       if (marcas.length > 0) console.log(`\n  objetivo del slice, lista llena: ${marcas.join(" · ")}`);
     }
+    const bien = filas.find((f) => f.nombre === BIEN);
+    const masOMenos = filas.find((f) => f.nombre === MAS_O_MENOS);
+    if (perfil.id === PERFIL_DEL_SLICE && bien && masOMenos) {
+      diferencias.set(clave(modo), seJuega(bien.mediciones) - seJuega(masOMenos.mediciones));
+    }
     console.log("");
   }
+}
+
+// Solo se puede decir con el F5 de la competencia medido: es la vara.
+const conSigno = (d: number): string => `${d >= 0 ? "+" : ""}${d}`;
+const marcasGrandes = modos.flatMap((modo) => {
+  const d = diferencias.get(clave(modo));
+  const vara = diferencias.get(clave({ ...modo, formato: "f5" }));
+  if (d === undefined || vara === undefined || modo.formato === "f5") return [];
+  return [`${nombreDelModo(modo)} ${conSigno(d)} ${d >= vara ? "✓" : "✗"}`];
+});
+if (marcasGrandes.length > 0) {
+  const varas = modos
+    .filter((m) => m.formato === "f5" && diferencias.has(clave(m)))
+    .map((m) => `${nombreDelModo(m)} ${conSigno(diferencias.get(clave(m))!)}`);
+  console.log(`  formatos grandes, ${BIEN} − ${MAS_O_MENOS} en "se juega" (≥ que en F5): ${varas.join(" · ")} → ${marcasGrandes.join(" · ")}\n`);
 }
 
 // Un contacto que nadie usa nunca es contenido muerto: hay que arreglarlo o sacarlo.

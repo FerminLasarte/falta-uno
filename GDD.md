@@ -487,7 +487,8 @@ Lo que dicen los números, más allá de los objetivos:
   las 20:30.
 - **El reloj es la causa principal**, y en parte es moral: el que la cuida atiende a quien le
   reclama y paga en minutos.
-- **En F8 el atento juega peor que el razonable** (paso 8).
+- **En los formatos grandes jugar bien ya rinde más que jugar más o menos**, salvo en el torneo F8,
+  donde la diferencia (+18 en "se juega") queda por debajo de la de F5 (+24) (paso 8).
 - **Decisiones:** `npm run valor` encuentra 2 respuestas que convienen siempre, 3 que no convienen
   nunca y 4 pares que dan lo mismo. Hay que revisarlas una por una: algunas son groserías que pueden
   quedar como color.
@@ -536,10 +537,22 @@ contenido → margen → plata → reloj.
 7. ✅ **El relato variado.** `contenido/relato.json`: de tres a seis fraseos por momento y por gol,
    sin repetir dentro del partido.
 8. **Los formatos grandes.** Que en F6 y F8 la diferencia entre jugar bien y jugar más o menos sea
-   igual o mayor que en F5. *Ahora (razonable contra atento): torneo F5 56% y 79%, torneo F6 30% y
-   48%, torneo F8 25% y 8%; partido F8 72% y 47%. En F8 el atento juega peor que el razonable: ve
-   solo la mitad de las mentiras y en F8 confirma a más gente, así que se le descubren más; después
-   pesan los avisos que no ataja y los imprevistos. Escuchar todos los audios no es la causa.*
+   igual o mayor que en F5, en la misma competencia. Se mide en "se juega" y no en "lista llena": en
+   F8 el razonable llena pagando reemplazos y después no le alcanza la seña. El bot lo imprime al
+   final. *Antes (razonable contra atento, lista llena): torneo F5 56% y 79%, torneo F6 30% y 48%,
+   torneo F8 25% y 8%; partido F8 72% y 47%. La causa era el orden: el atento le escribía primero
+   al mejor de cada puesto, así que abría siempre con Fede y Santi, justo cuando todavía se puede
+   decir "el Tano no va" o "Beto no va". En F8 los dos terminan en la lista, así que la mentira se
+   descubría siempre: Fede y Santi se le bajaban la mitad de los viernes, sin aviso y sin margen
+   para reponerlos. Elegir al mejor primero no rendía ni en F5, porque la formación ya pone a los
+   mejores. Hecho: el atento escribe en el orden de la agenda y ve una mentira según lo obvio que es
+   que el otro va a estar (los que hacen falta sobre la agenda: 67% en torneo F5, 92% en torneo F8).
+   Atento menos razonable en "se juega": torneo F5 +24, F6 +28 ✓, F8 +18 ✗; partido F6 +16 ✓, F8
+   +19 ✓ (partido F5 +4, con los dos casi al 100%). El objetivo del slice en F5 sigue (79%). Queda
+   el torneo F8: el atento pierde por bajas (49%) y reloj (48%), porque en 11 de 12 no hay margen y
+   cualquier baja se repone solo con invitados. Arrancar F8 más temprano no sirve: el razonable gana
+   más lista que el atento (repone pagando) y después pierde por plata. Tampoco premia elegir a quién
+   escribirle primero; que eso pese es tema de contenido.*
 9. **Para los testers.** Build de Windows, "Exportar partidas" desde el menú y una hoja de
    instrucciones. Cada viernes jugado ya queda en `partidas/` con su build.
 10. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
