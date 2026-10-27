@@ -8,8 +8,9 @@
  * vieja de la nube no pisa la nueva del disco, y la partida que viene de otra
  * máquina sí pisa la local.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { basename, dirname, join } from "node:path";
+import { leerArchivado, type ViernesArchivado } from "../src/core/archivo.js";
 import { nube } from "./steam.js";
 
 export interface DestinoGuardado {
@@ -104,6 +105,25 @@ export function archivar(nombre: string, datos: string): boolean {
   // El nombre lo arma la ventana: que no pueda salirse de la carpeta.
   if (basename(nombre) !== nombre || !nombre.endsWith(".json")) return false;
   return escribirEntero(join(carpeta, "partidas", nombre), datos);
+}
+
+/** Los viernes de `partidas/`, en orden de nombre. Uno roto queda afuera. */
+export function leerArchivados(): ViernesArchivado[] {
+  try {
+    const dentro = join(carpeta, "partidas");
+    if (!existsSync(dentro)) return [];
+    return readdirSync(dentro)
+      .filter((nombre) => nombre.endsWith(".json"))
+      .sort()
+      .flatMap((nombre) => leerArchivado(readFileSync(join(dentro, nombre), "utf8")) ?? []);
+  } catch {
+    return [];
+  }
+}
+
+/** Escribe la exportación donde eligió el tester. La ruta la da el diálogo del sistema, no la ventana. */
+export function exportar(ruta: string, texto: string): boolean {
+  return escribirEntero(ruta, texto);
 }
 
 export function cargar(nombre: string): { contenido: string | null; origen: "nube" | "local" | null } {

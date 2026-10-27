@@ -1,9 +1,10 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
-import { join } from "node:path";
+import { app, BrowserWindow, dialog, ipcMain, shell, type SaveDialogOptions } from "electron";
+import { basename, dirname, join } from "node:path";
 import { writeFile } from "node:fs/promises";
-import { CANALES, type Versiones } from "./canal.js";
+import { CANALES, type ResultadoExportacion, type Versiones } from "./canal.js";
+import { armarExportacion, nombreDeExportacion } from "../src/core/archivo.js";
 import { cargarContenido, ErrorDeContenido, type Contenido } from "../src/datos/cargar.js";
-import { archivar, cargar, configurarCarpeta, guardar } from "./guardado.js";
+import { archivar, cargar, configurarCarpeta, exportar, guardar, leerArchivados } from "./guardado.js";
 import { carpetaBundle } from "./rutas.js";
 import {
   cerrarSteam,
@@ -216,6 +217,46 @@ async function capturarSiSePidio(ventana: BrowserWindow): Promise<void> {
   app.exit(0);
 }
 
+/** La última exportación, para "Mostrar el archivo": la ventana nunca manda una ruta. */
+let ultimaExportacion: string | null = null;
+
+/**
+ * "Exportar partidas" del menú. Lo que se manda es lo que hay en `partidas/`:
+ * cada viernes jugado, terminado o a medias. Dónde queda lo elige el tester con
+ * el diálogo del sistema, que arranca en el Escritorio.
+ */
+async function exportarPartidas(ventana: BrowserWindow | null): Promise<ResultadoExportacion> {
+  const partidas = leerArchivados();
+  if (partidas.length === 0) return { estado: "sin-partidas" };
+  const ahora = new Date();
+  const opciones: SaveDialogOptions = {
+    title: "Exportar partidas",
+    buttonLabel: "Exportar",
+    defaultPath: join(app.getPath("desktop"), nombreDeExportacion(ahora)),
+    filters: [{ name: "Partidas de Falta Uno", extensions: ["json"] }],
+  };
+  const { canceled, filePath } = ventana
+    ? await dialog.showSaveDialog(ventana, opciones)
+    : await dialog.showSaveDialog(opciones);
+  if (canceled || !filePath) return { estado: "cancelado" };
+  if (!exportar(filePath, armarExportacion(partidas, ahora))) return { estado: "fallo" };
+  ultimaExportacion = filePath;
+  return { estado: "listo", cantidad: partidas.length, archivo: basename(filePath), carpeta: nombrarCarpeta(dirname(filePath)) };
+}
+
+/** "el Escritorio", no "/Users/fer/Desktop": lo que el tester ve en su máquina. */
+function nombrarCarpeta(carpeta: string): string {
+  const conocidas = [
+    ["desktop", "el Escritorio"],
+    ["downloads", "Descargas"],
+    ["documents", "Documentos"],
+  ] as const;
+  for (const [clave, nombre] of conocidas) {
+    if (carpeta.toLowerCase() === app.getPath(clave).toLowerCase()) return nombre;
+  }
+  return `la carpeta ${basename(carpeta) || carpeta}`;
+}
+
 function registrarCanales(): void {
   ipcMain.handle(CANALES.versiones, (): Versiones => {
     return {
@@ -248,5 +289,9 @@ function registrarCanales(): void {
     evento.returnValue = archivar(nombre, contenido);
   });
   ipcMain.handle(CANALES.archivosEnNube, () => nube.listar());
+  ipcMain.handle(CANALES.exportarPartidas, (evento) => exportarPartidas(BrowserWindow.fromWebContents(evento.sender)));
+  ipcMain.handle(CANALES.mostrarExportacion, () => {
+    if (ultimaExportacion) shell.showItemInFolder(ultimaExportacion);
+  });
   ipcMain.handle(CANALES.salir, () => app.quit());
 }

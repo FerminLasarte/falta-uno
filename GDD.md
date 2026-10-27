@@ -558,8 +558,16 @@ contenido → margen → plata → reloj.
    pierde por plata), dos suplentes en F8 (lo mismo), traer invitados con menos faltantes (levanta
    al razonable) y más plazo para el que duda (no cambia nada). Queda: que elegir a quién
    escribirle primero pese, que es tema de contenido.*
-9. **Para los testers.** Build de Windows, "Exportar partidas" desde el menú y una hoja de
-   instrucciones. Cada viernes jugado ya queda en `partidas/` con su build.
+9. ✅ **Para los testers.** Build de Windows, "Exportar partidas" desde el menú y una hoja de
+   instrucciones. Cada viernes jugado ya queda en `partidas/` con su build. *Hecho: `npm run
+   empaquetar:win` arma el x64 desde la Mac, sin wine, con los binarios de Steam afuera del asar
+   y `contenido/` al lado ([docs/windows.md](docs/windows.md)). "Exportar partidas" va en el menú
+   antes de Salir: junta todo `partidas/` en un solo `.json`, lo guarda donde elija el tester con
+   el diálogo del sistema (arranca en el Escritorio) y ofrece "Mostrar el archivo"; sin viernes
+   jugados, lo dice. `npm run analizar` lee ese archivo tal cual, o una carpeta llena de ellos.
+   La hoja es [docs/testers.md](docs/testers.md): instalar, dos viernes del torneo F5 con el
+   Oficinista, exportar y mandar. Pendiente de Fermín: verificarlo en una PC con Windows real
+   (los pasos están en docs/windows.md).*
 10. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
     manden. Es el momento honesto de decidir si el juego funciona (9.8).
 

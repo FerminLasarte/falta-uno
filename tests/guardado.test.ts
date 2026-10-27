@@ -2,7 +2,8 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { cargar, configurarCarpeta, guardar, leerCopia, masNueva } from "../electron/guardado.js";
+import { archivar, cargar, configurarCarpeta, exportar, guardar, leerArchivados, leerCopia, masNueva } from "../electron/guardado.js";
+import { armarExportacion, FORMATO_ARCHIVO, leerExportacion, type ViernesArchivado } from "../src/core/archivo.js";
 
 // Sin Steam la nube no está: todo esto es la copia local, que es la que tiene
 // que andar siempre.
@@ -74,5 +75,36 @@ describe("entre la nube y el disco", () => {
     expect(leerCopia(JSON.stringify({ sello: 1.5, datos: "x" }))).toBeNull();
     expect(leerCopia(JSON.stringify({ sello: 1, datos: 3 }))).toBeNull();
     expect(leerCopia(JSON.stringify({ sello: 1, datos: "x" }))).toEqual({ sello: 1, datos: "x" });
+  });
+});
+
+describe("las partidas para exportar", () => {
+  const viernes = (fecha: number): ViernesArchivado => ({
+    formato: FORMATO_ARCHIVO,
+    build: { version: "0.1.0", commit: "abc1234", plataforma: "win32-x64" },
+    campana: { semilla: "123", perfil: "oficinista", modo: { formato: "f5", competencia: "torneo" } },
+    viernes: { fecha, dinero: 9000, contenido: "ccec5dba", pasos: [["t", 300]] },
+    marcas: [],
+    empezado: "2026-10-31T21:00:00.000Z",
+    actualizado: "2026-10-31T21:30:00.000Z",
+    terminado: true,
+  });
+
+  it("sin viernes jugados no hay nada", () => {
+    expect(leerArchivados()).toEqual([]);
+  });
+
+  it("se leen los viernes de partidas/, en orden, y los rotos quedan afuera", () => {
+    archivar("123-fecha-2.json", JSON.stringify(viernes(2)));
+    archivar("123-fecha-1.json", JSON.stringify(viernes(1)));
+    archivar("roto.json", "{a medias");
+    expect(leerArchivados().map((v) => v.viernes.fecha)).toEqual([1, 2]);
+  });
+
+  it("lo exportado se lee entero del otro lado", () => {
+    archivar("123-fecha-1.json", JSON.stringify(viernes(1)));
+    const ruta = join(carpeta, "Escritorio", "falta-uno-partidas.json");
+    expect(exportar(ruta, armarExportacion(leerArchivados(), new Date()))).toBe(true);
+    expect(leerExportacion(readFileSync(ruta, "utf8"))).toEqual([viernes(1)]);
   });
 });

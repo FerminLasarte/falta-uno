@@ -1,16 +1,26 @@
 /**
  * Analiza viernes jugados por personas. Lee los archivos que deja el juego en
- * `partidas/` (y también un guardado, `saves/partida.json`, para reproducir el
- * bug de alguien), los juega de nuevo contra el núcleo y saca el mismo informe
- * que el bot, más la línea de tiempo de cada viernes: qué hizo, qué estaba
- * mirando y cuánto tiempo real tardó.
+ * `partidas/`, las exportaciones que mandan los testers desde el menú (todos
+ * sus viernes en un archivo) y también un guardado, `saves/partida.json`, para
+ * reproducir el bug de alguien. Los juega de nuevo contra el núcleo y saca el
+ * mismo informe que el bot, más la línea de tiempo de cada viernes: qué hizo,
+ * qué estaba mirando y cuánto tiempo real tardó.
  *
- *   npm run analizar -- carpeta-con-partidas
+ *   npm run analizar -- carpeta-con-lo-que-mandaron
+ *   npm run analizar -- falta-uno-partidas-2026-10-31.json
  *   npm run analizar -- partidas/123-fecha-1.json --linea
  */
 import { readdir, readFile, stat } from "node:fs/promises";
 import { basename, join } from "node:path";
-import { leerArchivado, esMarca, type Build, type MarcaVista } from "../core/archivo.js";
+import {
+  leerArchivado,
+  leerExportacion,
+  esMarca,
+  nombreDeArchivo,
+  type Build,
+  type MarcaVista,
+  type ViernesArchivado,
+} from "../core/archivo.js";
 import { huella, leerGuardado, type ViernesGuardado } from "../core/registro.js";
 import { formatearHora } from "../core/tiempo.js";
 import { opcionesDeViernes, type Ajustes } from "../core/viernes.js";
@@ -63,21 +73,30 @@ function desdeGuardado(texto: string, archivo: string): Leido | null {
   };
 }
 
-async function leer(archivo: string): Promise<Leido | null> {
+function desdeArchivado(archivado: ViernesArchivado, archivo: string): Leido {
+  return {
+    archivo,
+    perfil: archivado.campana.perfil,
+    semilla: archivado.campana.semilla,
+    ajustes: archivado.campana,
+    viernes: archivado.viernes,
+    marcas: archivado.marcas,
+    build: archivado.build,
+  };
+}
+
+/** Los viernes de un archivo: uno si es un viernes suelto o un guardado, todos si es una exportación. */
+async function leer(archivo: string): Promise<Leido[] | null> {
   const texto = await readFile(archivo, "utf8");
   const archivado = leerArchivado(texto);
-  if (archivado) {
-    return {
-      archivo,
-      perfil: archivado.campana.perfil,
-      semilla: archivado.campana.semilla,
-      ajustes: archivado.campana,
-      viernes: archivado.viernes,
-      marcas: archivado.marcas,
-      build: archivado.build,
-    };
+  if (archivado) return [desdeArchivado(archivado, archivo)];
+  const exportados = leerExportacion(texto);
+  if (exportados) {
+    // Cada viernes se nombra como estaría suelto en `partidas/`, después de la exportación que lo trajo.
+    return exportados.map((a) => desdeArchivado(a, `${archivo} › ${nombreDeArchivo(a.campana.semilla, a.viernes.fecha)}`));
   }
-  return desdeGuardado(texto, archivo);
+  const guardado = desdeGuardado(texto, archivo);
+  return guardado ? [guardado] : null;
 }
 
 /** "contacto:carlos_el_quejoso" → "el chat con Carlos". */
@@ -147,14 +166,16 @@ const archivos = (await Promise.all(rutas.map(listar))).flat();
 // gana el archivo, que sabe con qué build se jugó.
 const porViernes = new Map<string, Leido>();
 for (const archivo of archivos) {
-  const leido = await leer(archivo).catch(() => null);
-  if (!leido) {
-    console.log(`  ⚠ ${archivo}: no es un viernes archivado ni un guardado`);
+  const leidosDelArchivo = await leer(archivo).catch(() => null);
+  if (!leidosDelArchivo) {
+    console.log(`  ⚠ ${archivo}: no es un viernes archivado, una exportación ni un guardado`);
     continue;
   }
-  const clave = `${leido.semilla}·${leido.viernes.fecha}`;
-  const previo = porViernes.get(clave);
-  if (!previo || (previo.build === null && leido.build !== null)) porViernes.set(clave, leido);
+  for (const leido of leidosDelArchivo) {
+    const clave = `${leido.semilla}·${leido.viernes.fecha}`;
+    const previo = porViernes.get(clave);
+    if (!previo || (previo.build === null && leido.build !== null)) porViernes.set(clave, leido);
+  }
 }
 const leidos = [...porViernes.values()];
 const conLinea = argumentos.includes("--linea") || leidos.length === 1;

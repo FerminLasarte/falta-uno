@@ -60,14 +60,20 @@ function esBuild(x: unknown): x is Build {
   return esObjeto(x) && esTexto(x["version"]) && esTexto(x["commit"]) && esTexto(x["plataforma"]);
 }
 
-/** Lee un viernes archivado. Si está roto o es de otro formato, null. */
-export function leerArchivado(texto: string): ViernesArchivado | null {
-  let crudo: unknown;
+function parsear(texto: string): unknown {
   try {
-    crudo = JSON.parse(texto);
+    return JSON.parse(texto);
   } catch {
     return null;
   }
+}
+
+/** Lee un viernes archivado. Si está roto o es de otro formato, null. */
+export function leerArchivado(texto: string): ViernesArchivado | null {
+  return validarArchivado(parsear(texto));
+}
+
+function validarArchivado(crudo: unknown): ViernesArchivado | null {
   if (!esObjeto(crudo) || crudo["formato"] !== FORMATO_ARCHIVO) return null;
   const { build, campana, viernes, marcas, empezado, actualizado, terminado } = crudo;
   if (!esBuild(build) || !esViernes(viernes) || !esTexto(empezado) || !esTexto(actualizado)) return null;
@@ -91,4 +97,41 @@ export function leerArchivado(texto: string): ViernesArchivado | null {
     actualizado,
     terminado,
   };
+}
+
+// ------------------------------------------------------------------ exportación
+
+/**
+ * Todos los viernes archivados en un solo archivo: lo que el tester manda por
+ * mail o WhatsApp, y lo que `npm run analizar` lee tal cual. Cada viernes va
+ * entero, con el mismo formato que tiene suelto en `partidas/`.
+ */
+export const FORMATO_EXPORTACION = 1;
+
+export interface Exportacion {
+  readonly exportacion: typeof FORMATO_EXPORTACION;
+  /** Hora de la máquina al exportar, en ISO. */
+  readonly exportado: string;
+  readonly partidas: readonly ViernesArchivado[];
+}
+
+/** "falta-uno-partidas-2026-10-27.json", con la fecha de la máquina. */
+export function nombreDeExportacion(ahora: Date): string {
+  const dos = (n: number): string => String(n).padStart(2, "0");
+  return `falta-uno-partidas-${ahora.getFullYear()}-${dos(ahora.getMonth() + 1)}-${dos(ahora.getDate())}.json`;
+}
+
+export function armarExportacion(partidas: readonly ViernesArchivado[], ahora: Date): string {
+  const exportacion: Exportacion = { exportacion: FORMATO_EXPORTACION, exportado: ahora.toISOString(), partidas };
+  return JSON.stringify(exportacion);
+}
+
+/**
+ * Los viernes de una exportación. Si no es una exportación, null; un viernes
+ * roto adentro queda afuera sin tirar abajo a los demás.
+ */
+export function leerExportacion(texto: string): ViernesArchivado[] | null {
+  const crudo = parsear(texto);
+  if (!esObjeto(crudo) || crudo["exportacion"] !== FORMATO_EXPORTACION || !Array.isArray(crudo["partidas"])) return null;
+  return crudo["partidas"].flatMap((p) => validarArchivado(p) ?? []);
 }

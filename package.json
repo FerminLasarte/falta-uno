@@ -11,6 +11,7 @@
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/construir.mjs",
     "empaquetar": "npm run build && electron-builder --dir",
+    "empaquetar:win": "npm run build && electron-builder --win",
     "jugar": "tsx src/cli/jugar.ts",
     "validar": "tsx src/cli/validar.ts",
     "bot": "tsx src/cli/bot.ts",

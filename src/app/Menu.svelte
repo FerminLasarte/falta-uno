@@ -5,10 +5,12 @@
   una ventana que salta.
 
   Se maneja con flechas y Enter (y con el mouse): es lo que después toma el
-  gamepad en la Deck. Empezar otra campaña pide confirmación.
+  gamepad en la Deck. Empezar otra campaña pide confirmación. Exportar partidas
+  abre el diálogo del sistema y después dice cómo salió, en el mismo lugar.
 -->
 <script lang="ts">
   import { tick } from "svelte";
+  import type { ResultadoExportacion } from "../../electron/canal.js";
 
   let {
     estado,
@@ -16,6 +18,8 @@
     hayQuePerder,
     alSeguir,
     alCampanaNueva,
+    alExportar,
+    alMostrarExportacion,
     alSalir,
   }: {
     /** Dónde estás: el perfil, la fecha y la hora. */
@@ -26,10 +30,20 @@
     hayQuePerder: boolean;
     alSeguir: () => void;
     alCampanaNueva: () => void;
+    alExportar: () => Promise<ResultadoExportacion>;
+    alMostrarExportacion: () => void;
     alSalir: () => void;
   } = $props();
 
-  let confirmando = $state(false);
+  /** Las opciones, la confirmación de campaña nueva o cómo salió la exportación. */
+  type Paso =
+    | { tipo: "opciones" }
+    | { tipo: "confirmando" }
+    | { tipo: "exportada"; resultado: Exclude<ResultadoExportacion, { estado: "cancelado" }> };
+
+  let paso = $state<Paso>({ tipo: "opciones" });
+  /** Con el diálogo del sistema abierto, un segundo Enter no abre otro. */
+  let exportando = false;
   let columna = $state<HTMLElement>();
 
   const opciones = (): HTMLButtonElement[] => [...(columna?.querySelectorAll<HTMLButtonElement>("button") ?? [])];
@@ -37,22 +51,40 @@
   /** Qué opción queda elegida después de cambiar de lista: al volver, la de la que saliste. */
   let elegida = 0;
 
-  /* Al abrir, al pasar a confirmar y al volver, queda elegida la que corresponde. */
+  /* Al abrir, al pasar de una lista a otra y al volver, queda elegida la que corresponde. */
   $effect(() => {
-    void confirmando;
+    void paso;
     void tick().then(() => opciones()[elegida]?.focus());
   });
 
-  function empezarOtra(): void {
-    if (!hayQuePerder) return alCampanaNueva();
-    elegida = 0;
-    confirmando = true;
+  function irA(destino: Paso, enfocada: number): void {
+    elegida = enfocada;
+    paso = destino;
   }
 
-  function noEmpezar(): void {
-    elegida = 1;
-    confirmando = false;
+  /* Las posiciones de la lista de opciones, que cambia si no hay campaña nueva. */
+  const enCampanaNueva = 1;
+  const enExportar = $derived(puedeEmpezarOtra ? 2 : 1);
+
+  function empezarOtra(): void {
+    if (!hayQuePerder) return alCampanaNueva();
+    irA({ tipo: "confirmando" }, 0);
   }
+
+  async function exportar(): Promise<void> {
+    if (exportando) return;
+    exportando = true;
+    try {
+      const resultado = await alExportar();
+      // Cancelar el diálogo es volver a donde estabas, sin nada que contar.
+      if (resultado.estado === "cancelado") irA({ tipo: "opciones" }, enExportar);
+      else irA({ tipo: "exportada", resultado }, 0);
+    } finally {
+      exportando = false;
+    }
+  }
+
+  const viernes = (n: number): string => (n === 1 ? "1 viernes exportado" : `${n} viernes exportados`);
 
   function mover(evento: KeyboardEvent): void {
     const lista = opciones();
@@ -72,16 +104,32 @@
     <span class="marca">Falta Uno</span>
     <span class="estado">{estado}</span>
 
-    {#if confirmando}
+    {#if paso.tipo === "confirmando"}
       <p class="pregunta">¿Empezar otra campaña?</p>
       <p class="detalle">Se pierde la que estás jugando.</p>
       <button class="opcion" onmouseenter={enfocar} onclick={alCampanaNueva}>Empezar otra</button>
-      <button class="opcion" onmouseenter={enfocar} onclick={noEmpezar}>No, seguir con esta</button>
+      <button class="opcion" onmouseenter={enfocar} onclick={() => irA({ tipo: "opciones" }, enCampanaNueva)}>No, seguir con esta</button>
+    {:else if paso.tipo === "exportada"}
+      {@const resultado = paso.resultado}
+      {#if resultado.estado === "listo"}
+        <p class="pregunta">{viernes(resultado.cantidad)}</p>
+        <p class="detalle">Quedó en {resultado.carpeta}:<span class="archivo">{resultado.archivo}</span></p>
+        <button class="opcion" onmouseenter={enfocar} onclick={alMostrarExportacion}>Mostrar el archivo</button>
+      {:else if resultado.estado === "sin-partidas"}
+        <p class="pregunta">Todavía no hay partidas</p>
+        <p class="detalle">Cada viernes que jugás se guarda solo. Jugá uno y volvé.</p>
+      {:else}
+        <p class="pregunta">No se pudo exportar</p>
+        <p class="detalle">Probá guardarlo en otra carpeta.</p>
+        <button class="opcion" onmouseenter={enfocar} onclick={exportar}>Probar de nuevo</button>
+      {/if}
+      <button class="opcion" onmouseenter={enfocar} onclick={() => irA({ tipo: "opciones" }, enExportar)}>Volver</button>
     {:else}
       <button class="opcion" onmouseenter={enfocar} onclick={alSeguir}>Seguir</button>
       {#if puedeEmpezarOtra}
         <button class="opcion" onmouseenter={enfocar} onclick={empezarOtra}>Campaña nueva</button>
       {/if}
+      <button class="opcion" onmouseenter={enfocar} onclick={exportar}>Exportar partidas</button>
       <button class="opcion" onmouseenter={enfocar} onclick={alSalir}>Salir</button>
     {/if}
 
@@ -128,6 +176,8 @@
 
   .pregunta { margin: 0; font-family: var(--fuente-cromo); font-size: 20px; font-weight: 700; }
   .detalle { margin: 2px 0 10px; font-size: 13px; color: rgb(255 255 255 / 62%); }
+  /* El nombre del archivo, para reconocerlo en la carpeta: entero, aunque no entre en una línea. */
+  .archivo { display: block; color: rgb(255 255 255 / 85%); overflow-wrap: anywhere; }
 
   .opcion {
     padding: 8px 0;

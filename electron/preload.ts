@@ -22,6 +22,8 @@ const api = {
   archivarYa: (nombre: string, contenido: string) =>
     ipcRenderer.sendSync(CANALES.archivarYa, nombre, contenido),
   archivosEnNube: () => ipcRenderer.invoke(CANALES.archivosEnNube),
+  exportarPartidas: () => ipcRenderer.invoke(CANALES.exportarPartidas),
+  mostrarExportacion: () => ipcRenderer.invoke(CANALES.mostrarExportacion),
   salir: () => ipcRenderer.invoke(CANALES.salir),
 };
 
