@@ -503,7 +503,7 @@ Avance hacia el lanzamiento: **44%**, pesando cada fase por el trabajo que lleva
 | 6 — Contenido | 40% | 14% | 🟡 El elenco del Pibe: 13 contactos (los 8 a fondo y los 4 de segunda línea del slice, sin Beto, más Darío y Zenón), grupo, interrupciones, avisos, excusas e imprevistos. Faltan los elencos del Oficinista y del Acomodado. |
 | 7 — Pulido | 15% | 7% | 🟡 Herramientas de balance: bot con estilos, analizador y valor esperado por respuesta. |
 
-Balance del slice (torneo F5, el Pibe, 1000 viernes): se cumplen 5 de los 7 objetivos. Se mide con
+Balance del slice (torneo F5, el Pibe, 1000 viernes): se cumplen 6 de los 7 objetivos. Se mide con
 "se juega" y no con "lista llena" (decidido el 28 de octubre de 2026): a cada perfil le cuesta otra
 cosa, y al Pibe le cuesta pagar la seña, no juntar gente. Con el Oficinista, que medía lista llena,
 también eran 5 de 7 (58% / 81% / 22%).
@@ -512,7 +512,7 @@ también eran 5 de 7 (58% / 81% / 22%).
 |---|---|---|
 | Razonable juega el partido | 55–65% | 63% ✓ |
 | Atento juega el partido | 75–85% | 84% ✓ |
-| Apurado juega el partido | 20–35% | 6% ✗ |
+| Apurado juega el partido | 0–15% | 6% ✓ |
 | Gana | 45–55% | 46% ✓ |
 | Bajas por viernes | 0,6–1 | 1,4 ✗ |
 | Rechazos por viernes | 1–2 | 1,3 ✓ |
@@ -526,10 +526,11 @@ Lo que dicen los números, más allá de los objetivos:
 - **La moral y la plata de arranque casi no mueven el slice.** En el torneo, la inscripción se come
   el colchón: con $3.000 o con $6.000 no queda nada para tapar la seña. Bajar la moral solo frena
   al apurado.
-- **El apurado casi nunca juega (6%).** Desde la guita allá, confirma a todos con "la plata
-  después", que es lo más rápido, y llega a la cancha con lo que se acordaron de traer. Es lo que
-  le tiene que pasar al que no pide la plata; falta decidir si la meta del apurado (20–35%) sigue
-  siendo la del Pibe.
+- **El apurado casi nunca juega (6%), y está bien.** Desde la guita allá, confirma a todos con
+  "la plata después", que es lo más rápido, y llega a la cancha con lo que se acordaron de traer.
+  Es lo que le tiene que pasar al que no pide la plata, así que con el Pibe su meta baja de 20–35%
+  a 0–15% (decidido el 28 de octubre de 2026). La de 20–35% era del Oficinista, al que lo frenaba
+  la moral.
 - **Las bajas por viernes ya no miden lo mismo.** Desde que pasan a lo largo de la noche, una baja
   temprana se repone: son más pero pesan menos. La meta de 0,6–1 era para cuando todas caían a las
   20:30.

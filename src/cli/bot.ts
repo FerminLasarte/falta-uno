@@ -31,16 +31,18 @@ const CORRIDAS = Number(argumentos.find((a) => /^\d+$/.test(a)) ?? 500);
 const NARRAR = argumentos.includes("--narrar");
 
 /**
- * Lo que se busca en el vertical slice (GDD §9.8), en la primera fecha del
- * torneo de fútbol 5: el que presta atención juega el partido, el apurado casi
- * nunca, y el razonable depende de cómo juegue ese viernes. Se mide con "se
- * juega" y no con "lista llena": a cada perfil le cuesta otra cosa, y al Pibe
- * le cuesta pagar la seña, no juntar gente.
+ * Lo que se busca en el vertical slice (GDD §9.8), con el Pibe en la primera
+ * fecha del torneo de fútbol 5: el que presta atención juega el partido, el
+ * apurado casi nunca, y el razonable depende de cómo juegue ese viernes. Se
+ * mide con "se juega" y no con "lista llena": a cada perfil le cuesta otra
+ * cosa, y al Pibe le cuesta pagar la seña, no juntar gente. Por eso el apurado
+ * va más abajo que con el Oficinista (20–35%): confirma a todos con "la plata
+ * después" y llega a la cancha sin con qué pagar.
  */
 const OBJETIVOS: Readonly<Record<string, readonly [number, number]>> = {
   razonable: [55, 65],
   atento: [75, 85],
-  apurado: [20, 35],
+  apurado: [0, 15],
 };
 const PERFIL_DEL_SLICE = "pibe";
 
