@@ -9,7 +9,6 @@
  */
 import { FRECUENCIA_MUESTREO, murmullo, tono, zumbido } from "./sintesis.js";
 
-const VOLUMEN = 0.6;
 /** El tono sale apenas después de que arranca el motor, como en un teléfono. */
 const RETRASO_TONO_S = 0.02;
 
@@ -24,9 +23,16 @@ const BRILLO_MINIMO = 2100;
 class Sonido {
   /** De 0 a 1. Lo escribe App, y solo App. */
   deterioro = 0;
+  #volumen = 0.6;
   #contexto: AudioContext | null = null;
   #salida: GainNode | null = null;
   #memoria = new Map<string, AudioBuffer>();
+
+  /** De 0 a 1: el volumen de Ajustes. Lo escribe App, como el deterioro. */
+  set volumen(valor: number) {
+    this.#volumen = valor;
+    if (this.#salida) this.#salida.gain.value = valor;
+  }
 
   /** Suena un aviso: el motor de vibración con su patrón, y encima el tono. */
   avisar(reclamo: boolean, tramos: readonly number[]): void {
@@ -70,7 +76,7 @@ class Sonido {
     try {
       this.#contexto = new AudioContext({ sampleRate: FRECUENCIA_MUESTREO });
       this.#salida = this.#contexto.createGain();
-      this.#salida.gain.value = VOLUMEN;
+      this.#salida.gain.value = this.#volumen;
       this.#salida.connect(this.#contexto.destination);
       return this.#contexto;
     } catch {

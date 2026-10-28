@@ -293,5 +293,8 @@ function registrarCanales(): void {
   ipcMain.handle(CANALES.mostrarExportacion, () => {
     if (ultimaExportacion) shell.showItemInFolder(ultimaExportacion);
   });
+  ipcMain.handle(CANALES.pantallaCompleta, (evento, si: boolean) => {
+    BrowserWindow.fromWebContents(evento.sender)?.setFullScreen(Boolean(si));
+  });
   ipcMain.handle(CANALES.salir, () => app.quit());
 }

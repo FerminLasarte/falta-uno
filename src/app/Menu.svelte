@@ -5,7 +5,9 @@
   tele Escena.svelte, con la perspectiva del render; acá se diseña plano, a 588 × 336.
 
   Se maneja con flechas y Enter (y con el mouse): es lo que después toma el gamepad en la
-  Deck. Las opciones van numeradas, como una formación. Empezar otra campaña pide
+  Deck. Las opciones van numeradas, como una formación. Cómo se juega, Ajustes y Créditos
+  son pantallas de la misma tele (la pizarra del programa, el menú del televisor y la
+  formación del cierre), y Esc vuelve de ellas al entretiempo. Empezar otra campaña pide
   confirmación. Exportar partidas abre el diálogo del sistema y después dice cómo salió,
   en la misma placa.
 -->
@@ -22,11 +24,16 @@
 <script lang="ts">
   import { tick } from "svelte";
   import type { ResultadoExportacion } from "../../electron/canal.js";
+  import AjustesTele from "./tele/AjustesTele.svelte";
+  import Creditos from "./tele/Creditos.svelte";
+  import Pizarra, { type Reglas } from "./tele/Pizarra.svelte";
+  import { enfocarAlPasar, moverFoco } from "./tele/foco.js";
 
   let {
     estado,
     marcador,
     version,
+    reglas,
     puedeEmpezarOtra,
     hayQuePerder,
     alSeguir,
@@ -41,6 +48,8 @@
     marcador: Marcador | null;
     /** La versión del build, para saber qué jugó cada tester. */
     version: string;
+    /** Los números de la pizarra, del modo que se juega. Sin contenido cargado, no hay pizarra. */
+    reglas: Reglas | null;
     /** Sin una campaña en curso no hay nada que perder ni que empezar de nuevo. */
     puedeEmpezarOtra: boolean;
     /** Si hay una campaña en juego que se perdería. Terminada, se empieza otra sin preguntar. */
@@ -52,11 +61,20 @@
     alSalir: () => void;
   } = $props();
 
-  /** Las opciones, la confirmación de campaña nueva o cómo salió la exportación. */
+  /** Lo que se ve en la placa: las opciones, una de sus pantallas, la confirmación o cómo salió la exportación. */
   type Paso =
     | { tipo: "opciones" }
+    | { tipo: "pizarra" }
+    | { tipo: "ajustes" }
+    | { tipo: "creditos" }
     | { tipo: "confirmando" }
     | { tipo: "exportada"; resultado: Exclude<ResultadoExportacion, { estado: "cancelado" }> };
+
+  /** Las pantallas que tienen su propia placa: Esc vuelve de ellas al entretiempo, no al celular. */
+  type Pantalla = "pizarra" | "ajustes" | "creditos";
+  const esPantalla = (p: Paso): p is { tipo: Pantalla } => p.tipo === "pizarra" || p.tipo === "ajustes" || p.tipo === "creditos";
+
+  type Clave = "seguir" | "pizarra" | "ajustes" | "campana" | "exportar" | "creditos" | "salir";
 
   interface Opcion {
     readonly texto: string;
@@ -68,25 +86,19 @@
   let exportando = false;
   let lista = $state<HTMLElement>();
 
-  const botones = (): HTMLButtonElement[] => [...(lista?.querySelectorAll<HTMLButtonElement>("button") ?? [])];
-
   /** Qué opción queda elegida después de cambiar de lista: al volver, la de la que saliste. */
   let elegida = 0;
 
   /* Al abrir, al pasar de una lista a otra y al volver, queda elegida la que corresponde. */
   $effect(() => {
     void paso;
-    void tick().then(() => botones()[elegida]?.focus());
+    void tick().then(() => lista?.querySelectorAll<HTMLButtonElement>("button")[elegida]?.focus());
   });
 
   function irA(destino: Paso, enfocada: number): void {
     elegida = enfocada;
     paso = destino;
   }
-
-  /* Las posiciones de la lista de opciones, que cambia si no hay campaña nueva. */
-  const enCampanaNueva = 1;
-  const enExportar = $derived(puedeEmpezarOtra ? 2 : 1);
 
   function empezarOtra(): void {
     if (!hayQuePerder) return alCampanaNueva();
@@ -99,17 +111,35 @@
     try {
       const resultado = await alExportar();
       // Cancelar el diálogo es volver a donde estabas, sin nada que contar.
-      if (resultado.estado === "cancelado") irA({ tipo: "opciones" }, enExportar);
+      if (resultado.estado === "cancelado") volverAlEntretiempo("exportar");
       else irA({ tipo: "exportada", resultado }, 0);
     } finally {
       exportando = false;
     }
   }
 
-  const viernes = (n: number): string => (n === 1 ? "1 viernes exportado" : `${n} viernes exportados`);
-  const volverAOpciones = (): void => irA({ tipo: "opciones" }, enExportar);
+  const opcion = (clave: Clave, texto: string, hacer: () => void): Opcion & { clave: Clave } => ({ clave, texto, hacer });
 
-  /** El título grande de la placa, lo que se lee al costado y las opciones de cada paso. */
+  /** Las opciones del entretiempo. Sin campaña no hay campaña nueva; sin contenido, no hay pizarra. */
+  const entretiempo = $derived([
+    opcion("seguir", "Seguir", alSeguir),
+    ...(reglas ? [opcion("pizarra", "Cómo se juega", () => irA({ tipo: "pizarra" }, 0))] : []),
+    opcion("ajustes", "Ajustes", () => irA({ tipo: "ajustes" }, 0)),
+    ...(puedeEmpezarOtra ? [opcion("campana", "Campaña nueva", empezarOtra)] : []),
+    opcion("exportar", "Exportar partidas", () => void exportar()),
+    opcion("creditos", "Créditos", () => irA({ tipo: "creditos" }, 0)),
+    opcion("salir", "Salir", alSalir),
+  ]);
+
+  /** Vuelve a la lista del entretiempo con la opción de la que venías elegida. */
+  function volverAlEntretiempo(desde: Clave): void {
+    irA({ tipo: "opciones" }, Math.max(0, entretiempo.findIndex((o) => o.clave === desde)));
+  }
+
+  const viernes = (n: number): string => (n === 1 ? "1 viernes exportado" : `${n} viernes exportados`);
+  const volverDeExportar = (): void => volverAlEntretiempo("exportar");
+
+  /** El título grande de la placa, lo que se lee al costado y las opciones de cada paso con lista. */
   const placa = $derived.by((): { titulo: string; aparte: string; archivo?: string; opciones: Opcion[] } => {
     if (paso.tipo === "confirmando") {
       return {
@@ -117,7 +147,7 @@
         aparte: "Se pierde la que estás jugando.",
         opciones: [
           { texto: "Empezar otra", hacer: alCampanaNueva },
-          { texto: "No, seguir con esta", hacer: () => irA({ tipo: "opciones" }, enCampanaNueva) },
+          { texto: "No, seguir con esta", hacer: () => volverAlEntretiempo("campana") },
         ],
       };
     }
@@ -130,7 +160,7 @@
           archivo: resultado.archivo,
           opciones: [
             { texto: "Mostrar el archivo", hacer: alMostrarExportacion },
-            { texto: "Volver", hacer: volverAOpciones },
+            { texto: "Volver", hacer: volverDeExportar },
           ],
         };
       }
@@ -138,7 +168,7 @@
         return {
           titulo: "Sin partidas",
           aparte: "Cada viernes que jugás se guarda solo. Jugá uno y volvé.",
-          opciones: [{ texto: "Volver", hacer: volverAOpciones }],
+          opciones: [{ texto: "Volver", hacer: volverDeExportar }],
         };
       }
       return {
@@ -146,35 +176,32 @@
         aparte: "Probá guardarlo en otra carpeta.",
         opciones: [
           { texto: "Probar de nuevo", hacer: () => void exportar() },
-          { texto: "Volver", hacer: volverAOpciones },
+          { texto: "Volver", hacer: volverDeExportar },
         ],
       };
     }
-    return {
-      titulo: "Entretiempo",
-      aparte: "El viernes está en pausa.\nEsc para volver al celu.",
-      opciones: [
-        { texto: "Seguir", hacer: alSeguir },
-        ...(puedeEmpezarOtra ? [{ texto: "Campaña nueva", hacer: empezarOtra }] : []),
-        { texto: "Exportar partidas", hacer: () => void exportar() },
-        { texto: "Salir", hacer: alSalir },
-      ],
-    };
+    return { titulo: "Entretiempo", aparte: "El viernes está en pausa.\nEsc para volver al celu.", opciones: entretiempo };
   });
 
-  function mover(evento: KeyboardEvent): void {
-    const todos = botones();
-    const actual = todos.indexOf(document.activeElement as HTMLButtonElement);
-    const paso = evento.key === "ArrowDown" ? 1 : evento.key === "ArrowUp" ? -1 : 0;
-    if (paso === 0) return;
-    evento.preventDefault();
-    todos[(actual + paso + todos.length) % todos.length]?.focus();
-  }
+  /** Lo que dice el zócalo: dónde estás, o qué teclas sirven en la pantalla abierta. */
+  const zocalo = $derived.by((): { rojo: string; texto: string } => {
+    if (paso.tipo === "pizarra") return { rojo: "En pausa", texto: "◀ ▶ pasar de jugada · Esc volver al entretiempo" };
+    if (paso.tipo === "ajustes") return { rojo: "En pausa", texto: "◀ ▶ cambiar · Esc volver al entretiempo" };
+    if (paso.tipo === "creditos") return { rojo: "Fin de la transmisión", texto: "Créditos · Esc volver al entretiempo" };
+    return { rojo: "En pausa", texto: `${estado} · ${version}` };
+  });
 
-  const enfocar = (e: MouseEvent): void => (e.currentTarget as HTMLButtonElement).focus();
+  /* En una pantalla de la placa, Esc vuelve al entretiempo y no llega a la ventana, que bajaría la vista al celu. */
+  function alTeclear(evento: KeyboardEvent): void {
+    if (evento.key !== "Escape" || !esPantalla(paso)) return;
+    evento.preventDefault();
+    evento.stopPropagation();
+    volverAlEntretiempo(paso.tipo);
+  }
 </script>
 
-<div class="placa-tv" role="dialog" aria-modal="true" aria-label="Menú">
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div class="placa-tv" role="dialog" aria-modal="true" aria-label="Menú" tabindex="-1" onkeydown={alTeclear}>
   <div class="marcador">
     {#if marcador}
       <span class="equipo">{marcador.local}</span><span class="hora">21 HS</span><span class="equipo">{marcador.rival}</span>
@@ -182,28 +209,37 @@
       <span class="equipo">Falta Uno</span>
     {/if}
   </div>
-  {#if marcador}
-    <div class="mosca"><b>{marcador.competencia}</b>{marcador.fecha}</div>
+
+  {#if paso.tipo === "pizarra" && reglas}
+    <Pizarra {reglas} />
+  {:else if paso.tipo === "ajustes"}
+    <AjustesTele />
+  {:else if paso.tipo === "creditos"}
+    <Creditos />
+  {:else}
+    {#if marcador}
+      <div class="mosca"><b>{marcador.competencia}</b>{marcador.fecha}</div>
+    {/if}
+
+    <p class="titulo">{placa.titulo}</p>
+
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="lista" bind:this={lista} onkeydown={(e) => moverFoco(e, lista)}>
+      {#each placa.opciones as opcion, i (opcion.texto)}
+        <button class="opcion" onmouseenter={enfocarAlPasar} onclick={opcion.hacer}>
+          <b class="numero">{i + 1}</b><span class="texto">{opcion.texto}</span>
+        </button>
+      {/each}
+    </div>
+
+    <p class="aparte">
+      {placa.aparte}
+      {#if placa.archivo}<span class="archivo">{placa.archivo}</span>{/if}
+    </p>
   {/if}
 
-  <p class="titulo">{placa.titulo}</p>
-
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="lista" bind:this={lista} onkeydown={mover}>
-    {#each placa.opciones as opcion, i (opcion.texto)}
-      <button class="opcion" onmouseenter={enfocar} onclick={opcion.hacer}>
-        <b class="numero">{i + 1}</b><span class="texto">{opcion.texto}</span>
-      </button>
-    {/each}
-  </div>
-
-  <p class="aparte">
-    {placa.aparte}
-    {#if placa.archivo}<span class="archivo">{placa.archivo}</span>{/if}
-  </p>
-
   <div class="zocalo">
-    <span class="en-pausa">En pausa</span><span class="estado">{estado}<i>·</i>{version}</span>
+    <span class="en-pausa">{zocalo.rojo}</span><span class="estado">{zocalo.texto}</span>
   </div>
 </div>
 
@@ -394,5 +430,4 @@
     white-space: nowrap;
     overflow: hidden;
   }
-  .estado i { font-style: normal; color: #8D959D; }
 </style>

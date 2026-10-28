@@ -50,6 +50,8 @@ export interface ApiPuente {
   exportarPartidas(): Promise<ResultadoExportacion>;
   /** Abre la carpeta de la última exportación con el archivo marcado. */
   mostrarExportacion(): Promise<void>;
+  /** Pone o saca la ventana de pantalla completa: lo pide Ajustes. */
+  pantallaCompleta(si: boolean): Promise<void>;
   /** Cierra el juego. Lo que haya que guardar se guarda al cerrarse la ventana. */
   salir(): Promise<void>;
 }
@@ -69,5 +71,6 @@ export const CANALES = {
   archivosEnNube: "guardado:listar",
   exportarPartidas: "partidas:exportar",
   mostrarExportacion: "partidas:mostrar",
+  pantallaCompleta: "ventana:pantalla-completa",
   salir: "juego:salir",
 } as const;

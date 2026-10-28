@@ -2,6 +2,8 @@
   import { grupo as grupoDeAmigos } from "./estado/grupo.svelte.js";
   import Depurador from "./Depurador.svelte";
   import Menu, { type Marcador } from "./Menu.svelte";
+  import type { Reglas } from "./tele/Pizarra.svelte";
+  import { configDeViernes, MODO_POR_DEFECTO } from "../core/modo.js";
   import Escena from "./escena/Escena.svelte";
   import Inscripcion from "./mensajeria/Inscripcion.svelte";
   import InfoGrupo from "./mensajeria/InfoGrupo.svelte";
@@ -13,6 +15,7 @@
   import Isla from "./telefono/Isla.svelte";
   import Pantalla from "./telefono/Pantalla.svelte";
   import { calcularDeterioro } from "./estado/deterioro.js";
+  import { ajustes } from "./estado/ajustes.svelte.js";
   import { juego } from "./estado/juego.svelte.js";
   import { sonido } from "./sonido/sonido.js";
   import { SEPARACION_MS, VIBRACION } from "./telefono/vibracion.js";
@@ -33,6 +36,18 @@
   $effect(() => {
     document.documentElement.style.setProperty("--deterioro", String(deterioro));
     sonido.deterioro = deterioro;
+  });
+
+  /* Y donde llegan los ajustes: al parlante, a la ventana y a esta máquina. */
+  $effect(() => {
+    sonido.volumen = ajustes.volumen / 100;
+  });
+  $effect(() => {
+    void window.faltaUno.pantallaCompleta(ajustes.pantallaCompleta);
+  });
+  $effect(() => {
+    void [ajustes.volumen, ajustes.pantallaCompleta, ajustes.movimientoReducido];
+    ajustes.guardar();
   });
 
   let escena = $state<Escena>();
@@ -82,6 +97,19 @@
     return `${perfil.nombre.replace(/^El /, "")} · ${vista.torneo.fecha} · viernes ${vista.hora}`;
   });
 
+  /** Los números de la pizarra, del modo que se juega (o del de siempre, antes de elegir). */
+  const reglas = $derived.by((): Reglas | null => {
+    const contenido = juego.contenido;
+    if (!contenido) return null;
+    const config = configDeViernes(contenido.config, juego.vista?.campana.modo ?? MODO_POR_DEFECTO);
+    return {
+      corte: formatearHora(config.horaCorte),
+      revision: formatearHora(config.minutoRevision),
+      plazoDuda: config.plazoDuda ?? null,
+      suplentes: contenido.config.suplentesTorneo,
+    };
+  });
+
   const marcador = $derived.by((): Marcador | null => {
     const torneo = juego.vista?.torneo;
     if (!torneo) return null;
@@ -91,12 +119,13 @@
 
 <svelte:window onkeydown={alTeclear} />
 
-<Escena bind:this={escena} {mirandoTele} alVolverAlCelu={() => (juego.pausado = false)}>
+<Escena bind:this={escena} {mirandoTele} quieta={ajustes.sinMovimiento} alVolverAlCelu={() => (juego.pausado = false)}>
   {#snippet placa()}
     <Menu
       estado={estadoDelMenu}
       {marcador}
       version={juego.version}
+      {reglas}
       puedeEmpezarOtra={juego.vista !== null}
       hayQuePerder={juego.vista !== null && juego.vista.campana.fin === null}
       alSeguir={() => (mirandoTele = false)}

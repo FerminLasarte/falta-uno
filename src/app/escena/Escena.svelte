@@ -25,6 +25,7 @@
     children,
     placa,
     mirandoTele = false,
+    quieta = false,
     alVolverAlCelu,
   }: {
     children?: Snippet;
@@ -32,6 +33,8 @@
     placa?: Snippet;
     /** Levantaste la vista del celular. */
     mirandoTele?: boolean;
+    /** Sin movimiento: lo pide el jugador en Ajustes o el sistema. La escena no respira, no tiembla ni vibra. */
+    quieta?: boolean;
     /** La mirada volvió al celular: recién ahí sigue el viernes. */
     alVolverAlCelu?: () => void;
   } = $props();
@@ -75,19 +78,18 @@
    * celular todavía está nítido, y cuando se desenfoca ya no se nota.
    */
   const FUNDIDO = 0.28;
-  const sinMovimiento = (): boolean => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   /** Cuánto subió la mirada: 0 es el celular, 1 la tele. */
   let avance = $state(0);
   let lienzo = $state<HTMLCanvasElement>();
   const enLaTele = $derived(mirandoTele && avance === 1);
   // Sin movimiento, no hay recorrido: se funde de una toma a la otra.
-  const opacidadPausa = $derived(sinMovimiento() ? avance : Math.min(1, avance / FUNDIDO));
+  const opacidadPausa = $derived(quieta ? avance : Math.min(1, avance / FUNDIDO));
 
   function dibujar(): void {
     const contexto = lienzo?.getContext("2d");
     if (!lienzo || !contexto || cuadrosMirada.length === 0) return;
-    const i = sinMovimiento() ? cuadrosMirada.length - 1 : Math.round(avance * (cuadrosMirada.length - 1));
+    const i = quieta ? cuadrosMirada.length - 1 : Math.round(avance * (cuadrosMirada.length - 1));
     const cuadro = cuadrosMirada[i]!;
     if (cuadro.complete) contexto.drawImage(cuadro, 0, 0, lienzo.width, lienzo.height);
   }
@@ -95,7 +97,7 @@
   $effect(() => {
     const hacia = mirandoTele ? 1 : 0;
     if (untrack(() => avance) === hacia) return;
-    const duracion = sinMovimiento() ? 200 : MIRADA_MS;
+    const duracion = quieta ? 200 : MIRADA_MS;
     let antes = performance.now();
     let pedido = requestAnimationFrame(function cuadro(ahora) {
       const paso = (ahora - antes) / duracion;
@@ -123,7 +125,7 @@
    * rápido que la respiración. Los tramos son de motor prendido y apagado, en ms.
    */
   export function vibrar(tramos: readonly number[]): void {
-    if (!vibra || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!vibra || quieta) return;
     const total = tramos.reduce((t, ms) => t + ms, 0);
     const cuadros: Keyframe[] = [];
     let desde = 0;
@@ -147,7 +149,7 @@
   }
 </script>
 
-<div class="escena">
+<div class="escena" class:quieta>
   <div class="cuadro" bind:clientWidth={anchoCuadro} bind:clientHeight={altoCuadro} style:--proporcion={cuadro.ancho / cuadro.alto}>
     <div class="mundo" aria-hidden="true">
       <img src={fondo} alt="" />
@@ -188,7 +190,7 @@
 
     <div class="pausa" class:oculta={avance === 0} style:opacity={opacidadPausa}>
       <canvas bind:this={lienzo} width="1280" height="800" aria-hidden="true"></canvas>
-      <img class="quieta" class:llego={enLaTele} src={pausaQuieta} alt="" />
+      <img class="toma" class:llego={enLaTele} src={pausaQuieta} alt="" />
       {#if enLaTele}
         <div class="placa" style:width="{ANCHO_PLACA}px" style:height="{ALTO_PLACA}px" style:transform={matrizPlaca}>
           {@render placa?.()}
@@ -307,8 +309,8 @@
     height: 100%;
   }
   /* Los cuadros van a media resolución: al llegar, la toma quieta entera. */
-  .quieta { opacity: 0; }
-  .quieta.llego { opacity: 1; transition: opacity 160ms ease-out; }
+  .toma { opacity: 0; }
+  .toma.llego { opacity: 1; transition: opacity 160ms ease-out; }
 
   .placa {
     position: absolute;
@@ -363,13 +365,8 @@
     83% { opacity: 0.3; }
   }
 
-  /* Sin movimiento si el sistema lo pide: la escena queda quieta, no rota. */
-  @media (prefers-reduced-motion: reduce) {
-    .mundo,
-    .tele,
-    .manos,
-    .pulso {
-      animation: none;
-    }
+  /* Sin movimiento, por Ajustes o porque lo pide el sistema: la escena queda quieta, no rota. */
+  .quieta :is(.mundo, .tele, .manos, .pulso) {
+    animation: none;
   }
 </style>

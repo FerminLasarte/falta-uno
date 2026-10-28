@@ -607,8 +607,12 @@ contenido → margen → plata → reloj.
     `arte/exportar_pausa.py` saca la toma mirando la tele, las esquinas de la pantalla y los 18
     cuadros de la mirada que sube. Esc la reproduce (y al revés al volver, interrumpible), la
     placa es HTML en la perspectiva de la tele y el viernes sigue en pausa hasta que la mirada
-    vuelve al celular. La placa tiene Seguir, Campaña nueva, Exportar partidas y Salir. Falta:
-    Cómo se juega, Ajustes, Créditos, los avisos de primera vez y el arranque.*
+    vuelve al celular. La placa tiene Seguir, Cómo se juega, Ajustes, Campaña nueva, Exportar
+    partidas, Créditos y Salir. Cómo se juega es la pizarra de a una jugada, en tiza (la misma
+    Archivo con un filtro), con los números del modo que se juega. Ajustes es el menú de una tele
+    vieja (volumen, pantalla completa, movimiento), guardado en la máquina y no en la partida.
+    Créditos es la formación del cierre, armada desde `arte/CREDITOS.md`. Esc vuelve de cada una
+    al entretiempo. Falta: los avisos de primera vez en el hilo y el arranque con la previa.*
 11. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
     manden. Es el momento honesto de decidir si el juego funciona (9.8).
 

@@ -11,4 +11,4 @@ créditos del juego; los CC0 no, pero se listan igual para saber de dónde sali�
 | Potted Plant 02 | Rico Cilliers | [Poly Haven](https://polyhaven.com/a/potted_plant_02) | CC0 |
 | Decorative Book Set 01 | James Ray Cock | [Poly Haven](https://polyhaven.com/a/decorative_book_set_01) | CC0 |
 | Herringbone Parquet | Jenelle van Heerden, Sergej Majboroda | [Poly Haven](https://polyhaven.com/a/herringbone_parquet) | CC0 |
-| Cuerpo, esqueleto y piel del personaje | MakeHuman / MPFB (system assets) | [makehumancommunity.org](http://www.makehumancommunity.org) | CC0 |
+| Cuerpo, esqueleto y piel del personaje y de los jugadores de la tele | MakeHuman / MPFB (system assets) | [makehumancommunity.org](http://www.makehumancommunity.org) | CC0 |

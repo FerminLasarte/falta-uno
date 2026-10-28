@@ -24,6 +24,7 @@ const api = {
   archivosEnNube: () => ipcRenderer.invoke(CANALES.archivosEnNube),
   exportarPartidas: () => ipcRenderer.invoke(CANALES.exportarPartidas),
   mostrarExportacion: () => ipcRenderer.invoke(CANALES.mostrarExportacion),
+  pantallaCompleta: (si: boolean) => ipcRenderer.invoke(CANALES.pantallaCompleta, si),
   salir: () => ipcRenderer.invoke(CANALES.salir),
 };
 
