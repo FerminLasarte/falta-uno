@@ -7,21 +7,9 @@
   granos. Los números (la hora, el plazo, los suplentes) salen de la configuración del
   modo que estás jugando, no del texto: así no quedan viejos.
 -->
-<script lang="ts" module>
-  /** Lo que la pizarra cuenta con números, tal como está configurado el modo. */
-  export interface Reglas {
-    /** "21:00" */
-    readonly corte: string;
-    /** "20:30" */
-    readonly revision: string;
-    /** Minutos de reloj que tiene el que duda. Sin plazo, tiene hasta la revisión. */
-    readonly plazoDuda: number | null;
-    readonly suplentes: number;
-  }
-</script>
-
 <script lang="ts">
   import { onMount } from "svelte";
+  import type { Reglas } from "../estado/reglas.js";
 
   let { reglas }: { reglas: Reglas } = $props();
 

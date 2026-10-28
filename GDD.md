@@ -612,7 +612,12 @@ contenido → margen → plata → reloj.
     Archivo con un filtro), con los números del modo que se juega. Ajustes es el menú de una tele
     vieja (volumen, pantalla completa, movimiento), guardado en la máquina y no en la partida.
     Créditos es la formación del cierre, armada desde `arte/CREDITOS.md`. Esc vuelve de cada una
-    al entretiempo. Falta: los avisos de primera vez en el hilo y el arranque con la previa.*
+    al entretiempo. Los avisos de primera vez son una tarjeta en el hilo del chat donde pasa lo
+    que explican (la lista, la seña, el reloj, la moral, el que duda, la revisión), una vez por
+    computadora (`estado/consejos.svelte.ts`). El juego arranca mirando la tele, que pasa la
+    previa con el nombre y el marcador; al rato el celu vibra y con cualquier tecla o un clic
+    bajás la vista. Pantalla completa probada en la Mac: ocupa la pantalla y se mantiene al
+    volver a abrir.*
 11. **Probar y decidir.** Cinco o más personas, dos viernes cada una. `npm run analizar` sobre lo que
     manden. Es el momento honesto de decidir si el juego funciona (9.8).
 

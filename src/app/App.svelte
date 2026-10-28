@@ -2,8 +2,7 @@
   import { grupo as grupoDeAmigos } from "./estado/grupo.svelte.js";
   import Depurador from "./Depurador.svelte";
   import Menu, { type Marcador } from "./Menu.svelte";
-  import type { Reglas } from "./tele/Pizarra.svelte";
-  import { configDeViernes, MODO_POR_DEFECTO } from "../core/modo.js";
+  import { reglasDe, type Reglas } from "./estado/reglas.js";
   import Escena from "./escena/Escena.svelte";
   import Inscripcion from "./mensajeria/Inscripcion.svelte";
   import InfoGrupo from "./mensajeria/InfoGrupo.svelte";
@@ -75,8 +74,30 @@
   /*
     Esc levanta la vista a la tele, donde está el menú, y la vuelve a bajar. El tiempo real
     se frena apenas levantás la vista y sigue recién cuando la mirada llegó al celular.
+
+    El juego arranca así: mirando la tele, que pasa la previa. Al rato el celu suena, y con
+    cualquier tecla o un clic bajás la vista.
   */
-  let mirandoTele = $state(false);
+  let mirandoTele = $state(true);
+  let enPrevia = $state(true);
+  let vibroLaPrevia = $state(false);
+  juego.pausado = true;
+
+  /** Lo que tarda en sonar el celu durante la previa: lo justo para ver la tele. */
+  const AVISO_PREVIA_MS = 2200;
+  $effect(() => {
+    const reloj = setTimeout(() => {
+      if (!enPrevia) return;
+      vibroLaPrevia = true;
+      sonido.avisar(false, VIBRACION.mensaje);
+    }, AVISO_PREVIA_MS);
+    return () => clearTimeout(reloj);
+  });
+
+  function agarrarElCelu(): void {
+    enPrevia = false;
+    mirandoTele = false;
+  }
 
   function mirarLaTele(): void {
     mirandoTele = true;
@@ -84,6 +105,10 @@
   }
 
   function alTeclear(evento: KeyboardEvent): void {
+    if (enPrevia) {
+      evento.preventDefault();
+      return agarrarElCelu();
+    }
     if (evento.key !== "Escape") return;
     evento.preventDefault();
     if (mirandoTele) mirandoTele = false;
@@ -98,17 +123,7 @@
   });
 
   /** Los números de la pizarra, del modo que se juega (o del de siempre, antes de elegir). */
-  const reglas = $derived.by((): Reglas | null => {
-    const contenido = juego.contenido;
-    if (!contenido) return null;
-    const config = configDeViernes(contenido.config, juego.vista?.campana.modo ?? MODO_POR_DEFECTO);
-    return {
-      corte: formatearHora(config.horaCorte),
-      revision: formatearHora(config.minutoRevision),
-      plazoDuda: config.plazoDuda ?? null,
-      suplentes: contenido.config.suplentesTorneo,
-    };
-  });
+  const reglas = $derived<Reglas | null>(juego.contenido ? reglasDe(juego.contenido, juego.vista?.campana.modo) : null);
 
   const marcador = $derived.by((): Marcador | null => {
     const torneo = juego.vista?.torneo;
@@ -117,7 +132,7 @@
   });
 </script>
 
-<svelte:window onkeydown={alTeclear} />
+<svelte:window onkeydown={alTeclear} onpointerdown={() => enPrevia && agarrarElCelu()} />
 
 <Escena bind:this={escena} {mirandoTele} quieta={ajustes.sinMovimiento} alVolverAlCelu={() => (juego.pausado = false)}>
   {#snippet placa()}
@@ -126,6 +141,7 @@
       {marcador}
       version={juego.version}
       {reglas}
+      previa={enPrevia ? { sono: vibroLaPrevia } : null}
       puedeEmpezarOtra={juego.vista !== null}
       hayQuePerder={juego.vista !== null && juego.vista.campana.fin === null}
       alSeguir={() => (mirandoTele = false)}
@@ -162,6 +178,7 @@
         complejo={juego.vista.cancha.de}
         chatCancha={juego.vista.cancha.chat}
         alDesbloquear={() => juego.desbloquear()}
+        enPausa={juego.pausado}
       />
     {:else if juego.vista && juego.contenido}
       <BarraEstado hora={juego.vista.hora} restante={juego.vista.restante} />

@@ -12,12 +12,14 @@
   import type { Snippet } from "svelte";
   import type { EventoFeed, VistaRoster } from "../../core/partida.js";
   import BotonPrincipal from "./BotonPrincipal.svelte";
+  import type { ConsejoEnHilo } from "../estado/consejos.svelte.js";
   import Charla from "./Charla.svelte";
   import Franja from "./Franja.svelte";
   import { esGesto, sinCorchetes, type AccionChat, type RespuestaChat } from "./rotulos.js";
 
   let {
     eventos,
+    consejos = [],
     escribiendo = null,
     opciones = [],
     principal = null,
@@ -28,6 +30,8 @@
     alPrincipal,
   }: {
     eventos: readonly EventoFeed[];
+    /** Los avisos de primera vez de este chat. */
+    consejos?: readonly ConsejoEnHilo[];
     escribiendo?: string | null;
     /** Respuestas del árbol de diálogo. */
     opciones?: readonly RespuestaChat[];
@@ -51,7 +55,7 @@
   {#if franja}
     <Franja roster={franja.roster} dinero={franja.dinero} sena={franja.sena} alTocar={franja.alVerLista} />
   {/if}
-  <Charla {eventos} {escribiendo} />
+  <Charla {eventos} {consejos} {escribiendo} />
 
   <div class="pie">
     {#if respuestas.length > 0}

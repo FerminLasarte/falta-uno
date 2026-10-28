@@ -19,6 +19,7 @@
     complejo,
     chatCancha,
     alDesbloquear,
+    enPausa = false,
   }: {
     /** La hora del bloqueo: un rato antes de que arranque el viernes. */
     hora: string;
@@ -30,12 +31,15 @@
     complejo: string;
     chatCancha: string;
     alDesbloquear: () => void;
+    /** Mirando la tele no se lee el celu: el bloqueo espera a que vuelvas. */
+    enPausa?: boolean;
   } = $props();
 
   /** Lo que dura a la vista. Lo justo para leer las dos notificaciones. */
   const BLOQUEADO_MS = 3000;
 
   $effect(() => {
+    if (enPausa) return;
     const reloj = setTimeout(alDesbloquear, BLOQUEADO_MS);
     return () => clearTimeout(reloj);
   });

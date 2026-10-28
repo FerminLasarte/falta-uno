@@ -132,6 +132,8 @@ export interface Vista {
   readonly escribiendo: readonly Tipeo[];
   /** Los audios del grupo que ya escuchaste. */
   readonly audiosEscuchados: readonly string[];
+  /** Los que avisaron que no saben si llegan, en orden: el aviso de primera vez sale con el primero. */
+  readonly avisaron: readonly string[];
   /** Calmar al grupo, si alguien se está peleando. */
   readonly calmar: { readonly texto: string; readonly costoReloj: number; readonly entre: readonly string[] } | null;
   /** Cerrar la lista: con los diez, o cuando ya no queda nada por hacer. Cuesta lo que falta para las 21:00. */
@@ -239,7 +241,7 @@ class Juego {
   #marcas: MarcaVista[] = [];
   /** Cuándo empezó el viernes en curso, en la hora de la máquina. */
   #empezado = "";
-  #build: Build = { version: "?", commit: "?", plataforma: "?" };
+  #build = $state<Build>({ version: "?", commit: "?", plataforma: "?" });
 
   /** La versión del build, para el zócalo de la pausa: qué jugó cada tester. */
   get version(): string {
@@ -694,6 +696,7 @@ class Juego {
       grupoSinLeer: sinLeer(CHAT_GRUPO),
       escribiendo,
       audiosEscuchados: eventos.flatMap((e) => (e.audio && p.escuchado(e.audio.id) ? [e.audio.id] : [])),
+      avisaron: [...p.avisaron],
       calmar: p.accionCalmar,
       cerrar: p.accionCerrar,
       pagar: p.accionPagar,

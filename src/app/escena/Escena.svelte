@@ -79,8 +79,8 @@
    */
   const FUNDIDO = 0.28;
 
-  /** Cuánto subió la mirada: 0 es el celular, 1 la tele. */
-  let avance = $state(0);
+  /** Cuánto subió la mirada: 0 es el celular, 1 la tele. Si arranca mirando la tele, ya está ahí. */
+  let avance = $state(untrack(() => (mirandoTele ? 1 : 0)));
   let lienzo = $state<HTMLCanvasElement>();
   const enLaTele = $derived(mirandoTele && avance === 1);
   // Sin movimiento, no hay recorrido: se funde de una toma a la otra.

@@ -25,9 +25,11 @@ nada.
 
 ## 2. Qué jugar
 
-Cuando arranca, te escribe el complejo de canchas. Contestale así:
+Arranca mirando la tele, que pasa la previa. Al rato te vibra el celu: apretá
+cualquier tecla o hacé un clic para agarrarlo. Te escribió el complejo de
+canchas. Contestale así:
 
-1. **"anotamos en el torneo relámpago"**
+1. **"anotarnos en el torneo relámpago"**
 2. **"fútbol 5"**
 3. Cuando te pregunta cómo van a pagar la seña: **"te la transfiero cuando
    salga del laburo"**. Eso te hace *El Oficinista*.
@@ -40,7 +42,10 @@ viene**: tocalo y jugá la **segunda fecha** del torneo también.
 Algunas cosas que conviene saber:
 
 - El tiempo corre de verdad mientras jugás. **Esc** levanta la vista a la tele,
-  donde está el menú, y frena el reloj; Esc otra vez vuelve al teléfono.
+  donde está el menú, y frena el reloj; Esc otra vez vuelve al teléfono. Ahí
+  también están **Cómo se juega** y **Ajustes** (volumen y pantalla completa).
+- La primera vez que pasa algo nuevo, aparece una tarjetita gris en el chat que
+  lo explica. Leela, que es corta.
 - Si cerrás el juego, se guarda solo. La próxima vez seguís donde estabas.
 - Jugalo como lo jugarías en tu casa. No leas esto dos veces ni busques el
   truco: lo que me sirve es ver qué hace alguien que lo juega por primera vez.

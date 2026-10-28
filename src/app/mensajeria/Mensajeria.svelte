@@ -9,7 +9,10 @@
 <script lang="ts">
   import { CHAT_GRUPO } from "../../core/partida.js";
   import { COSTO } from "../../core/tiempo.js";
+  import { untrack } from "svelte";
+  import { consejos } from "../estado/consejos.svelte.js";
   import { juego, type Vista } from "../estado/juego.svelte.js";
+  import { reglasDe } from "../estado/reglas.js";
   import Avatar from "./Avatar.svelte";
   import Cabecera from "./Cabecera.svelte";
   import Chat from "./Chat.svelte";
@@ -69,6 +72,46 @@
       : [],
   );
 
+  /*
+    Los avisos de primera vez: cada uno la primera vez que pasa lo que explica, en el chat
+    donde pasa, después de los mensajes que había. Solo mientras corre el viernes.
+  */
+  const reglas = $derived(juego.contenido ? reglasDe(juego.contenido, vista.campana.modo) : null);
+  /** Con cuánta moral arrancó el viernes, para avisar la primera vez que baja de verdad. */
+  const moralAlEmpezar = untrack(() => vista.moral);
+  /** Lo que ya estaba escrito al empezar (la inscripción, los saludos): no lo contestaste vos. */
+  const eventosAlEmpezar = untrack(() => vista.eventos.length);
+  consejos.empezarViernes();
+  /** Lo que tiene que bajar la moral para que se note y valga el aviso. */
+  const BAJA_QUE_SE_NOTA = 6;
+  /** Cuánto antes de la revisión se avisa que viene. */
+  const ANTES_DE_LA_REVISION = 15;
+  const cuantosEn = (chat: string, hasta = vista.eventos.length): number =>
+    vista.eventos.slice(0, hasta).filter((e) => e.chat === chat).length;
+  /** El chat que se está mirando, si es uno de alguien. */
+  const chatAbierto = $derived(pantalla.tipo === "contacto" || pantalla.tipo === "interrupcion" ? pantalla.id : null);
+
+  $effect(() => {
+    if (!reglas || vista.terminada) return;
+    if (pantalla.tipo === "grupo") consejos.dar("lista", CHAT_GRUPO, delGrupo.length, reglas);
+    if (vista.roster.confirmados > 0) consejos.dar("sena", CHAT_GRUPO, delGrupo.length, reglas);
+    const primeraRespuesta = vista.eventos.findIndex(
+      (e, i) => i >= eventosAlEmpezar && e.clase === "propio" && e.chat !== undefined && e.chat !== CHAT_GRUPO,
+    );
+    if (primeraRespuesta >= 0) {
+      const chat = vista.eventos[primeraRespuesta]!.chat!;
+      consejos.dar("reloj", chat, cuantosEn(chat, primeraRespuesta + 1), reglas);
+    }
+    if (vista.moral <= moralAlEmpezar - BAJA_QUE_SE_NOTA) {
+      consejos.dar("moral", chatAbierto ?? CHAT_GRUPO, chatAbierto ? delChat.length : delGrupo.length, reglas);
+    }
+    const primeroQueDuda = vista.avisaron[0];
+    if (primeroQueDuda) consejos.dar("duda", primeroQueDuda, cuantosEn(primeroQueDuda), reglas);
+    if (vista.minutos >= reglas.minutoRevision - ANTES_DE_LA_REVISION) {
+      consejos.dar("revision", CHAT_GRUPO, delGrupo.length, reglas);
+    }
+  });
+
   const puedeLlamar = $derived(
     contacto !== null && contacto.estado !== "rechazado" && contacto.estado !== "bajado" && !vista.terminada,
   );
@@ -78,6 +121,7 @@
   {#if pantalla.tipo === "grupo"}
     <Grupo
       eventos={delGrupo}
+      consejos={consejos.del(CHAT_GRUPO)}
       escribiendo={tipeoPorChat.get(CHAT_GRUPO) ?? null}
       lista={vista.lista}
       contactos={vista.contactos}
@@ -149,6 +193,7 @@
     {@const tipea = tipeoPorChat.has(c.id)}
     <Chat
       eventos={delChat}
+      consejos={chatAbierto ? consejos.del(chatAbierto) : []}
       escribiendo={tipea ? c.nombre : null}
       opciones={c.opciones}
       principal={irALaCancha ??
@@ -183,6 +228,7 @@
     {@const tipea = tipeoPorChat.has(i.id)}
     <Chat
       eventos={delChat}
+      consejos={chatAbierto ? consejos.del(chatAbierto) : []}
       escribiendo={tipea ? i.de : null}
       principal={irALaCancha ?? (i.pendiente ? { texto: "Atender", minutos: i.costoAtender } : null)}
       {franja}

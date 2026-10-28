@@ -24,10 +24,11 @@ Electron y `resources/` con tres cosas que tienen que estar sí o sí:
 Un zip con la carpeta adentro, que se llame "Falta Uno" y no "win-unpacked":
 
 ```bash
-rm -rf release/zip && ditto release/win-unpacked "release/zip/Falta Uno" && ditto -c -k --keepParent "release/zip/Falta Uno" "release/Falta Uno - Windows.zip" && rm -rf release/zip
+rm -rf release/zip && ditto --norsrc --noextattr --noqtn release/win-unpacked "release/zip/Falta Uno" && ditto -c -k --norsrc --noextattr --keepParent "release/zip/Falta Uno" "release/Falta Uno - Windows.zip" && rm -rf release/zip
 ```
 
-Pesa unos 160 MB: por mail no entra, va por Drive o WeTransfer. Junto con el
+Los `--norsrc --noextattr` dejan afuera los `._*` que la Mac agrega a cada
+archivo: en Windows aparecerían sueltos en la carpeta. Pesa unos 160 MB: por mail no entra, va por Drive o WeTransfer. Junto con el
 link, la hoja [testers.md](testers.md).
 
 ## Verificarlo en una PC con Windows

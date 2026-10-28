@@ -26,7 +26,8 @@
   import type { ResultadoExportacion } from "../../electron/canal.js";
   import AjustesTele from "./tele/AjustesTele.svelte";
   import Creditos from "./tele/Creditos.svelte";
-  import Pizarra, { type Reglas } from "./tele/Pizarra.svelte";
+  import type { Reglas } from "./estado/reglas.js";
+  import Pizarra from "./tele/Pizarra.svelte";
   import { enfocarAlPasar, moverFoco } from "./tele/foco.js";
 
   let {
@@ -34,6 +35,7 @@
     marcador,
     version,
     reglas,
+    previa = null,
     puedeEmpezarOtra,
     hayQuePerder,
     alSeguir,
@@ -50,6 +52,8 @@
     version: string;
     /** Los números de la pizarra, del modo que se juega. Sin contenido cargado, no hay pizarra. */
     reglas: Reglas | null;
+    /** Al abrir el juego la tele pasa la previa, no el menú. `sono`: el celu ya te avisó que te escribieron. */
+    previa?: { readonly sono: boolean } | null;
     /** Sin una campaña en curso no hay nada que perder ni que empezar de nuevo. */
     puedeEmpezarOtra: boolean;
     /** Si hay una campaña en juego que se perdería. Terminada, se empieza otra sin preguntar. */
@@ -185,6 +189,11 @@
 
   /** Lo que dice el zócalo: dónde estás, o qué teclas sirven en la pantalla abierta. */
   const zocalo = $derived.by((): { rojo: string; texto: string } => {
+    if (previa) {
+      return previa.sono
+        ? { rojo: "En vivo", texto: "Te escribieron · cualquier tecla o un clic para agarrar el celu" }
+        : { rojo: "En vivo", texto: `La previa · ${version}` };
+    }
     if (paso.tipo === "pizarra") return { rojo: "En pausa", texto: "◀ ▶ pasar de jugada · Esc volver al entretiempo" };
     if (paso.tipo === "ajustes") return { rojo: "En pausa", texto: "◀ ▶ cambiar · Esc volver al entretiempo" };
     if (paso.tipo === "creditos") return { rojo: "Fin de la transmisión", texto: "Créditos · Esc volver al entretiempo" };
@@ -210,7 +219,18 @@
     {/if}
   </div>
 
-  {#if paso.tipo === "pizarra" && reglas}
+  {#if previa}
+    {#if marcador}
+      <div class="mosca"><b>{marcador.competencia}</b>{marcador.fecha}</div>
+    {/if}
+    <div class="previa">
+      <span class="volanta">La previa</span>
+      <p class="nombre">Falta Uno</p>
+      <p class="bajada">
+        {#if marcador}Hoy a las {reglas?.corte ?? "21"}: {marcador.local} contra {marcador.rival}.{:else}Hoy a las {reglas?.corte ?? "21"} se juega, y el equipo todavía no está.{/if}
+      </p>
+    </div>
+  {:else if paso.tipo === "pizarra" && reglas}
     <Pizarra {reglas} />
   {:else if paso.tipo === "ajustes"}
     <AjustesTele />
@@ -396,6 +416,54 @@
   }
   /* El nombre del archivo, para reconocerlo en la carpeta: entero, aunque no entre en una línea. */
   .archivo { display: block; margin-top: 4px; color: #FFFFFF; overflow-wrap: anywhere; }
+
+  /* La previa: el nombre del juego como la placa de apertura de la transmisión. */
+  .previa {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 86px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .volanta {
+    padding: 3px 12px 2px;
+    background: var(--rojo);
+    transform: skewX(-10deg);
+    font-size: 14px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .nombre {
+    margin: 8px 0 0;
+    font-size: 72px;
+    font-weight: 900;
+    font-style: italic;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+    text-transform: uppercase;
+    text-shadow: 0 0 18px rgb(255 255 255 / 25%);
+  }
+  .nombre::after {
+    content: "";
+    display: block;
+    width: 140px;
+    height: 6px;
+    margin: 8px auto 0;
+    background: var(--amarillo);
+    transform: skewX(-20deg);
+  }
+  .bajada {
+    margin: 12px 0 0;
+    font-size: 17px;
+    font-weight: 700;
+    font-style: italic;
+    color: rgb(255 255 255 / 80%);
+  }
 
   .zocalo {
     position: absolute;

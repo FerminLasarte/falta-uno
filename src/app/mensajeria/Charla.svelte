@@ -12,6 +12,7 @@
   import { formatearHora } from "../../core/tiempo.js";
   import { segundosDeEscucha } from "../sonido/sintesis.js";
   import { sonido } from "../sonido/sonido.js";
+  import type { ConsejoEnHilo } from "../estado/consejos.svelte.js";
   import Audio, { type EstadoAudio } from "./Audio.svelte";
 
   let {
@@ -21,6 +22,7 @@
     colorDe = () => null,
     escuchados = new Set(),
     alEscuchar = () => {},
+    consejos = [],
   }: {
     eventos: readonly EventoFeed[];
     /** Quién está escribiendo en esta conversación ahora mismo. */
@@ -33,6 +35,8 @@
     escuchados?: ReadonlySet<string>;
     /** Escuchar un audio cuesta reloj: eso lo decide el núcleo. */
     alEscuchar?: (audioId: string) => void;
+    /** Los avisos de primera vez de este chat, cada uno después de los mensajes que había cuando apareció. */
+    consejos?: readonly ConsejoEnHilo[];
   } = $props();
 
   type Item =
@@ -46,12 +50,21 @@
         audio: EventoFeed["audio"];
         cita: EventoFeed["cita"];
       }
-    | { tipo: "aviso"; alerta: boolean; cierre: boolean; texto: string };
+    | { tipo: "aviso"; alerta: boolean; cierre: boolean; texto: string }
+    | { tipo: "consejo"; titulo: string; texto: string };
 
   const items = $derived.by((): Item[] => {
     const salida: Item[] = [];
     let anterior: string | null = null;
-    for (const e of eventos) {
+    const ponerConsejos = (hasta: (despuesDe: number) => boolean): void => {
+      for (const c of consejos) {
+        if (!hasta(c.despuesDe)) continue;
+        salida.push({ tipo: "consejo", titulo: c.titulo, texto: c.texto });
+        anterior = null;
+      }
+    };
+    for (const [i, e] of eventos.entries()) {
+      ponerConsejos((despuesDe) => despuesDe === i);
       const propio = e.clase === "propio";
       const deAlguien = propio || e.clase === "mensaje" || e.de !== "Sistema";
       if (!deAlguien) {
@@ -72,6 +85,7 @@
       });
       anterior = quien;
     }
+    ponerConsejos((despuesDe) => despuesDe >= eventos.length);
     return salida;
   });
 
@@ -153,6 +167,12 @@
     {#each items as item, i (i)}
       {#if item.tipo === "aviso"}
         <span class="aviso" class:alerta={item.alerta} class:cierre={item.cierre}>{item.texto}</span>
+      {:else if item.tipo === "consejo"}
+        <div class="consejo" role="note">
+          <span class="icono" aria-hidden="true">i</span>
+          <b>{item.titulo}</b>
+          <p>{item.texto}</p>
+        </div>
       {:else}
         <div class="msj" class:propio={item.propio} class:sigue={item.sigue} class:es-audio={item.audio} data-audio={item.audio?.id}>
           {#if mostrarNombres && !item.propio && !item.sigue}
@@ -228,6 +248,42 @@
     max-width: 88%;
   }
   .dia { padding: 3px 10px; font-weight: 600; letter-spacing: 0.06em; font-size: var(--t-micro); }
+
+  /* Un aviso de primera vez: una entrada más del hilo, acromática como la app, que se va con el scroll. */
+  .consejo {
+    align-self: center;
+    max-width: 92%;
+    margin: 6px 0 4px;
+    padding: 9px 12px 10px;
+    border-radius: var(--radio-app);
+    background: var(--app-superficie);
+    border: 1px solid var(--app-linea);
+    box-shadow: var(--sombra-app);
+    display: grid;
+    grid-template-columns: 18px 1fr;
+    column-gap: 8px;
+    animation: llega-consejo 260ms ease-out both;
+  }
+  .consejo .icono {
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    border-radius: 50%;
+    border: 1.5px solid var(--app-tinta-2);
+    display: grid;
+    place-items: center;
+    font-family: var(--fuente-cromo);
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--app-tinta-2);
+  }
+  .consejo b { font-size: var(--t-meta); font-weight: 700; color: var(--app-tinta); }
+  .consejo p { grid-column: 2; margin: 2px 0 0; font-size: var(--t-meta); line-height: 1.42; color: var(--app-tinta-2); }
+
+  @keyframes llega-consejo {
+    from { opacity: 0; translate: 0 6px; }
+    to { opacity: 1; translate: 0 0; }
+  }
   .aviso.alerta { color: var(--est-rechazado); font-weight: 600; }
   /* Las 21:00: el último aviso del viernes, que se lea como un sello y no como uno más. */
   .aviso.cierre {

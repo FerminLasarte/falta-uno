@@ -10,12 +10,14 @@
   import Avatar from "./Avatar.svelte";
   import BotonPrincipal from "./BotonPrincipal.svelte";
   import Cabecera from "./Cabecera.svelte";
+  import type { ConsejoEnHilo } from "../estado/consejos.svelte.js";
   import Charla from "./Charla.svelte";
   import ListaGrupo from "./ListaGrupo.svelte";
   import { COLOR_ESTADO, enumerar, pesos, ROL_CORTO } from "./rotulos.js";
 
   let {
     eventos,
+    consejos = [],
     escribiendo,
     lista,
     contactos,
@@ -39,6 +41,8 @@
     alVerInfo,
   }: {
     eventos: readonly EventoFeed[];
+    /** Los avisos de primera vez de este chat. */
+    consejos?: readonly ConsejoEnHilo[];
     /** Quién escribe en el grupo ahora mismo. */
     escribiendo: string | null;
     lista: readonly VistaPuesto[];
@@ -109,7 +113,7 @@
 
   <ListaGrupo {lista} {enDuda} {roster} {dinero} {sena} titulo="Viernes 21 h · {complejo}" {alAbrir} />
 
-  <Charla {eventos} {escribiendo} mostrarNombres {colorDe} {escuchados} {alEscuchar} />
+  <Charla {eventos} {consejos} {escribiendo} mostrarNombres {colorDe} {escuchados} {alEscuchar} />
 
   <!--
     Mientras alguien se pelea, queda a la vista arriba de las acciones, aunque la
