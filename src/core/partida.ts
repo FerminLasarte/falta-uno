@@ -755,6 +755,7 @@ export class Partida {
     if (c.escuchado !== undefined && !this.escuchado(c.escuchado)) return false;
     if (c.confirmado !== undefined && !confirmado(c.confirmado)) return false;
     if (c.noConfirmado !== undefined && confirmado(c.noConfirmado)) return false;
+    if (c.enAgenda !== undefined && !this.agenda.has(c.enAgenda)) return false;
     if (c.confirmadosMin !== undefined && this.roster().confirmados < c.confirmadosMin) return false;
     if (c.faltanMin !== undefined && this.config.jugadoresNecesarios - this.roster().confirmados < c.faltanMin) return false;
     if (c.faltanMax !== undefined && this.config.jugadoresNecesarios - this.roster().confirmados > c.faltanMax) return false;

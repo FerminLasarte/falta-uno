@@ -43,6 +43,7 @@ export const condicionSchema = z
     escuchado: z.string().min(1).optional(),
     confirmado: z.string().min(1).optional(),
     noConfirmado: z.string().min(1).optional(),
+    enAgenda: z.string().min(1).optional(),
     confirmadosMin: z.number().int().min(0).optional(),
     faltanMin: z.number().int().min(1).optional(),
     faltanMax: z.number().int().min(0).optional(),

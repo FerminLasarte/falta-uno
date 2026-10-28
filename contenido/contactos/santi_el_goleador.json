@@ -33,10 +33,69 @@
         "confirmado": "el_sindicalista"
       },
       "nodo": "con_beto"
+    },
+    {
+      "si": {
+        "enAgenda": "el_sindicalista"
+      },
+      "nodo": "abre_beto"
     }
   ],
   "nodos": {
     "abre": {
+      "mensajes": [
+        "cuánto sale?",
+        "porq la última pagué 1500 y jugamos media hora. eso es inflación de minutos"
+      ],
+      "opciones": [
+        {
+          "id": "explicar",
+          "texto": "1500 y jugamos la hora entera, te lo garantizo",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -1,
+            "probabilidadBaja": -10
+          },
+          "siguiente": "cierra"
+        },
+        {
+          "id": "invitar",
+          "texto": "hoy va por mi cuenta, vení",
+          "costoReloj": 2,
+          "efectos": {
+            "dinero": -1500,
+            "probabilidadBaja": -25
+          },
+          "siguiente": "gratis",
+          "requiere": {
+            "dineroMin": 1500
+          }
+        },
+        {
+          "id": "rata",
+          "texto": "{voc:santi_el_goleador} no seas rata, son 1500",
+          "costoReloj": 2,
+          "efectos": {
+            "moral": -2,
+            "probabilidadBaja": 25,
+            "enojo": 30,
+            "registrar": "apuro"
+          },
+          "siguiente": "ofendido"
+        },
+        {
+          "id": "dejar",
+          "texto": "[Dejarlo en visto]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado",
+            "registrar": "ignorado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "abre_beto": {
       "mensajes": [
         "cuánto sale?",
         "porq la última pagué 1500 y jugamos media hora. eso es inflación de minutos",

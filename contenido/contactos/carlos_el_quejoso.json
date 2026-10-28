@@ -135,6 +135,13 @@
           "siguiente": [
             {
               "si": {
+                "confirmadosMin": 3,
+                "enAgenda": "el_sindicalista"
+              },
+              "nodo": "pillado_beto"
+            },
+            {
+              "si": {
                 "confirmadosMin": 3
               },
               "nodo": "pillado"
@@ -257,6 +264,23 @@
       ]
     },
     "pillado": {
+      "mensajes": [
+        "estoy viendo la lista del grupo. primero de qué, pelotudo",
+        "dejá. ese verso vendéselo a otro"
+      ],
+      "opciones": [
+        {
+          "id": "bueno",
+          "texto": "[Bueno]",
+          "costoReloj": 1,
+          "efectos": {
+            "estado": "rechazado"
+          },
+          "siguiente": null
+        }
+      ]
+    },
+    "pillado_beto": {
       "mensajes": [
         "estoy viendo la lista del grupo. primero de qué, pelotudo",
         "dejá. llamalo a {el_sindicalista} q le encanta organizar, como buen sindicalista"

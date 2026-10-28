@@ -118,10 +118,14 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
 
   problemas.push(...revisarCondiciones(contactos));
   if (grupo && config) problemas.push(...revisarGrupo(grupo as DefinicionGrupo, contactos, config));
-  if (grupo && interrupciones) problemas.push(...revisarMarcas(contactos, grupo as DefinicionGrupo, interrupciones as DefinicionInterrupcion[]));
   if (perfiles && interrupciones && inscripcion) {
     problemas.push(
       ...revisarPerfiles(perfiles as DefinicionPerfil[], contactos, interrupciones as DefinicionInterrupcion[], inscripcion),
+    );
+  }
+  if (perfiles && grupo && interrupciones) {
+    problemas.push(
+      ...revisarMarcas(perfiles as DefinicionPerfil[], contactos, grupo as DefinicionGrupo, interrupciones as DefinicionInterrupcion[]),
     );
   }
 

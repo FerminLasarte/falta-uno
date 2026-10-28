@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { alDia, CHAT_GRUPO, Partida } from "../src/core/partida.js";
 import { resolver } from "../src/core/resolucion.js";
 import { rocesAlSumar } from "../src/core/roster.js";
-import { revisarCondiciones, revisarGrafo } from "../src/datos/validar.js";
+import { revisarCondiciones, revisarGrafo, revisarMarcas } from "../src/datos/validar.js";
 import { GRUPO_QUIETO, type DefinicionGrupo } from "../src/core/grupo.js";
-import type { DefinicionContacto, OpcionDialogo } from "../src/core/tipos.js";
+import type { DefinicionContacto, DefinicionPerfil, OpcionDialogo } from "../src/core/tipos.js";
 import { agendaCompleta, CONFIG, contacto, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js";
 
 const confirma = (id: string, extra: Partial<OpcionDialogo> = {}): OpcionDialogo => ({
@@ -221,6 +221,48 @@ describe("lo que le llega a otro", () => {
     const detalles = revisarCondiciones([carlos, roto]).map((p) => p.detalle);
     expect(detalles.some((d) => d.includes(`"no_esta" no existe`))).toBe(true);
     expect(detalles.some((d) => d.includes(`ninguna respuesta "inventada"`))).toBe(true);
+  });
+});
+
+describe("según quién está en tu agenda", () => {
+  /** Santi pregunta por Beto solo si lo conocés: Beto es de un solo perfil. */
+  const santi: DefinicionContacto = {
+    ...contacto("santi"),
+    aperturas: [{ si: { enAgenda: "beto" }, nodo: "con_beto" }],
+    nodos: { ...contacto("santi").nodos, con_beto: { mensajes: ["y va {beto}?"], opciones: [confirma("si")] } },
+  };
+  const conBeto: DefinicionPerfil = { ...PERFIL, id: "oficinista", nombre: "El Oficinista", contactoUnico: "beto" };
+  const sinBeto: DefinicionPerfil = { ...PERFIL, id: "acomodado", nombre: "El Acomodado", contactoUnico: "ferreyra" };
+  const perfiles = [conBeto, sinBeto];
+  const contactos = [santi, contacto("beto"), contacto("ferreyra")];
+  const marcas = (cs: readonly DefinicionContacto[]): string[] =>
+    revisarMarcas(perfiles, cs, GRUPO_QUIETO, SIN_INTERRUPCIONES).map((p) => p.detalle);
+
+  it("una apertura con enAgenda solo se abre si ese contacto está en tu agenda", () => {
+    const con = partida([santi, contacto("beto")]);
+    charlar(con, "santi");
+    // Las marcas las completa el viernes al armarse, no la partida.
+    expect(dijo(con, "santi")).toEqual(["y va {beto}?"]);
+
+    const sin = partida([santi]);
+    charlar(sin, "santi");
+    expect(dijo(sin, "santi")).toEqual(["¿A qué hora?"]);
+  });
+
+  it("el validador acepta una marca que solo se ve con ese contacto en la agenda", () => {
+    expect(marcas(contactos)).toEqual([]);
+  });
+
+  it("y avisa en qué perfiles se vería la marca cruda", () => {
+    const suelto: DefinicionContacto = { ...santi, aperturas: [], nodos: { ...santi.nodos, abre: { ...santi.nodos["abre"]!, mensajes: ["y va {beto}?"] } } };
+    expect(marcas([suelto, contacto("beto"), contacto("ferreyra")])).toEqual([
+      `nodo "abre": la marca {beto} no está en la agenda de El Acomodado`,
+    ]);
+  });
+
+  it("una marca que no nombra a nadie se dice una sola vez", () => {
+    const tipeo: DefinicionContacto = { ...contacto("santi"), excusas: ["hoy no, me lleva {bto}"] };
+    expect(marcas([tipeo, contacto("beto"), contacto("ferreyra")])).toEqual([`excusa: la marca {bto} no nombra a nadie`]);
   });
 });
 

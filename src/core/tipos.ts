@@ -101,6 +101,8 @@ export interface Condicion {
   readonly confirmado?: string;
   /** Ese contacto no está en la lista. */
   readonly noConfirmado?: string;
+  /** Ese contacto está en tu agenda: cada perfil tiene la suya, y no todos lo conocen. */
+  readonly enAgenda?: string;
   /** Hay por lo menos tantos en la lista. */
   readonly confirmadosMin?: number;
   /** Faltan por lo menos tantos para llenar la lista: "si les falta gente, traigo a mi primo". */
