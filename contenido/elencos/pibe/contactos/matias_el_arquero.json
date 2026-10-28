@@ -130,9 +130,13 @@
         {
           "id": "confirma_debe",
           "texto": "sabía. la plata allá",
-          "costoReloj": 2,
+          "costoReloj": 1,
           "efectos": {
             "estado": "confirmado",
+            "plataAlla": {
+              "monto": 1500,
+              "probabilidad": 55
+            },
             "probabilidadBaja": -5
           },
           "siguiente": null
@@ -158,9 +162,13 @@
         {
           "id": "confirma_debe",
           "texto": "ahí quedás, la plata la vemos allá",
-          "costoReloj": 2,
+          "costoReloj": 1,
           "efectos": {
             "estado": "confirmado",
+            "plataAlla": {
+              "monto": 1500,
+              "probabilidad": 55
+            },
             "probabilidadBaja": -5
           },
           "siguiente": null

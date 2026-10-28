@@ -40,7 +40,7 @@
     /** Una aclaración entre los pulgares: qué pasó, o qué implica elegir. */
     nota?: string | null;
     /** La lista en un renglón. Sin lista todavía, no hay franja. */
-    franja?: { roster: VistaRoster; dinero: number; sena: number; alVerLista: () => void } | null;
+    franja?: { roster: VistaRoster; dinero: number; alla: number; sena: number; alVerLista: () => void } | null;
     cabecera: Snippet;
     alElegir?: (opcionId: string) => void;
     alPrincipal?: () => void;
@@ -53,7 +53,7 @@
 <div class="pantalla-app">
   {@render cabecera()}
   {#if franja}
-    <Franja roster={franja.roster} dinero={franja.dinero} sena={franja.sena} alTocar={franja.alVerLista} />
+    <Franja roster={franja.roster} dinero={franja.dinero} alla={franja.alla} sena={franja.sena} alTocar={franja.alVerLista} />
   {/if}
   <Charla {eventos} {consejos} {escribiendo} />
 

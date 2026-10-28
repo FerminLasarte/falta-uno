@@ -128,6 +128,8 @@ export interface Vista {
   readonly restante: number;
   readonly moral: number;
   readonly dinero: number;
+  /** Lo que prometieron traer a la cancha los que vienen: todavía no está, y puede no llegar. */
+  readonly plataAlla: number;
   readonly roster: VistaRoster;
   readonly lista: readonly VistaPuesto[];
   readonly contactos: readonly ContactoEnVista[];
@@ -702,6 +704,7 @@ class Juego {
       restante: p.reloj.restante,
       moral: p.moral,
       dinero: p.dinero,
+      plataAlla: p.prometido,
       roster: p.roster(),
       lista: p.lista(),
       contactos: p.contactos().map((c) => ({ ...c, sinLeer: sinLeer(c.id) })),

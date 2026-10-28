@@ -141,9 +141,13 @@
         {
           "id": "confirma_debe",
           "texto": "quedás anotado",
-          "costoReloj": 2,
+          "costoReloj": 1,
           "efectos": {
             "estado": "confirmado",
+            "plataAlla": {
+              "monto": 1500,
+              "probabilidad": 35
+            },
             "probabilidadBaja": -5
           },
           "siguiente": null

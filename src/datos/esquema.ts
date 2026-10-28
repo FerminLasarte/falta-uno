@@ -10,6 +10,7 @@ export const efectosSchema = z
     probabilidadBaja: z.number().optional(),
     enojo: z.number().optional(),
     dineroAportado: z.number().optional(),
+    plataAlla: z.object({ monto: z.number().int().positive(), probabilidad: z.number().min(0).max(100) }).strict().optional(),
     estado: z.enum(ESTADOS_CONTACTO).optional(),
     registrar: z.enum(TIPOS_EVENTO).optional(),
     trae: z

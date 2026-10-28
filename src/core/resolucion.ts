@@ -203,6 +203,13 @@ function porQueNoHubo(partida: Partida): Motivo[] {
           ? `Entre todos juntaron ${formatearPesos(partida.dinero)} y tenías ${formatearPesos(partida.colchon)} guardados`
           : `Entre todos juntaron ${formatearPesos(partida.dinero)}`,
     });
+    for (const e of bitacora.filter((x) => x.tipo === "sin_billetera")) {
+      motivos.push({
+        hora: null,
+        texto: `${partida.definicion(e.contactoId ?? "").nombre} llegó sin la plata.`,
+        porque: `Le dijiste que la plata después, a las ${e.detalle ?? formatearHora(e.minuto)}`,
+      });
+    }
   }
 
   const contactos = partida.contactos();
@@ -325,6 +332,28 @@ function narrar(
               ? `${capitalizar(entrada.detalle ?? "pagaste un reemplazo")} a las ${hora}`
               : `Le pusiste plata para que venga, a las ${hora}`,
             signo: 1,
+            peso: 2,
+            clave,
+          });
+        }
+        break;
+      case "plata_alla":
+        if (id && enPlantel.has(id)) {
+          candidatos.push({
+            frase: frase("plata_alla", { x: nombre(id) }),
+            porque: `Le dijiste que la plata después, a las ${entrada.detalle ?? hora}, y la trajo`,
+            signo: 0,
+            peso: 1,
+            clave,
+          });
+        }
+        break;
+      case "sin_billetera":
+        if (id && enPlantel.has(id)) {
+          candidatos.push({
+            frase: frase("sin_billetera", { x: nombre(id) }),
+            porque: `Le dijiste que la plata después, a las ${entrada.detalle ?? hora}`,
+            signo: -1,
             peso: 2,
             clave,
           });

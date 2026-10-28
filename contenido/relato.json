@@ -41,6 +41,16 @@
     "El que pagaste no sabe el nombre de nadie, pero corre por tres.",
     "El pagado juega serio, como si fuera un laburo. Lo es."
   ],
+  "plata_alla": [
+    "{x} llega con los 1500 en la mano, contados en billetes de cien.",
+    "{x} cumple: paga en la puerta, antes que nadie.",
+    "{x} aparece con la plata justa. Nadie lo esperaba."
+  ],
+  "sin_billetera": [
+    "{x} llega sin un peso. \"Te la transfiero mañana\", dice, y nadie le cree.",
+    "{x} se olvidó la billetera. Otra vez.",
+    "{x} se revisa los bolsillos en la puerta y no encuentra nada."
+  ],
   "grupo_caliente": [
     "Llegan todos calientes de lo que se dijo en el grupo, y en la cancha se nota.",
     "Lo del grupo sigue en la cancha: nadie se pasa la pelota.",

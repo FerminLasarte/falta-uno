@@ -23,6 +23,7 @@
     contactos,
     roster,
     dinero,
+    alla,
     sena,
     pagar,
     sinLeerAfuera,
@@ -49,6 +50,8 @@
     contactos: readonly VistaContacto[];
     roster: VistaRoster;
     dinero: number;
+    /** La plata que prometieron traer a la cancha. */
+    alla: number;
     sena: number;
     /** Pagar un reemplazo: lo que cuesta y entre qué puestos elegir. Null si no se puede. */
     pagar: { readonly costo: number; readonly costoReloj: number; readonly puestos: readonly Rol[] } | null;
@@ -111,7 +114,7 @@
     {/snippet}
   </Cabecera>
 
-  <ListaGrupo {lista} {enDuda} {roster} {dinero} {sena} titulo="Viernes 21 h · {complejo}" {alAbrir} />
+  <ListaGrupo {lista} {enDuda} {roster} {dinero} {alla} {sena} titulo="Viernes 21 h · {complejo}" {alAbrir} />
 
   <Charla {eventos} {consejos} {escribiendo} mostrarNombres {colorDe} {escuchados} {alEscuchar} />
 

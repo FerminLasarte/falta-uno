@@ -66,9 +66,13 @@
         {
           "id": "confirma_debe",
           "texto": "Anotado, profe. La plata después.",
-          "costoReloj": 2,
+          "costoReloj": 1,
           "efectos": {
             "estado": "confirmado",
+            "plataAlla": {
+              "monto": 1500,
+              "probabilidad": 80
+            },
             "probabilidadBaja": 10
           },
           "siguiente": null

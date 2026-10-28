@@ -155,9 +155,13 @@
         {
           "id": "confirma_debe",
           "texto": "grande, la guita allá",
-          "costoReloj": 2,
+          "costoReloj": 1,
           "efectos": {
             "estado": "confirmado",
+            "plataAlla": {
+              "monto": 1500,
+              "probabilidad": 50
+            },
             "probabilidadBaja": -5
           },
           "siguiente": null

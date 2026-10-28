@@ -46,7 +46,7 @@
 
   const volver = $derived({ cuenta: sinLeerAfuera, alVolver: () => juego.volver() });
   const irAlGrupo = (): void => juego.ir({ tipo: "grupo" });
-  const franja = $derived({ roster: vista.roster, dinero: vista.dinero, sena, alVerLista: irAlGrupo });
+  const franja = $derived({ roster: vista.roster, dinero: vista.dinero, alla: vista.plataAlla, sena, alVerLista: irAlGrupo });
 
   /* A las 21:00 se corta todo: lo único que queda por hacer, en cualquier chat, es ir a la cancha. */
   const irALaCancha = $derived<AccionChat | null>(vista.terminada ? { texto: "Ir a la cancha" } : null);
@@ -127,6 +127,7 @@
       contactos={vista.contactos}
       roster={vista.roster}
       dinero={vista.dinero}
+      alla={vista.plataAlla}
       {sena}
       pagar={vista.pagar}
       {sinLeerAfuera}
@@ -162,6 +163,7 @@
       grupoSinLeer={vista.grupoSinLeer}
       roster={vista.roster}
       dinero={vista.dinero}
+      alla={vista.plataAlla}
       {sena}
       alAbrirGrupo={irAlGrupo}
       alAbrirContacto={abrirContacto}

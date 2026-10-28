@@ -104,9 +104,13 @@
         {
           "id": "confirma_debe",
           "texto": "anotado, la plata la vemos",
-          "costoReloj": 2,
+          "costoReloj": 1,
           "efectos": {
             "estado": "confirmado",
+            "plataAlla": {
+              "monto": 1500,
+              "probabilidad": 70
+            },
             "probabilidadBaja": -5
           },
           "siguiente": null

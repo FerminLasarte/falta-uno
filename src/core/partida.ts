@@ -221,6 +221,10 @@ export class Partida {
   private readonly invitados = new Map<string, Invitado>();
   /** Los invitados que al final no vinieron. */
   private readonly faltaron = new Set<string>();
+  /** La plata que prometieron traer a la cancha, por contacto, y desde cuándo. Se cobra a las 21:00. */
+  private readonly promesas = new Map<string, { monto: number; probabilidad: number; minuto: number }>();
+  /** Su propio azar, como las excusas: si alguien se olvida la billetera no mueve nada más. */
+  private readonly rngPlata: Rng;
   /** Los que ya tienen la baja en camino: se bajan una sola vez. */
   private readonly bajasEnCamino = new Set<string>();
   /** Ids en el orden en que entraron a la lista. Puede tener bajas: lista() las filtra. */
@@ -260,6 +264,7 @@ export class Partida {
     this.perfil = opciones.perfil;
     this.config = opciones.config;
     this.rng = new Rng(opciones.semilla);
+    this.rngPlata = new Rng(`${opciones.semilla}:plata`);
     this.pulso = new Pulso(opciones.semilla);
     this.reloj = new Reloj(opciones.config.horaInicio, opciones.config.horaCorte);
     this.interrupcionesPosibles = opciones.interrupciones;
@@ -304,6 +309,12 @@ export class Partida {
   }
   get dinero(): number {
     return this._dinero;
+  }
+  /** La plata que prometieron traer a la cancha los que vienen. Todavía no está: puede no llegar. */
+  get prometido(): number {
+    let total = 0;
+    for (const [id, promesa] of this.promesas) if (this.estadoDe(id).estado === "confirmado") total += promesa.monto;
+    return total;
   }
   get terminada(): boolean {
     return this._terminada;
@@ -902,6 +913,10 @@ export class Partida {
       estado.dineroAportado += efectos.dineroAportado;
       this._dinero += efectos.dineroAportado;
     }
+    if (efectos.plataAlla !== undefined) {
+      const antes = this.promesas.get(id)?.monto ?? 0;
+      this.promesas.set(id, { ...efectos.plataAlla, monto: antes + efectos.plataAlla.monto, minuto: this.reloj.minutos });
+    }
     if (efectos.estado !== undefined) estado.estado = efectos.estado;
     // El que trae va primero en la lista, y los suyos después.
     if (efectos.trae?.length && estado.estado === "confirmado" && !this.ordenLista.includes(id)) this.ordenLista.push(id);
@@ -1341,8 +1356,29 @@ export class Partida {
     if (this.reloj.agotado) {
       this._terminada = true;
       this._motivoFin = "corte_horario";
+      this.cobrarPromesas();
       this.emitir("sistema", `${this.reloj} · Se cerró la lista`, "Sistema", CHAT_GRUPO, { cierre: true });
     }
+  }
+
+  /**
+   * En la puerta de la cancha: el que dijo "la guita allá" llega con la plata o
+   * sin ella. Solo cuenta el que vino. Lo que llega entra al bolsillo antes de
+   * pagar la seña.
+   */
+  private cobrarPromesas(): void {
+    for (const [id, promesa] of this.promesas) {
+      const estado = this.estadoDe(id);
+      if (estado.estado !== "confirmado") continue;
+      if (this.rngPlata.ocurre(promesa.probabilidad)) {
+        estado.dineroAportado += promesa.monto;
+        this._dinero += promesa.monto;
+        this.bitacora.registrar("plata_alla", this.reloj.minutos, id, formatearHora(promesa.minuto));
+      } else {
+        this.bitacora.registrar("sin_billetera", this.reloj.minutos, id, formatearHora(promesa.minuto));
+      }
+    }
+    this.promesas.clear();
   }
 
   private emitir(

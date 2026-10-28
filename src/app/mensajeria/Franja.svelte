@@ -11,9 +11,10 @@
   let {
     roster,
     dinero,
+    alla,
     sena,
     alTocar,
-  }: { roster: VistaRoster; dinero: number; sena: number; alTocar: () => void } = $props();
+  }: { roster: VistaRoster; dinero: number; alla: number; sena: number; alTocar: () => void } = $props();
 </script>
 
 <button class="franja" onclick={alTocar} aria-label="Ver la lista en el grupo">
@@ -22,7 +23,7 @@
     <Faltantes {roster} compacto />
   </span>
   <span class="sena" class:corta={dinero < sena}>
-    {pesos(dinero)} / {pesos(sena)}
+    {pesos(dinero)} / {pesos(sena)}{#if alla > 0}<span class="alla"> · {pesos(alla)} allá</span>{/if}
   </span>
 </button>
 
@@ -54,4 +55,6 @@
     font-variant-numeric: tabular-nums;
   }
   .sena.corta { color: var(--est-rechazado); }
+  /* La que prometieron traer no cuenta todavía: no pinta la seña de ningún color. */
+  .alla { color: var(--app-tinta-3); }
 </style>

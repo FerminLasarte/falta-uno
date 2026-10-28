@@ -23,6 +23,7 @@
     grupoSinLeer,
     roster,
     dinero,
+    alla,
     sena,
     alAbrirGrupo,
     alAbrirContacto,
@@ -36,6 +37,8 @@
     grupoSinLeer: number;
     roster: VistaRoster;
     dinero: number;
+    /** La plata que prometieron traer a la cancha. */
+    alla: number;
     sena: number;
     alAbrirGrupo: () => void;
     alAbrirContacto: (id: string) => void;
@@ -70,7 +73,7 @@
 
 <div class="pantalla-app">
   <Cabecera titulo="Chats" />
-  <Franja {roster} {dinero} {sena} alTocar={alAbrirGrupo} />
+  <Franja {roster} {dinero} {alla} {sena} alTocar={alAbrirGrupo} />
 
   <div class="bandeja">
     <ItemChat

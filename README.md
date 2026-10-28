@@ -266,7 +266,9 @@ fuera de su puesto rinde 20 puntos menos (al arco, sin arquero, va el peor). El 
 razonable gana entre el 36% y el 50% de los partidos que juega; el atento, entre el 41% y el 54%.
 
 La plata del viernes es un bolsillo aparte: arranca con tu parte de la cancha y se llena con lo
-que ponen los que vienen. Los arreglos que cuestan plata se pagan de ahí. Lo de la campaña es el
+que ponen los que vienen, y a las 21:00 con lo que traen a la cancha los que dijeron "la plata
+después" y se acordaron de la billetera (`plataAlla`, con su probabilidad en cada respuesta). Los
+arreglos que cuestan plata se pagan de ahí. Lo de la campaña es el
 colchón: si a las 21:00 el bolsillo no llega a la seña, se completa con él, y la fecha que viene
 se arranca con menos.
 

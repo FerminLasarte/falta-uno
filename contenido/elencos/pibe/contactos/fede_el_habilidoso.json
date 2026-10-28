@@ -178,9 +178,13 @@
         {
           "id": "confirma_debe",
           "texto": "dale, la guita la vemos allá",
-          "costoReloj": 2,
+          "costoReloj": 1,
           "efectos": {
             "estado": "confirmado",
+            "plataAlla": {
+              "monto": 1500,
+              "probabilidad": 60
+            },
             "probabilidadBaja": -5
           },
           "siguiente": null

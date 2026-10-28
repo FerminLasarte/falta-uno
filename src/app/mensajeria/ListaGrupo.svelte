@@ -14,6 +14,7 @@
     enDuda,
     roster,
     dinero,
+    alla,
     sena,
     titulo,
     alAbrir,
@@ -23,6 +24,8 @@
     enDuda: readonly { id: string; nombre: string; rol: Rol }[];
     roster: VistaRoster;
     dinero: number;
+    /** La plata que prometieron traer a la cancha: se ve aparte porque puede no llegar. */
+    alla: number;
     sena: number;
     titulo: string;
     alAbrir: (id: string) => void;
@@ -89,7 +92,7 @@
       <Faltantes {roster} />
     {/if}
     <span class="sena" class:corta={!alcanza}>
-      Seña {pesos(dinero)} de {pesos(sena)}
+      Seña {pesos(dinero)} de {pesos(sena)}{#if alla > 0}<span class="alla"> · {pesos(alla)} allá</span>{/if}
     </span>
   </div>
 </section>
@@ -189,4 +192,5 @@
     font-variant-numeric: tabular-nums;
   }
   .sena.corta { color: var(--est-rechazado); }
+  .alla { color: var(--app-tinta-3); }
 </style>

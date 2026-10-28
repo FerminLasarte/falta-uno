@@ -40,6 +40,11 @@ export interface Efectos {
   readonly probabilidadBaja?: number;
   readonly enojo?: number;
   readonly dineroAportado?: number;
+  /**
+   * "La guita allá": la plata que promete traer a la cancha. Llega a las 21:00
+   * si viene, con esa probabilidad: no todos se acuerdan de la billetera.
+   */
+  readonly plataAlla?: { readonly monto: number; readonly probabilidad: number };
   readonly estado?: EstadoContacto;
   /** Etiqueta que se guarda en la bitácora para que la resolución pueda narrarla. */
   readonly registrar?: TipoEvento;
@@ -73,6 +78,8 @@ export const TIPOS_EVENTO = [
   "no_vino", // el que trajo alguien al final no vino
   "duda", // un confirmado te avisó que se está por bajar
   "excusa", // esa noche no podía, hicieras lo que hicieras
+  "plata_alla", // trajo a la cancha la plata que prometió
+  "sin_billetera", // prometió traer la plata y llegó sin ella
 ] as const;
 export type TipoEvento = (typeof TIPOS_EVENTO)[number];
 

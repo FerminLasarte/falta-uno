@@ -178,6 +178,11 @@ al Pibe de Barrio, que se leía como "villero" (decidido el 28 de octubre de 202
   momento (pagarle a alguien para que venga). El viernes arranca con tu parte en el bolsillo; lo de
   la campaña queda de colchón para completar la seña. El torneo cobra la inscripción al anotarte, de
   ese colchón: la primera fecha llega con poco guardado y cobrar por adelantado es una decisión.
+  **La guita allá** (agregado el 28 de octubre de 2026): al que confirma le podés pedir la plata en
+  el momento o dejar que la traiga a la cancha. Pedirla cuesta un minuto más y lo calienta un poco;
+  "la plata después" lo deja tranquilo, pero esa plata llega a las 21:00 solo si viene y si se
+  acuerda de la billetera, y cada uno tiene su probabilidad: Darío casi siempre, Santi casi nunca.
+  Hasta las 21:00 se ve aparte en la lista ("$3.000 allá"), y el relato cuenta quién llegó sin ella.
 - **El Reloj.** De 19:00 a 21:00. **Avanza por acción, no en tiempo real.**
 
 ### El Reloj: por qué cambia respecto de la v1
@@ -506,12 +511,12 @@ también eran 5 de 7 (58% / 81% / 22%).
 | Objetivo | Meta | Medido |
 |---|---|---|
 | Razonable juega el partido | 55–65% | 63% ✓ |
-| Atento juega el partido | 75–85% | 82% ✓ |
-| Apurado juega el partido | 20–35% | 20% ✓ |
+| Atento juega el partido | 75–85% | 84% ✓ |
+| Apurado juega el partido | 20–35% | 6% ✗ |
 | Gana | 45–55% | 46% ✓ |
 | Bajas por viernes | 0,6–1 | 1,4 ✗ |
 | Rechazos por viernes | 1–2 | 1,3 ✓ |
-| Ninguna causa de fracaso pasa del 50% | <50% | plata 42% ✓ (en el apurado, 54%) |
+| Ninguna causa de fracaso pasa del 50% | <50% | plata 42% ✓ |
 
 Lo que dicen los números, más allá de los objetivos:
 
@@ -521,16 +526,19 @@ Lo que dicen los números, más allá de los objetivos:
 - **La moral y la plata de arranque casi no mueven el slice.** En el torneo, la inscripción se come
   el colchón: con $3.000 o con $6.000 no queda nada para tapar la seña. Bajar la moral solo frena
   al apurado.
-- **El apurado está justo en el borde (20%).** Un cambio chico de contenido lo puede sacar.
+- **El apurado casi nunca juega (6%).** Desde la guita allá, confirma a todos con "la plata
+  después", que es lo más rápido, y llega a la cancha con lo que se acordaron de traer. Es lo que
+  le tiene que pasar al que no pide la plata; falta decidir si la meta del apurado (20–35%) sigue
+  siendo la del Pibe.
 - **Las bajas por viernes ya no miden lo mismo.** Desde que pasan a lo largo de la noche, una baja
   temprana se repone: son más pero pesan menos. La meta de 0,6–1 era para cuando todas caían a las
   20:30.
-- **En los formatos grandes jugar bien rinde igual o más que en F5** (paso 8): +23 en el torneo F5
-  contra +24 en F6 y +26 en F8.
-- **Decisiones:** `npm run valor` encuentra 5 respuestas que convienen siempre, 10 que no convienen
-  nunca y 6 pares que dan lo mismo. Con el Pibe, dejar que alguien pague después ("la plata
-  después") nunca conviene: seis de las diez son eso. Para este perfil, esa respuesta no es una
-  decisión todavía.
+- **En los formatos grandes jugar bien rinde igual o más que en F5** (paso 8): +24 en el torneo F5
+  contra +27 en F6 y en F8.
+- **Decisiones:** `npm run valor` encuentra 1 respuesta que conviene siempre, 4 que no convienen
+  nunca y 6 pares que dan lo mismo. Antes de la guita allá eran 5 y 10: "la plata después" nunca
+  convenía con el Pibe, porque esa plata no llegaba nunca. Ahora pedirla o no es una decisión con
+  todos los que la ofrecen.
 
 ### Plan para cerrar un viernes
 

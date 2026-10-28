@@ -57,7 +57,8 @@ if (!perfil || !estilo) {
 
 /** Cuánto vale cómo terminó el viernes: sin partido 0, partido 1, partido ganado 2. */
 const puntaje = (m: Medicion): number => (m.hayPartido ? 1 : 0) + (m.gano ? 1 : 0);
-const plataDe = (o: OpcionDialogo): number => (o.efectos.dinero ?? 0) + (o.efectos.dineroAportado ?? 0);
+const plataDe = (o: OpcionDialogo): number =>
+  (o.efectos.dinero ?? 0) + (o.efectos.dineroAportado ?? 0) + (o.efectos.plataAlla?.monto ?? 0);
 const diceQueNo = (o: OpcionDialogo): boolean => o.efectos.estado === "rechazado";
 
 interface Conteo {
@@ -111,9 +112,11 @@ const pct = (n: number, de: number): number => Math.round((n / de) * 100);
 function costos(o: OpcionDialogo): string {
   const partes: string[] = [`${o.costoReloj} min`];
   const { moral, probabilidadBaja } = o.efectos;
-  const plata = plataDe(o);
+  const alla = o.efectos.plataAlla;
+  const plata = plataDe(o) - (alla?.monto ?? 0);
   if (moral) partes.push(`moral ${moral > 0 ? "+" : ""}${moral}`);
   if (plata) partes.push(`${plata > 0 ? "+" : "−"}$${Math.abs(plata)}`);
+  if (alla) partes.push(`+$${alla.monto} allá (${alla.probabilidad}%)`);
   if (probabilidadBaja) partes.push(`calentura ${probabilidadBaja > 0 ? "+" : ""}${probabilidadBaja}`);
   if (o.efectos.trae?.length) partes.push(`trae ${o.efectos.trae.length}`);
   return partes.join(" · ");

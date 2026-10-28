@@ -66,9 +66,13 @@
         {
           "id": "confirma_debe",
           "texto": "vení nomás, la plata después",
-          "costoReloj": 2,
+          "costoReloj": 1,
           "efectos": {
             "estado": "confirmado",
+            "plataAlla": {
+              "monto": 1500,
+              "probabilidad": 45
+            },
             "probabilidadBaja": -5
           },
           "siguiente": null
