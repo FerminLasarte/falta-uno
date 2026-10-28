@@ -498,34 +498,39 @@ Avance hacia el lanzamiento: **44%**, pesando cada fase por el trabajo que lleva
 | 6 — Contenido | 40% | 14% | 🟡 El elenco del Pibe: 13 contactos (los 8 a fondo y los 4 de segunda línea del slice, sin Beto, más Darío y Zenón), grupo, interrupciones, avisos, excusas e imprevistos. Faltan los elencos del Oficinista y del Acomodado. |
 | 7 — Pulido | 15% | 7% | 🟡 Herramientas de balance: bot con estilos, analizador y valor esperado por respuesta. |
 
-Balance del slice (torneo F5, Oficinista, 1000 viernes): se cumplen 5 de los 7 objetivos. Desde
-que cada perfil tiene su elenco, el único que se juega es el Pibe, y con 92 de moral y $3.000 no
-cumple las metas: el razonable llena la lista el 78% de las veces, el atento el 83% y el apurado el
-63%, y la primera causa de quedarse sin partido es la plata (42% en el razonable). Queda por
-rebalancear.
+Balance del slice (torneo F5, el Pibe, 1000 viernes): se cumplen 5 de los 7 objetivos. Se mide con
+"se juega" y no con "lista llena" (decidido el 28 de octubre de 2026): a cada perfil le cuesta otra
+cosa, y al Pibe le cuesta pagar la seña, no juntar gente. Con el Oficinista, que medía lista llena,
+también eran 5 de 7 (58% / 81% / 22%).
 
 | Objetivo | Meta | Medido |
 |---|---|---|
-| Razonable llena la lista | 55–65% | 58% ✓ |
-| Atento llena la lista | 75–85% | 81% ✓ |
-| Apurado llena la lista | 20–35% | 22% ✓ |
-| Gana | 45–55% | 52% ✓ |
-| Bajas por viernes | 0,6–1 | 1,8 ✗ |
-| Rechazos por viernes | 1–2 | 1,5 ✓ |
-| Ninguna causa de fracaso pasa del 50% | <50% | reloj 60% ✗ |
+| Razonable juega el partido | 55–65% | 63% ✓ |
+| Atento juega el partido | 75–85% | 82% ✓ |
+| Apurado juega el partido | 20–35% | 20% ✓ |
+| Gana | 45–55% | 46% ✓ |
+| Bajas por viernes | 0,6–1 | 1,4 ✗ |
+| Rechazos por viernes | 1–2 | 1,3 ✓ |
+| Ninguna causa de fracaso pasa del 50% | <50% | plata 42% ✓ (en el apurado, 54%) |
 
 Lo que dicen los números, más allá de los objetivos:
 
+- **El Pibe llena la lista fácil y no llega a pagar.** El razonable la llena el 78% de las veces y
+  juega el 63%; la plata es la primera causa de quedarse sin partido (42%). El atento casi no
+  pierde por plata (6%): elige a los que ponen y no paga por otros. Esa diferencia es el perfil.
+- **La moral y la plata de arranque casi no mueven el slice.** En el torneo, la inscripción se come
+  el colchón: con $3.000 o con $6.000 no queda nada para tapar la seña. Bajar la moral solo frena
+  al apurado.
+- **El apurado está justo en el borde (20%).** Un cambio chico de contenido lo puede sacar.
 - **Las bajas por viernes ya no miden lo mismo.** Desde que pasan a lo largo de la noche, una baja
-  temprana se repone: son más (1,8) pero pesan menos. La meta de 0,6–1 era para cuando todas caían a
-  las 20:30.
-- **El reloj es la causa principal**, y en parte es moral: el que la cuida atiende a quien le
-  reclama y paga en minutos.
-- **En los formatos grandes jugar bien rinde igual o más que en F5** (paso 8), pero en el torneo F8
-  por poco: +25 contra +24. Un cambio de contenido puede volver a dejarlo abajo; el bot lo avisa.
-- **Decisiones:** `npm run valor` encuentra 2 respuestas que convienen siempre, 3 que no convienen
-  nunca y 4 pares que dan lo mismo. Hay que revisarlas una por una: algunas son groserías que pueden
-  quedar como color.
+  temprana se repone: son más pero pesan menos. La meta de 0,6–1 era para cuando todas caían a las
+  20:30.
+- **En los formatos grandes jugar bien rinde igual o más que en F5** (paso 8): +23 en el torneo F5
+  contra +24 en F6 y +26 en F8.
+- **Decisiones:** `npm run valor` encuentra 5 respuestas que convienen siempre, 10 que no convienen
+  nunca y 6 pares que dan lo mismo. Con el Pibe, dejar que alguien pague después ("la plata
+  después") nunca conviene: seis de las diez son eso. Para este perfil, esa respuesta no es una
+  decisión todavía.
 
 ### Plan para cerrar un viernes
 

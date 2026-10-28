@@ -31,9 +31,11 @@ const CORRIDAS = Number(argumentos.find((a) => /^\d+$/.test(a)) ?? 500);
 const NARRAR = argumentos.includes("--narrar");
 
 /**
- * Lo que se busca en el vertical slice (GDD §9.8), para el Oficinista en la
- * primera fecha del torneo de fútbol 5: el que presta atención llena la lista,
- * el apurado casi nunca, y el razonable depende de cómo juegue ese viernes.
+ * Lo que se busca en el vertical slice (GDD §9.8), en la primera fecha del
+ * torneo de fútbol 5: el que presta atención juega el partido, el apurado casi
+ * nunca, y el razonable depende de cómo juegue ese viernes. Se mide con "se
+ * juega" y no con "lista llena": a cada perfil le cuesta otra cosa, y al Pibe
+ * le cuesta pagar la seña, no juntar gente.
  */
 const OBJETIVOS: Readonly<Record<string, readonly [number, number]>> = {
   razonable: [55, 65],
@@ -138,11 +140,11 @@ for (const perfil of perfiles) {
       const marcas = filas.flatMap(({ nombre, mediciones }) => {
         const objetivo = OBJETIVOS[nombre];
         if (!objetivo) return [];
-        const llena = Math.round((mediciones.filter((m) => m.listaLlena).length / mediciones.length) * 100);
-        const ok = llena >= objetivo[0] && llena <= objetivo[1];
+        const juega = seJuega(mediciones);
+        const ok = juega >= objetivo[0] && juega <= objetivo[1];
         return [`${nombre} ${objetivo[0]}–${objetivo[1]}% ${ok ? "✓" : "✗"}`];
       });
-      if (marcas.length > 0) console.log(`\n  objetivo del slice, lista llena: ${marcas.join(" · ")}`);
+      if (marcas.length > 0) console.log(`\n  objetivo del slice, se juega: ${marcas.join(" · ")}`);
     }
     const bien = filas.find((f) => f.nombre === BIEN);
     const masOMenos = filas.find((f) => f.nombre === MAS_O_MENOS);
