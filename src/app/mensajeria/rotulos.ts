@@ -80,6 +80,8 @@ export interface RespuestaChat {
   readonly texto: string;
   readonly costoReloj?: number;
   readonly detalle?: { readonly titulo: string; readonly texto: string };
+  /** Se ve, pero todavía no se puede elegir. */
+  readonly bloqueada?: boolean;
 }
 
 /** "Fede y El Tano", "Fede, El Tano y Santi". */

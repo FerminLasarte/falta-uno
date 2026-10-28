@@ -62,7 +62,7 @@
       <div class="respuestas" role="group" aria-label="Responder">
         <span class="rotulo">Responder</span>
         {#each respuestas as o (o.id)}
-          <button class="opcion" class:con-detalle={o.detalle} onclick={() => alElegir?.(o.id)}>
+          <button class="opcion" class:con-detalle={o.detalle} disabled={o.bloqueada} onclick={() => alElegir?.(o.id)}>
             <span>{o.texto}</span>
             {#if o.costoReloj !== undefined}<span class="costo">{o.costoReloj} min</span>{/if}
             {#if o.detalle}<span class="detalle"><b>{o.detalle.titulo}</b> · {o.detalle.texto}</span>{/if}
@@ -111,7 +111,9 @@
     font-size: calc(14px * var(--escala-ui));
     line-height: 1.35;
   }
-  .opcion:hover { background: var(--app-hover); }
+  .opcion:hover:not(:disabled) { background: var(--app-hover); }
+  .opcion:disabled { background: transparent; color: var(--app-tinta-3); cursor: default; }
+  .opcion:disabled .detalle b { color: inherit; }
   .opcion.con-detalle { flex-direction: column; gap: 2px; }
   .detalle { font-size: var(--t-micro); font-weight: 600; line-height: 1.35; color: var(--app-tinta-3); }
   .detalle b { font-weight: 700; color: var(--app-tinta-2); }

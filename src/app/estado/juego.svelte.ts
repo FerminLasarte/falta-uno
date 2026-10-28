@@ -31,7 +31,7 @@ import type { Contenido } from "../../datos/cargar.js";
 import { opcionesDeViernes } from "../../core/viernes.js";
 import { nombreDelGrupo, type Apodos } from "../../core/apodos.js";
 import { COMPETENCIAS, configDeViernes, FORMATOS, type Competencia, type Formato, type Modo } from "../../core/modo.js";
-import { agendaDe } from "../../core/perfiles.js";
+import { elencoDe, jugable, type Elenco } from "../../core/perfiles.js";
 import { pesos } from "../mensajeria/rotulos.js";
 import { grupo } from "./grupo.svelte.js";
 import type { MotivoFin, PerfilId, Rol } from "../../core/tipos.js";
@@ -106,8 +106,14 @@ export interface Eleccion {
   readonly restante: number;
   readonly eventos: readonly EventoFeed[];
   readonly paso: PasoInscripcion | "grupo";
-  /** Las respuestas del paso: lo que contestás y, debajo, qué implica. */
-  readonly opciones: readonly { readonly id: string; readonly texto: string; readonly titulo: string; readonly resumen: string }[];
+  /** Las respuestas del paso: lo que contestás y, debajo, qué implica. Un perfil sin elenco se ve, pero no se elige. */
+  readonly opciones: readonly {
+    readonly id: string;
+    readonly texto: string;
+    readonly titulo: string;
+    readonly resumen: string;
+    readonly bloqueada?: boolean;
+  }[];
   readonly nota: string;
   /** En el último paso: el grupo, para poner los apodos. */
   readonly grupo: InfoDelGrupo | null;
@@ -257,12 +263,18 @@ class Juego {
   /** La pantalla donde se lee un chat. */
   pantallaDe(chat: string): Pantalla {
     if (chat === CHAT_GRUPO) return { tipo: "grupo" };
-    if (this.contenido?.interrupciones.some((i) => i.id === chat)) return { tipo: "interrupcion", id: chat };
+    if (this.#elenco?.interrupciones.some((i) => i.id === chat)) return { tipo: "interrupcion", id: chat };
     return { tipo: "contacto", id: chat };
   }
 
   get #partida(): Partida | null {
     return this.#registro?.partida ?? null;
+  }
+
+  /** Los amigos y el mundo del perfil con el que se juega. */
+  get #elenco(): Elenco | null {
+    const perfil = this.#campana?.perfil;
+    return perfil ? (this.contenido?.elencos[perfil] ?? null) : null;
   }
 
   /**
@@ -310,7 +322,7 @@ class Juego {
       this.#elegido = { modo: { competencia: id as Competencia }, perfil: null };
     } else if (eleccion.paso === "formato" && (FORMATOS as readonly string[]).includes(id)) {
       this.#elegido = { modo: { ...modo, formato: id as Formato }, perfil: null };
-    } else if (eleccion.paso === "perfil" && contenido.perfiles.some((p) => p.id === id)) {
+    } else if (eleccion.paso === "perfil" && contenido.perfiles.some((p) => p.id === id && jugable(contenido.elencos, p.id))) {
       this.#elegido = { modo, perfil: id as PerfilId };
     } else return;
     this.eleccion = eleccionDe(contenido, this.#elegido);
@@ -420,8 +432,9 @@ class Juego {
     const guardado = archivo.contenido === null ? null : leerGuardado(archivo.contenido);
     if (!guardado) return false;
     const { campana, viernes } = guardado;
+    // Una campaña de un perfil que hoy no tiene elenco no se puede seguir: se empieza otra.
     const perfil = contenido.perfiles.find((p) => p.id === campana.perfil);
-    if (!perfil) return false;
+    if (!perfil || !jugable(contenido.elencos, perfil.id)) return false;
 
     const { registro, aplicados } = Registro.reproducir(
       opcionesDeViernes(contenido, perfil, campana.semilla, viernes, campana),
@@ -437,14 +450,14 @@ class Juego {
     this.#campana = campana;
     this.#viernes = { fecha: viernes.fecha, dinero: viernes.dinero };
     this.#resolucion = null;
-    this.#restaurarVista(guardado.vista, contenido);
+    this.#restaurarVista(guardado.vista, elencoDe(contenido.elencos, perfil.id));
     if (campana.fin) this.pantalla = { tipo: "fin" };
     // Se retomó: desde acá, lo que se ve es lo que quedó abierto.
     this.#marcar();
     return true;
   }
 
-  #restaurarVista(crudo: unknown, contenido: Contenido): void {
+  #restaurarVista(crudo: unknown, elenco: Elenco): void {
     if (typeof crudo !== "object" || crudo === null) return;
     const { pantalla, leidos, cancha, marcas, empezado } = crudo as Record<string, unknown>;
     this.#leidos = Leidos.desde(leidos);
@@ -456,8 +469,8 @@ class Juego {
     if (tipo === "grupo" || tipo === "chats" || tipo === "partido") this.pantalla = { tipo };
     // Si se cerró con el teléfono bloqueado entre fechas, se abre ya desbloqueado.
     else if (tipo === "semana") this.pantalla = { tipo: "grupo" };
-    else if (tipo === "contacto" && contenido.contactos.some((c) => c.id === id)) this.pantalla = { tipo, id: id as string };
-    else if (tipo === "interrupcion" && contenido.interrupciones.some((i) => i.id === id)) this.pantalla = { tipo, id: id as string };
+    else if (tipo === "contacto" && elenco.contactos.some((c) => c.id === id)) this.pantalla = { tipo, id: id as string };
+    else if (tipo === "interrupcion" && elenco.interrupciones.some((i) => i.id === id)) this.pantalla = { tipo, id: id as string };
   }
 
   /** Escribe el viernes entero. `ya` espera a que termine: es para cuando se cierra la ventana. */
@@ -643,7 +656,8 @@ class Juego {
     const p = this.#partida;
     const contenido = this.contenido;
     const campana = this.#campana;
-    if (!p || !contenido || !campana) return;
+    const elenco = this.#elenco;
+    if (!p || !contenido || !campana || !elenco) return;
     grupo.nombre = nombreDelGrupo(campana.apodos, campana.modo);
 
     // Lo que está en pantalla se da por leído, también lo que llega mientras lo mirás.
@@ -655,7 +669,7 @@ class Juego {
     const sinLeer = (chat: string): number => this.#leidos.sinLeer(chat, cuantos(chat));
 
     const pendientes = new Set(p.interrupcionesActivas.map((i) => i.definicion.id));
-    const interrupciones = contenido.interrupciones.flatMap((def): VistaInterrupcion[] => {
+    const interrupciones = elenco.interrupciones.flatMap((def): VistaInterrupcion[] => {
       const ultimo = eventos.findLast((e) => e.chat === def.id && e.de === def.de);
       if (!ultimo) return [];
       return [
@@ -709,7 +723,7 @@ class Juego {
       cierre: this.#resolucion ? cerrarFecha(campana, p, this.#resolucion, p.config) : null,
       campana,
       sena: p.config.senaCancha,
-      infoDelGrupo: infoDelGrupo(contenido, campana, p.contactos().map((c) => c.id), this.#puedeCambiarApodos()),
+      infoDelGrupo: infoDelGrupo(elenco, campana, p.contactos().map((c) => c.id), this.#puedeCambiarApodos()),
       partidoSuelto: campana.modo.competencia === "partido",
       horaInicio: p.config.horaInicio,
       cancha: canchaDe(contenido),
@@ -720,7 +734,7 @@ class Juego {
 
 /** La charla con la cancha en el paso en que va, con las respuestas de ese paso. */
 function eleccionDe(contenido: Contenido, elegido: { modo: Partial<Modo>; perfil: PerfilId | null }): Eleccion {
-  const { inscripcion, config, perfiles } = contenido;
+  const { inscripcion, config, perfiles, elencos } = contenido;
   const { de } = canchaDe(contenido);
   const { modo, perfil } = elegido;
   // Se anota antes de que arranque el viernes más temprano: el de la cancha grande.
@@ -752,28 +766,32 @@ function eleccionDe(contenido: Contenido, elegido: { modo: Partial<Modo>; perfil
     });
     nota = "Cuantos más van, más cuesta llenar la lista";
   } else if (paso === "perfil") {
-    opciones = perfiles.map((p) => ({ id: p.id, texto: p.respuesta, titulo: p.nombre, resumen: p.resumen }));
+    opciones = perfiles.map((p) =>
+      jugable(elencos, p.id)
+        ? { id: p.id, texto: p.respuesta, titulo: p.nombre, resumen: p.resumen }
+        : { id: p.id, texto: p.respuesta, titulo: p.nombre, resumen: "todavía no se puede elegir", bloqueada: true },
+    );
     nota = "Lo elegís una vez por campaña";
   }
 
-  const perfilElegido = perfiles.find((p) => p.id === perfil);
+  const elenco = perfil ? elencos[perfil] : undefined;
   const grupo =
-    paso === "grupo" && perfilElegido && completo
-      ? infoDelGrupo(contenido, { modo: completo }, agendaDe(perfilElegido, perfiles, contenido.contactos).map((c) => c.id), true)
+    paso === "grupo" && elenco && completo
+      ? infoDelGrupo(elenco, { modo: completo }, elenco.contactos.map((c) => c.id), true)
       : null;
   return { chat: inscripcion.chat, de, hora: formatearHora(hora), restante: config.horaCorte - hora, eventos, paso, opciones, nota, grupo };
 }
 
 /** "Info del grupo" para una campaña: los personajes de su agenda, con los apodos que tengan. */
 function infoDelGrupo(
-  contenido: Contenido,
+  elenco: Elenco,
   campana: { readonly modo: Modo; readonly apodos?: Apodos },
   ids: readonly string[],
   editable: boolean,
 ): InfoDelGrupo {
   const { apodos, modo } = campana;
   const personajes = ids.flatMap((id): Personaje[] => {
-    const c = contenido.contactos.find((x) => x.id === id);
+    const c = elenco.contactos.find((x) => x.id === id);
     return c ? [{ id, personaje: c.nombre, retrato: c.retrato ?? "", rol: c.rol, apodo: apodos?.contactos?.[id] ?? "" }] : [];
   });
   // Por nombre, como una agenda: sin el artículo, "El Tano" va con la te.
@@ -784,8 +802,8 @@ function infoDelGrupo(
 
 /** El chat con la cancha: la inscripción y la interrupción comparten el mismo. */
 function canchaDe(contenido: Contenido): Vista["cancha"] {
-  const { chat } = contenido.inscripcion;
-  return { chat, de: contenido.interrupciones.find((i) => i.id === chat)?.de ?? "" };
+  const { chat, de } = contenido.inscripcion;
+  return { chat, de };
 }
 
 /** El torneo como se lo ve en la app: su nombre, la fecha que se juega y contra quién. Un partido suelto es una sola noche. */

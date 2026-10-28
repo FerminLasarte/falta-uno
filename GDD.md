@@ -148,21 +148,21 @@ ellos en WhatsApp. El chiste es la escritura (sección 7): el tono es parte del 
 
 ## 3. Clases y Perfiles (El Trasfondo)
 
-Al iniciar la campaña, el jugador elige su perfil, que define recursos iniciales y contactos de
-emergencia:
+Al iniciar la campaña, el jugador elige su perfil, que define la moral y la plata con las que
+arranca y, sobre todo, **su mundo**: cada perfil tiene su propio elenco de amigos, sin historias
+compartidas. Un tipo de oficina no se pelea por lo mismo que los pibes del barrio: los amigos, sus
+peleas, el grupo, quién más te escribe un viernes y cómo hablás vos son de cada perfil
+(`contenido/elencos/<perfil>/`). Lo común es el sistema (puestos, rasgos, roces, bajas, el reloj) y
+la charla con la cancha, que es donde se elige el perfil y por eso pasa antes de tener uno.
 
-| Perfil | Ventaja | Desventaja | Contacto Único Desbloqueado |
+| Perfil | Ventaja | Desventaja | Elenco |
 |---|---|---|---|
-| **El Acomodado** | Empieza con mucho Dinero. | Poca Moral inicial (presión social). | Político / Presidente (al arco). |
-| **El Pibe de Barrio** | Moral alta y química de equipo. | Dinero inicial muy bajo. | Kiosquero. |
-| **El Oficinista** | Balance medio. | El Jefe interrumpe un 50% más. | Sindicalista (anula pasivas rivales). |
+| **El Pibe** | Moral alta (92). | Ni un peso ($3.000). | Los pibes de 25 del slice: 13 contactos. |
+| **El Oficinista** | Balance medio. | El jefe encima. | Por escribir: los del laburo. Beto pasa a ser el delegado (`contenido/borradores/`). |
+| **El Acomodado** | Mucha plata. | Poca moral: todos esperan que pongas. | Por escribir. El Doctor Ferreyra queda de borrador. |
 
-> **A pulir más adelante.** Los perfiles quedaron de la v1 y no se revisaron con el tono nuevo. Hoy
-> son el mismo pibe de 25 con otra moral y otra plata de arranque, un contacto propio y, en el
-> Oficinista, más interrupciones del jefe. Falta decidir qué hace distinto jugar con cada uno, cómo
-> se presentan en el registro del juego y si los nombres siguen siendo estos. La tabla tampoco
-> coincide con el contenido: el Político figura "al arco" y en `contenido/contactos/el_politico.json`
-> es delantero. El slice juega solo con el Oficinista.
+Un perfil sin elenco se ve en la charla con la cancha, pero no se puede elegir. El Pibe reemplaza
+al Pibe de Barrio, que se leía como "villero" (decidido el 28 de octubre de 2026).
 
 ---
 
@@ -264,7 +264,7 @@ ignorar las notificaciones.
 - **Interrupciones del Viernes.** Tu pareja reclamando atención o el trabajo exigiendo una tarea.
   Ignorarlos consume Moral pasiva masiva; atenderlos consume reloj.
 - **La vida propia del grupo** (agregado en octubre de 2026). El grupo habla aunque vos no hagas
-  nada, y todo sale de `contenido/grupo.json`, validado como los contactos:
+  nada, y todo sale del `grupo.json` de cada elenco, validado como los contactos:
   - **Charla.** Arranca en una franja del reloj, cuando confirma alguien en particular o cuando la
     lista llega a tanto. Llega en tiempo real, con su "escribiendo…", y no cuesta nada: es ruido.
   - **Audios.** Escucharlos cuesta un minuto de reloj por cada medio minuto de audio. Mientras
@@ -495,10 +495,14 @@ Avance hacia el lanzamiento: **44%**, pesando cada fase por el trabajo que lleva
 | 3 — Interfaz y audio | 15% | 70% | 🟡 Escena, app, vibración, sonido, modos y apodos. Falta el ambiente del living y el gamepad. |
 | 4 — Integración | 8% | 100% | ✅ Un viernes se juega de punta a punta adentro del teléfono. |
 | 5 — El simulador | 7% | 85% | 🟡 Relato atribuido, cuenta de la fecha y campaña con sus finales. Faltan las pasivas. |
-| 6 — Contenido | 40% | 14% | 🟡 El slice: 12 contactos del Oficinista (8 a fondo, 4 de segunda línea), grupo, interrupciones, avisos, excusas e imprevistos. |
+| 6 — Contenido | 40% | 14% | 🟡 El elenco del Pibe: 13 contactos (los 8 a fondo y los 4 de segunda línea del slice, sin Beto, más Darío y Zenón), grupo, interrupciones, avisos, excusas e imprevistos. Faltan los elencos del Oficinista y del Acomodado. |
 | 7 — Pulido | 15% | 7% | 🟡 Herramientas de balance: bot con estilos, analizador y valor esperado por respuesta. |
 
-Balance del slice (torneo F5, Oficinista, 1000 viernes): se cumplen 5 de los 7 objetivos.
+Balance del slice (torneo F5, Oficinista, 1000 viernes): se cumplen 5 de los 7 objetivos. Desde
+que cada perfil tiene su elenco, el único que se juega es el Pibe, y con 92 de moral y $3.000 no
+cumple las metas: el razonable llena la lista el 78% de las veces, el atento el 83% y el apurado el
+63%, y la primera causa de quedarse sin partido es la plata (42% en el razonable). Queda por
+rebalancear.
 
 | Objetivo | Meta | Medido |
 |---|---|---|

@@ -3,12 +3,14 @@ import type { OpcionesPartida } from "../src/core/partida.js";
 import { Registro, type Paso } from "../src/core/registro.js";
 import { opcionesDeViernes } from "../src/core/viernes.js";
 import { cargarContenido } from "../src/datos/cargar.js";
+import { perfilesJugables } from "../src/core/perfiles.js";
 import { ESTILOS, jugarViernes } from "../src/cli/estilos.js";
 import { medir } from "../src/cli/medicion.js";
 import { agendaCompleta, CONFIG, contacto, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js";
 import type { DefinicionContacto } from "../src/core/tipos.js";
 
 const contenido = await cargarContenido();
+const jugables = perfilesJugables(contenido.perfiles, contenido.elencos);
 
 function opciones(agenda: DefinicionContacto[] = agendaCompleta(), perfil = PERFIL): OpcionesPartida {
   return { perfil, agenda, interrupciones: SIN_INTERRUPCIONES, config: CONFIG, semilla: "medir" };
@@ -75,7 +77,7 @@ describe("la medición", () => {
   });
 
   it("con línea de tiempo mide la misma partida que sin ella", () => {
-    const perfil = contenido.perfiles[2]!;
+    const perfil = jugables[0]!;
     for (const estilo of ESTILOS) {
       const op = opcionesDeViernes(contenido, perfil, `linea-${estilo.id}`, { fecha: 1, dinero: perfil.dineroInicial });
       const pasos = jugarViernes(op, estilo, `linea-${estilo.id}`);
@@ -89,7 +91,7 @@ describe("la medición", () => {
 
 describe("el bot", () => {
   it("juega a través del registro: lo que hizo se reproduce entero", () => {
-    for (const perfil of contenido.perfiles) {
+    for (const perfil of jugables) {
       for (const estilo of ESTILOS) {
         const semilla = `repro-${perfil.id}-${estilo.id}`;
         const op = opcionesDeViernes(contenido, perfil, semilla, { fecha: 1, dinero: perfil.dineroInicial });

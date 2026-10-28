@@ -7,9 +7,12 @@ import { FORMATO_GUARDADO, leerGuardado } from "../src/core/registro.js";
 import { faltantes, formacion, quimica } from "../src/core/roster.js";
 import { opcionesDeViernes } from "../src/core/viernes.js";
 import { cargarContenido } from "../src/datos/cargar.js";
+import { elencoDe } from "../src/core/perfiles.js";
 import { contacto, PERFIL } from "./ayudas.js";
 
 const contenido = await cargarContenido();
+const pibe = contenido.perfiles.find((p) => p.id === "pibe")!;
+const elenco = elencoDe(contenido.elencos, "pibe");
 const config = (modo: Modo) => configDeViernes(contenido.config, modo);
 
 describe("los modos", () => {
@@ -54,7 +57,7 @@ describe("los modos", () => {
 
   it("un partido de fútbol 5 se puede cerrar con cinco", () => {
     const modo: Modo = { formato: "f5", competencia: "partido" };
-    const p = new Partida(opcionesDeViernes(contenido, contenido.perfiles[2]!, "partido", { fecha: 1, dinero: 9000 }, { modo }));
+    const p = new Partida(opcionesDeViernes(contenido, pibe, "partido", { fecha: 1, dinero: 9000 }, { modo }));
     for (const c of p.contactos()) {
       if (p.roster().confirmados >= 5) break;
       p.escribir(c.id);
@@ -92,8 +95,7 @@ describe("los apodos", () => {
   });
 
   it("el viernes sale con los nombres de tus amigos", () => {
-    const perfil = contenido.perfiles.find((p) => p.id === "oficinista")!;
-    const opciones = opcionesDeViernes(contenido, perfil, "apodos", { fecha: 1, dinero: 9000 }, {
+    const opciones = opcionesDeViernes(contenido, pibe, "apodos", { fecha: 1, dinero: 9000 }, {
       apodos: { contactos: { el_tano: "Pepe", fede_el_habilidoso: "El Colo" }, vos: "Fermo", grupo: "Los del Jueves" },
     });
     const fede = opciones.agenda.find((c) => c.id === "fede_el_habilidoso")!;
@@ -104,18 +106,18 @@ describe("los apodos", () => {
   });
 
   it("los apodos también llegan a la duda y a las excusas", () => {
-    const perfil = contenido.perfiles.find((p) => p.id === "oficinista")!;
-    const conMarcas = contenido.contactos.map((c) =>
+    const conMarcas = elenco.contactos.map((c) =>
       c.id === "nico_el_cunado" ? { ...c, duda: "no sé si voy, {vos}", excusas: ["hoy no, {vos}"] } : c,
     );
-    const opciones = opcionesDeViernes({ ...contenido, contactos: conMarcas }, perfil, "apodos", { fecha: 1, dinero: 9000 }, { apodos: { vos: "Fermo" } });
+    const elencos = { ...contenido.elencos, pibe: { ...elenco, contactos: conMarcas } };
+    const opciones = opcionesDeViernes({ ...contenido, elencos }, pibe, "apodos", { fecha: 1, dinero: 9000 }, { apodos: { vos: "Fermo" } });
     const nico = opciones.agenda.find((c) => c.id === "nico_el_cunado")!;
     expect(nico.duda).toBe("no sé si voy, fermo");
     expect(nico.excusas).toEqual(["hoy no, fermo"]);
   });
 
   it("sin apodos, todo queda con los nombres de los personajes", () => {
-    const { agenda } = personalizar({ agenda: contenido.contactos, grupo: contenido.grupo, interrupciones: contenido.interrupciones }, undefined, MODO_POR_DEFECTO);
+    const { agenda } = personalizar({ agenda: elenco.contactos, grupo: elenco.grupo, interrupciones: elenco.interrupciones }, undefined, MODO_POR_DEFECTO);
     const fede = agenda.find((c) => c.id === "fede_el_habilidoso")!;
     expect(fede.nodos["abre"]!.mensajes.join(" ")).toContain("si va el tano ni en pedo");
   });

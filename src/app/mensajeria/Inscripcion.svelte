@@ -14,7 +14,7 @@
   let { eleccion, alElegir }: { eleccion: Eleccion; alElegir: (id: string) => void } = $props();
 
   const opciones = $derived(
-    eleccion.opciones.map((o) => ({ id: o.id, texto: o.texto, detalle: { titulo: o.titulo, texto: o.resumen } })),
+    eleccion.opciones.map((o) => ({ id: o.id, texto: o.texto, detalle: { titulo: o.titulo, texto: o.resumen }, bloqueada: o.bloqueada === true })),
   );
 </script>
 

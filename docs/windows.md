@@ -45,7 +45,7 @@ Pendiente: todavía no se probó en Windows real. Los pasos, en orden:
 3. **Con Steam.** Con Steam abierto, tiene que figurar "jugando a Spacewar"
    (el App ID 480 de prueba). Si figura, los binarios de `app.asar.unpacked`
    cargaron bien.
-4. **Un viernes.** Torneo, fútbol 5, Oficinista. Que se escuchen las
+4. **Un viernes.** Torneo, fútbol 5, El Pibe. Que se escuchen las
    notificaciones y que la tipografía sea la del juego, no una del sistema.
 5. **Guarda.** Cerrá el juego a mitad del viernes y volvé a abrirlo: sigue
    donde estaba. En `%APPDATA%\falta-uno\partidas` tiene que haber un

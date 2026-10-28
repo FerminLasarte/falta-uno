@@ -46,17 +46,7 @@
             "moral": -1,
             "probabilidadBaja": -20
           },
-          "siguiente": [
-            {
-              "si": {
-                "confirmado": "el_sindicalista"
-              },
-              "nodo": "beto"
-            },
-            {
-              "nodo": "cierra"
-            }
-          ],
+          "siguiente": "cierra",
           "requiere": {
             "dineroMin": 1500
           }
@@ -110,17 +100,7 @@
             "moral": -3,
             "probabilidadBaja": -10
           },
-          "siguiente": [
-            {
-              "si": {
-                "confirmado": "el_sindicalista"
-              },
-              "nodo": "beto"
-            },
-            {
-              "nodo": "cierra"
-            }
-          ],
+          "siguiente": "cierra",
           "requiere": {
             "dineroMin": 1500
           }
@@ -133,13 +113,6 @@
             "moral": -1
           },
           "siguiente": [
-            {
-              "si": {
-                "confirmadosMin": 3,
-                "enAgenda": "el_sindicalista"
-              },
-              "nodo": "pillado_beto"
-            },
             {
               "si": {
                 "confirmadosMin": 3
@@ -160,34 +133,6 @@
             "registrar": "ignorado"
           },
           "siguiente": null
-        }
-      ]
-    },
-    "beto": {
-      "mensajes": [
-        "ahí llegó. gracias eh, no era por la plata, era por el principio",
-        "otra cosa: vi q viene {el_sindicalista}. si arma los equipos el sindicalista ese me manda de lateral y se queda con los buenos",
-        "peronista hasta para eso, reparte entre los suyos"
-      ],
-      "opciones": [
-        {
-          "id": "arma_carlos",
-          "texto": "hoy armás vos {voc:carlos_el_quejoso}",
-          "costoReloj": 2,
-          "efectos": {
-            "probabilidadBaja": -15
-          },
-          "siguiente": "cierra"
-        },
-        {
-          "id": "arma_beto",
-          "texto": "arma {el_sindicalista} como siempre, bancatela",
-          "costoReloj": 2,
-          "efectos": {
-            "probabilidadBaja": 20,
-            "enojo": 15
-          },
-          "siguiente": "cierra"
         }
       ]
     },
@@ -280,23 +225,6 @@
         }
       ]
     },
-    "pillado_beto": {
-      "mensajes": [
-        "estoy viendo la lista del grupo. primero de qué, pelotudo",
-        "dejá. llamalo a {el_sindicalista} q le encanta organizar, como buen sindicalista"
-      ],
-      "opciones": [
-        {
-          "id": "bueno",
-          "texto": "[Bueno]",
-          "costoReloj": 1,
-          "efectos": {
-            "estado": "rechazado"
-          },
-          "siguiente": null
-        }
-      ]
-    },
     "remis_lucho": {
       "mensajes": [
         "me contó {lucho} q le pagaste el remis",
@@ -312,17 +240,7 @@
             "moral": -2,
             "probabilidadBaja": -10
           },
-          "siguiente": [
-            {
-              "si": {
-                "confirmado": "el_sindicalista"
-              },
-              "nodo": "beto"
-            },
-            {
-              "nodo": "cierra"
-            }
-          ],
+          "siguiente": "cierra",
           "requiere": {
             "dineroMin": 1500
           }
@@ -340,14 +258,6 @@
     }
   },
   "bajas": [
-    {
-      "si": {
-        "elegiste": "arma_beto",
-        "confirmado": "el_sindicalista"
-      },
-      "texto": "me enteré q arma {el_sindicalista}. paso, no voy a ir a regalarle la noche a ese chorro",
-      "porque": "Le dijiste que los equipos los armaba Beto"
-    },
     {
       "texto": "mirá no voy a ir. no me pinta ser otra vez el q pone y el q se queda esperando"
     }

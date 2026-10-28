@@ -6,20 +6,18 @@
     "dineroInicial": 22000,
     "ventaja": "Empezás con plata de sobra: podés tapar agujeros pagando.",
     "desventaja": "Poca moral inicial. Todos esperan que vos pongas.",
-    "contactoUnico": "el_politico",
     "respuesta": "la pongo yo, tranqui",
     "resumen": "plata sí, paciencia no · con el Doctor Ferreyra"
   },
   {
-    "id": "pibe_de_barrio",
-    "nombre": "El Pibe de Barrio",
+    "id": "pibe",
+    "nombre": "El Pibe",
     "moralInicial": 92,
     "dineroInicial": 3000,
     "ventaja": "Moral alta y la gente te contesta rápido.",
     "desventaja": "No tenés un peso. Dependés de que cada uno ponga lo suyo.",
-    "contactoUnico": "el_kiosquero",
     "respuesta": "la juntamos entre todos, como siempre",
-    "resumen": "paciencia de sobra, ni un peso · con Don Zenón"
+    "resumen": "paciencia de sobra, ni un peso"
   },
   {
     "id": "oficinista",
@@ -28,12 +26,7 @@
     "dineroInicial": 9000,
     "ventaja": "Balance medio en todo.",
     "desventaja": "El jefe te interrumpe mucho más seguido.",
-    "contactoUnico": "el_sindicalista",
-    "excluidos": ["dario_el_profe"],
     "respuesta": "te la transfiero cuando salga del laburo",
-    "resumen": "un poco de todo, el jefe encima · con Beto",
-    "probabilidadInterrupciones": {
-      "jefe_planilla": 1.5
-    }
+    "resumen": "un poco de todo, el jefe encima · con Beto"
   }
 ]

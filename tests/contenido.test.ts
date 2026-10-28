@@ -5,37 +5,38 @@ import { revisarGrafo, revisarGrupo } from "../src/datos/validar.js";
 import { contactoSchema, grupoSchema } from "../src/datos/esquema.js";
 import type { DefinicionGrupo } from "../src/core/grupo.js";
 import { alDia, Partida } from "../src/core/partida.js";
-import { agendaDe } from "../src/core/perfiles.js";
+import { elencoDe, perfilesJugables } from "../src/core/perfiles.js";
 import { resolver } from "../src/core/resolucion.js";
 import type { DefinicionContacto } from "../src/core/tipos.js";
 
 const contenido = await cargarContenido();
+const jugables = perfilesJugables(contenido.perfiles, contenido.elencos);
+const pibe = elencoDe(contenido.elencos, "pibe");
 
 describe("el contenido real carga y valida", () => {
-  it("carga todo sin problemas", () => {
-    expect(contenido.contactos.length).toBeGreaterThan(0);
+  it("carga todo sin problemas, con al menos un perfil para jugar", () => {
     expect(contenido.perfiles).toHaveLength(3);
-    expect(contenido.interrupciones.length).toBeGreaterThan(0);
+    expect(jugables.length).toBeGreaterThan(0);
+    for (const perfil of jugables) {
+      const elenco = elencoDe(contenido.elencos, perfil.id);
+      expect(elenco.contactos.length, perfil.id).toBeGreaterThan(0);
+      expect(elenco.interrupciones.length, perfil.id).toBeGreaterThan(0);
+    }
   });
 
   it("en todos los modos, cada perfil tiene más contactos que lugares: le pueden fallar y seguir", () => {
     for (const modo of TODOS_LOS_MODOS) {
       const necesarios = configDeViernes(contenido.config, modo).jugadoresNecesarios;
-      for (const perfil of contenido.perfiles) {
-        const agenda = agendaDe(perfil, contenido.perfiles, contenido.contactos);
+      for (const perfil of jugables) {
+        const agenda = elencoDe(contenido.elencos, perfil.id).contactos;
         expect(agenda.length, `${perfil.id} en ${nombreDelModo(modo)}`).toBeGreaterThan(necesarios);
       }
     }
   });
 
-  it("hay al menos un arquero en la agenda", () => {
-    expect(contenido.contactos.some((c) => c.rol === "arquero")).toBe(true);
-  });
-
-  it("el contacto único de cada perfil existe de verdad", () => {
-    const ids = new Set(contenido.contactos.map((c) => c.id));
-    for (const perfil of contenido.perfiles) {
-      expect(ids.has(perfil.contactoUnico), `${perfil.id} → ${perfil.contactoUnico}`).toBe(true);
+  it("cada elenco tiene al menos un arquero", () => {
+    for (const perfil of jugables) {
+      expect(elencoDe(contenido.elencos, perfil.id).contactos.some((c) => c.rol === "arquero"), perfil.id).toBe(true);
     }
   });
 
@@ -147,12 +148,12 @@ describe("el validador atrapa contenido roto", () => {
 
 describe("un viernes completo con el contenido real", () => {
   it("se puede jugar de punta a punta y resolver", () => {
-    const perfil = contenido.perfiles[1]!; // el pibe de barrio: el caso apretado
+    const perfil = contenido.perfiles.find((p) => p.id === "pibe")!; // ni un peso: el caso apretado
     const partida = new Partida({
       perfil,
-      agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
-      interrupciones: contenido.interrupciones,
-      grupo: contenido.grupo,
+      agenda: pibe.contactos,
+      interrupciones: pibe.interrupciones,
+      grupo: pibe.grupo,
       config: configDeViernes(contenido.config, MODO_POR_DEFECTO),
       semilla: "viernes-real",
     });
@@ -182,10 +183,10 @@ describe("un viernes completo con el contenido real", () => {
     }
   });
 
-  it.each(contenido.perfiles.map((p) => [p.nombre, p] as const))("%s puede llenar la lista", (_, perfil) => {
+  it.each(jugables.map((p) => [p.nombre, p] as const))("%s puede llenar la lista", (_, perfil) => {
     const partida = new Partida({
       perfil,
-      agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
+      agenda: elencoDe(contenido.elencos, perfil.id).contactos,
       interrupciones: [],
       config: configDeViernes(contenido.config, MODO_POR_DEFECTO),
       semilla: "optimo",
@@ -209,9 +210,9 @@ describe("un viernes completo con el contenido real", () => {
 });
 
 describe("el validador atrapa un grupo mal escrito", () => {
-  const sano = contenido.grupo;
+  const sano = pibe.grupo;
   const problemas = (grupo: DefinicionGrupo): string[] =>
-    revisarGrupo(grupo, contenido.contactos, contenido.config).map((p) => p.detalle);
+    revisarGrupo(grupo, pibe.contactos, contenido.config).map((p) => p.detalle);
   const charla = (de: string, extra: Partial<DefinicionGrupo["charlas"][number]> = {}) => ({
     id: "prueba",
     cuando: { desde: 1150, hasta: 1160 },

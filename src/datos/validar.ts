@@ -5,8 +5,8 @@ import { PARES_EN_ROCE } from "../core/roster.js";
 import { MARCAS_FIJAS, marcasDe } from "../core/apodos.js";
 import type { ConfigContenido } from "../core/modo.js";
 import { CLAVES_DEL_RELATO, MARCAS_DEL_RELATO, type Relato } from "../core/relato.js";
-import { agendaDe } from "../core/perfiles.js";
-import { destinos, type Condicion, type DefinicionContacto, type DefinicionPerfil, type Desvio } from "../core/tipos.js";
+import type { Elencos } from "../core/perfiles.js";
+import { destinos, type Condicion, type DefinicionContacto, type DefinicionPerfil } from "../core/tipos.js";
 
 export interface ProblemaContenido {
   readonly archivo: string;
@@ -122,11 +122,10 @@ export function condicionesDe(contacto: DefinicionContacto): { donde: string; co
 }
 
 /**
- * Lo que un contacto nombra de otro tiene que existir: los contactos de
- * `confirmado`, `noConfirmado`, `enAgenda` y `elegidoA` (y la respuesta que nombra), y a
- * quién le llega un efecto. Si el otro no está en la agenda de un perfil, la
- * condición no se cumple y el efecto no hace nada; si no existe en ningún
- * lado, es un error de tipeo.
+ * Lo que un contacto nombra de otro tiene que estar en su elenco: los
+ * contactos de `confirmado`, `noConfirmado` y `elegidoA` (y la respuesta que
+ * nombra), y a quién le llega un efecto. Cada perfil tiene sus amigos: nadie
+ * nombra a uno de otro elenco.
  */
 export function revisarCondiciones(contactos: readonly DefinicionContacto[]): ProblemaContenido[] {
   const problemas: ProblemaContenido[] = [];
@@ -135,13 +134,12 @@ export function revisarCondiciones(contactos: readonly DefinicionContacto[]): Pr
     const archivo = `${contacto.id}.json`;
     const existe = (otro: string | undefined, donde: string): boolean => {
       if (otro === undefined || porId.has(otro)) return true;
-      problemas.push({ archivo, detalle: `${donde}: el contacto "${otro}" no existe` });
+      problemas.push({ archivo, detalle: `${donde}: el contacto "${otro}" no está en este elenco` });
       return false;
     };
     for (const { donde, condicion } of condicionesDe(contacto)) {
       existe(condicion.confirmado, donde);
       existe(condicion.noConfirmado, donde);
-      existe(condicion.enAgenda, donde);
       const elegido = condicion.elegidoA;
       if (elegido && existe(elegido.contacto, donde)) {
         const otro = porId.get(elegido.contacto)!;
@@ -230,133 +228,78 @@ export function revisarGrupo(
 }
 
 /**
- * Los perfiles y la inscripción, que es donde se eligen. Cada perfil tiene que
- * nombrar en su resumen al contacto que trae, porque eso es lo que el jugador
- * lee para elegir; y la inscripción comparte el chat de una interrupción que
- * existe.
+ * Los perfiles y la inscripción, que es donde se eligen. La charla con la
+ * cancha es de antes de elegir: sigue en el chat de una interrupción que cada
+ * elenco tiene que tener, con la misma cancha del otro lado.
  */
 export function revisarPerfiles(
   perfiles: readonly DefinicionPerfil[],
-  contactos: readonly DefinicionContacto[],
-  interrupciones: readonly DefinicionInterrupcion[],
+  elencos: Elencos,
   inscripcion: DefinicionInscripcion,
 ): ProblemaContenido[] {
   const problemas: ProblemaContenido[] = [];
-  const archivo = "perfiles.json";
-  const unicos = new Set<string>();
+  const vistos = new Set<string>();
   for (const perfil of perfiles) {
-    const unico = contactos.find((c) => c.id === perfil.contactoUnico);
-    if (!unico) {
-      problemas.push({ archivo, detalle: `${perfil.id}: el contacto único "${perfil.contactoUnico}" no existe` });
-    } else if (!perfil.resumen.includes(unico.nombre)) {
-      problemas.push({ archivo, detalle: `${perfil.id}: el resumen no nombra a ${unico.nombre}, su contacto único` });
+    if (vistos.has(perfil.id)) problemas.push({ archivo: "perfiles.json", detalle: `${perfil.id} está dos veces` });
+    vistos.add(perfil.id);
+    const elenco = elencos[perfil.id];
+    if (!elenco) continue;
+    const archivo = `elencos/${perfil.id}/interrupciones.json`;
+    const cancha = elenco.interrupciones.find((i) => i.id === inscripcion.chat);
+    if (!cancha) problemas.push({ archivo, detalle: `falta "${inscripcion.chat}", el chat de la cancha donde arranca todo` });
+    else if (cancha.de !== inscripcion.de) {
+      problemas.push({ archivo, detalle: `"${inscripcion.chat}" la escribe "${cancha.de}", y en la inscripción es "${inscripcion.de}"` });
     }
-    if (unicos.has(perfil.contactoUnico)) {
-      problemas.push({ archivo, detalle: `${perfil.id}: "${perfil.contactoUnico}" ya es el contacto único de otro perfil` });
-    }
-    unicos.add(perfil.contactoUnico);
-    for (const id of perfil.excluidos ?? []) {
-      if (!contactos.some((c) => c.id === id)) problemas.push({ archivo, detalle: `${perfil.id}: excluye a "${id}", que no existe` });
-    }
-    for (const id of Object.keys(perfil.probabilidadInterrupciones ?? {})) {
-      if (!interrupciones.some((i) => i.id === id)) {
-        problemas.push({ archivo, detalle: `${perfil.id}: la interrupción "${id}" no existe` });
-      }
-    }
-  }
-  if (!interrupciones.some((i) => i.id === inscripcion.chat)) {
-    problemas.push({ archivo: "inscripcion.json", detalle: `chat "${inscripcion.chat}" no es el de ninguna interrupción` });
   }
   return problemas;
 }
 
 /**
  * Las marcas de los textos ({el_tano}, {voc:santi_el_goleador}, {vos}, {grupo})
- * tienen que nombrar a alguien de la agenda: si no, en el chat aparece la marca
- * cruda. Cada perfil tiene su agenda, así que se revisa perfil por perfil, y
- * solo lo que se puede llegar a ver con ella: una charla del grupo con alguien
- * que no está no pasa, y una rama que pide a alguien que no está tampoco.
- * En las peleas valen además {a} y {b}, que son los que se pelean.
+ * tienen que nombrar a alguien del elenco: si no, en el chat aparece la marca
+ * cruda. En las peleas valen además {a} y {b}, que son los que se pelean.
  */
 export function revisarMarcas(
-  perfiles: readonly DefinicionPerfil[],
   contactos: readonly DefinicionContacto[],
   grupo: DefinicionGrupo,
   interrupciones: readonly DefinicionInterrupcion[],
 ): ProblemaContenido[] {
-  const existen = new Set(contactos.map((c) => c.id));
-  // El mismo texto falla igual en varios perfiles: se dice una vez, con todos.
-  const fallas = new Map<string, { archivo: string; donde: string; id: string; perfiles: string[] }>();
-
-  for (const perfil of perfiles) {
-    const agenda = agendaDe(perfil, perfiles, contactos);
-    const enAgenda = new Set(agenda.map((c) => c.id));
-    const validas = new Set<string>([...enAgenda, ...MARCAS_FIJAS]);
-    const revisar = (texto: string, archivo: string, donde: string, extra: readonly string[] = []): void => {
-      for (const id of marcasDe(texto)) {
-        if (validas.has(id) || extra.includes(id)) continue;
-        const clave = `${archivo}|${donde}|${id}`;
-        const falla = fallas.get(clave) ?? { archivo, donde, id, perfiles: [] };
-        if (!falla.perfiles.includes(perfil.nombre)) falla.perfiles.push(perfil.nombre);
-        fallas.set(clave, falla);
-      }
-    };
-
-    for (const c of agenda) {
-      for (const { donde, texto } of textosAlAlcance(c, enAgenda)) revisar(texto, `${c.id}.json`, donde);
+  const problemas: ProblemaContenido[] = [];
+  const validas = new Set<string>([...contactos.map((c) => c.id), ...MARCAS_FIJAS]);
+  const revisar = (texto: string, archivo: string, donde: string, extra: readonly string[] = []): void => {
+    for (const id of marcasDe(texto)) {
+      if (!validas.has(id) && !extra.includes(id)) problemas.push({ archivo, detalle: `${donde}: la marca {${id}} no nombra a nadie del elenco` });
     }
-    const textosDe = (m: MensajeGrupo): string[] => [m.texto ?? "", m.audio?.transcripcion ?? ""];
-    for (const ch of grupo.charlas) {
-      if (!ch.mensajes.every((m) => enAgenda.has(m.de))) continue;
-      if ("alConfirmar" in ch.cuando && !enAgenda.has(ch.cuando.alConfirmar)) continue;
-      for (const m of ch.mensajes) for (const t of textosDe(m)) revisar(t, "grupo.json", `charla "${ch.id}"`);
-    }
-    grupo.roces.forEach((r, i) => {
-      for (const m of r.mensajes) for (const t of textosDe(m)) revisar(t, "grupo.json", `roce ${i + 1}`, ["a", "b"]);
-      if (r.calmar) revisar(r.calmar, "grupo.json", `roce ${i + 1}`, ["a", "b"]);
-    });
-    for (const t of [grupo.calmar.mensaje, grupo.cerrar.mensaje, grupo.cerrar.sinDiez]) revisar(t, "grupo.json", "calmar/cerrar");
-    for (const m of grupo.calmar.respuestas) for (const t of textosDe(m)) revisar(t, "grupo.json", "calmar", ["a", "b"]);
-    for (const i of interrupciones) {
-      for (const t of [i.de, i.texto, ...(i.insistencias ?? []).map((x) => x.texto)]) revisar(t, "interrupciones.json", `"${i.id}"`);
-    }
+  };
+  for (const c of contactos) {
+    for (const { donde, texto } of textosDelContacto(c)) revisar(texto, `${c.id}.json`, donde);
   }
-
-  return [...fallas.values()].map(({ archivo, donde, id, perfiles: con }) => ({
-    archivo,
-    detalle: existen.has(id)
-      ? `${donde}: la marca {${id}} no está en la agenda de ${con.join(" ni de ")}`
-      : `${donde}: la marca {${id}} no nombra a nadie`,
-  }));
+  const textosDe = (m: MensajeGrupo): string[] => [m.texto ?? "", m.audio?.transcripcion ?? ""];
+  for (const ch of grupo.charlas) for (const m of ch.mensajes) for (const t of textosDe(m)) revisar(t, "grupo.json", `charla "${ch.id}"`);
+  grupo.roces.forEach((r, i) => {
+    for (const m of r.mensajes) for (const t of textosDe(m)) revisar(t, "grupo.json", `roce ${i + 1}`, ["a", "b"]);
+    if (r.calmar) revisar(r.calmar, "grupo.json", `roce ${i + 1}`, ["a", "b"]);
+  });
+  for (const t of [grupo.calmar.mensaje, grupo.cerrar.mensaje, grupo.cerrar.sinDiez]) revisar(t, "grupo.json", "calmar/cerrar");
+  for (const m of grupo.calmar.respuestas) for (const t of textosDe(m)) revisar(t, "grupo.json", "calmar", ["a", "b"]);
+  for (const i of interrupciones) {
+    for (const t of [i.de, i.texto, ...(i.insistencias ?? []).map((x) => x.texto)]) revisar(t, "interrupciones.json", `"${i.id}"`);
+  }
+  return problemas;
 }
 
-/**
- * Lo que un contacto te puede llegar a escribir, o vos a él, con esta agenda.
- * Una condición que pide a alguien que no está nunca se cumple: la apertura,
- * la respuesta o el desvío que la lleva no pasan.
- */
-function textosAlAlcance(contacto: DefinicionContacto, agenda: ReadonlySet<string>): { donde: string; texto: string }[] {
-  const posible = (c: Condicion | undefined): boolean =>
-    [c?.confirmado, c?.enAgenda, c?.elegidoA?.contacto].every((id) => id === undefined || agenda.has(id));
+/** Todo lo que un contacto te escribe, o vos a él, con dónde está cada texto. */
+function textosDelContacto(contacto: DefinicionContacto): { donde: string; texto: string }[] {
   const salida: { donde: string; texto: string }[] = [];
-  const vistos = new Set<string>();
-  const pendientes = [contacto.nodoInicial, ...(contacto.aperturas ?? []).filter((a) => posible(a.si)).map((a) => a.nodo)];
-  while (pendientes.length > 0) {
-    const id = pendientes.pop()!;
-    const nodo = contacto.nodos[id];
-    if (vistos.has(id) || !nodo) continue;
-    vistos.add(id);
+  for (const [id, nodo] of Object.entries(contacto.nodos)) {
     for (const m of nodo.mensajes) salida.push({ donde: `nodo "${id}"`, texto: m });
     for (const o of nodo.opciones) {
-      if (!posible(o.requiere)) continue;
       const donde = `nodo "${id}", opción "${o.id}"`;
       salida.push({ donde, texto: o.texto });
       for (const invitado of o.efectos.trae ?? []) salida.push({ donde, texto: invitado.nombre });
-      const desvios: readonly Desvio[] = Array.isArray(o.siguiente) ? o.siguiente : [{ nodo: o.siguiente as string | null }];
-      for (const d of desvios) if (d.nodo !== null && posible(d.si)) pendientes.push(d.nodo);
     }
   }
-  for (const b of contacto.bajas ?? []) if (posible(b.si)) salida.push({ donde: "baja", texto: b.texto });
+  for (const b of contacto.bajas ?? []) salida.push({ donde: "baja", texto: b.texto });
   if (contacto.duda) salida.push({ donde: "duda", texto: contacto.duda });
   for (const t of contacto.excusas ?? []) salida.push({ donde: "excusa", texto: t });
   for (const t of contacto.imprevistos ?? []) salida.push({ donde: "imprevisto", texto: t });

@@ -27,18 +27,6 @@
         "horaDesde": 1220
       },
       "nodo": "tarde"
-    },
-    {
-      "si": {
-        "confirmado": "el_sindicalista"
-      },
-      "nodo": "con_beto"
-    },
-    {
-      "si": {
-        "enAgenda": "el_sindicalista"
-      },
-      "nodo": "abre_beto"
     }
   ],
   "nodos": {
@@ -90,119 +78,6 @@
           "efectos": {
             "estado": "rechazado",
             "registrar": "ignorado"
-          },
-          "siguiente": null
-        }
-      ]
-    },
-    "abre_beto": {
-      "mensajes": [
-        "cuánto sale?",
-        "porq la última pagué 1500 y jugamos media hora. eso es inflación de minutos",
-        "y va {el_sindicalista}? porq si va el kukardo de {el_sindicalista} no sumo ni en pedo"
-      ],
-      "opciones": [
-        {
-          "id": "negar_beto",
-          "texto": "{el_sindicalista} no va, tranqui",
-          "costoReloj": 2,
-          "efectos": {
-            "probabilidadBaja": -15
-          },
-          "siguiente": [
-            {
-              "si": {
-                "confirmado": "el_sindicalista"
-              },
-              "nodo": "pillado"
-            },
-            {
-              "nodo": "cierra"
-            }
-          ]
-        },
-        {
-          "id": "explicar",
-          "texto": "1500 y jugamos la hora entera, te lo garantizo",
-          "costoReloj": 2,
-          "efectos": {
-            "moral": -1,
-            "probabilidadBaja": -10
-          },
-          "siguiente": "cierra"
-        },
-        {
-          "id": "invitar",
-          "texto": "hoy va por mi cuenta, vení",
-          "costoReloj": 2,
-          "efectos": {
-            "dinero": -1500,
-            "probabilidadBaja": -25
-          },
-          "siguiente": "gratis",
-          "requiere": {
-            "dineroMin": 1500
-          }
-        },
-        {
-          "id": "rata",
-          "texto": "{voc:santi_el_goleador} no seas rata, son 1500",
-          "costoReloj": 2,
-          "efectos": {
-            "moral": -2,
-            "probabilidadBaja": 25,
-            "enojo": 30,
-            "registrar": "apuro"
-          },
-          "siguiente": "ofendido"
-        },
-        {
-          "id": "dejar",
-          "texto": "[Dejarlo en visto]",
-          "costoReloj": 1,
-          "efectos": {
-            "estado": "rechazado",
-            "registrar": "ignorado"
-          },
-          "siguiente": null
-        }
-      ]
-    },
-    "con_beto": {
-      "mensajes": [
-        "vi q está {el_sindicalista} en la lista",
-        "si va el kukardo de {el_sindicalista} no sumo ni en pedo. después me quiere cobrar la cuota sindical en el vestuario"
-      ],
-      "opciones": [
-        {
-          "id": "otro_equipo",
-          "texto": "jugás en el otro equipo y le hacés tres goles",
-          "costoReloj": 2,
-          "efectos": {
-            "moral": -1,
-            "probabilidadBaja": -10
-          },
-          "siguiente": "cierra"
-        },
-        {
-          "id": "invitar",
-          "texto": "te invito yo por bancártelo",
-          "costoReloj": 2,
-          "efectos": {
-            "dinero": -1500,
-            "probabilidadBaja": -25
-          },
-          "siguiente": "gratis",
-          "requiere": {
-            "dineroMin": 1500
-          }
-        },
-        {
-          "id": "dejar",
-          "texto": "[Bueno, otro día]",
-          "costoReloj": 1,
-          "efectos": {
-            "estado": "rechazado"
           },
           "siguiente": null
         }
@@ -318,23 +193,6 @@
         }
       ]
     },
-    "pillado": {
-      "mensajes": [
-        "{el_sindicalista} está en la lista. lo estoy viendo",
-        "me mentiste como un político. no voy"
-      ],
-      "opciones": [
-        {
-          "id": "bueno",
-          "texto": "[Bueno]",
-          "costoReloj": 1,
-          "efectos": {
-            "estado": "rechazado"
-          },
-          "siguiente": null
-        }
-      ]
-    },
     "ofendido": {
       "mensajes": [
         "rata? yo invierto, q es distinto",
@@ -400,14 +258,6 @@
     }
   },
   "bajas": [
-    {
-      "si": {
-        "elegiste": "negar_beto",
-        "confirmado": "el_sindicalista"
-      },
-      "texto": "vi al kukardo en la lista. me mentiste, no sumo ni en pedo",
-      "porque": "Le dijiste que Beto no iba"
-    },
     {
       "texto": "se me cayó el exchange y estoy re caliente. no voy"
     }

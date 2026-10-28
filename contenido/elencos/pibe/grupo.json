@@ -113,7 +113,7 @@
       "cuando": { "desde": 1245, "hasta": 1255 },
       "mensajes": [
         { "de": "nico_el_cunado", "texto": "al final se juega? porq está refrescando" },
-        { "de": "el_sindicalista", "texto": "{voc:nico_el_cunado} son las nueve menos diez", "cita": true }
+        { "de": "el_tano", "texto": "{voc:nico_el_cunado} son las nueve menos diez", "cita": true }
       ]
     }
   ],

@@ -23,6 +23,7 @@ import { nuevaCampana } from "../core/campana.js";
 import { MODO_POR_DEFECTO } from "../core/modo.js";
 import { opcionesDeViernes } from "../core/viernes.js";
 import { cargarContenido } from "../datos/cargar.js";
+import { perfilesJugables } from "../core/perfiles.js";
 import type { OpcionDialogo } from "../core/tipos.js";
 import { ESTILOS, jugarViernes } from "./estilos.js";
 import { medir, type Medicion } from "./medicion.js";
@@ -35,7 +36,7 @@ const valor = (nombre: string): string | undefined => {
 const CORRIDAS = Number(argumentos.find((a) => /^\d+$/.test(a)) ?? 300);
 const PLATA = argumentos.includes("--plata");
 const TODO = argumentos.includes("--todo");
-const PERFIL = valor("--perfil") ?? "oficinista";
+const PERFIL = valor("--perfil") ?? "pibe";
 const ESTILO = valor("--estilo") ?? "razonable";
 const COLCHON = valor("--colchon");
 
@@ -47,10 +48,10 @@ const CASI_NUNCA = 2;
 const A_VECES = 5;
 
 const contenido = await cargarContenido();
-const perfil = contenido.perfiles.find((p) => p.id === PERFIL);
+const perfil = perfilesJugables(contenido.perfiles, contenido.elencos).find((p) => p.id === PERFIL);
 const estilo = ESTILOS.find((e) => e.id === ESTILO);
 if (!perfil || !estilo) {
-  console.error(`\n  Perfil o estilo desconocido. Perfiles: ${contenido.perfiles.map((p) => p.id).join(", ")}. Estilos: ${ESTILOS.map((e) => e.id).join(", ")}\n`);
+  console.error(`\n  Perfil o estilo desconocido. Perfiles con elenco: ${perfilesJugables(contenido.perfiles, contenido.elencos).map((p) => p.id).join(", ")}. Estilos: ${ESTILOS.map((e) => e.id).join(", ")}\n`);
   process.exit(1);
 }
 

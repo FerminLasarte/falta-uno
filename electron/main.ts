@@ -89,7 +89,8 @@ async function cargarContenidoDelJuego(): Promise<void> {
   const raiz = esProduccion ? join(process.resourcesPath, "contenido") : "contenido";
   try {
     contenido = await cargarContenido(raiz);
-    console.log(`[contenido] ${contenido.contactos.length} contactos cargados desde ${raiz}`);
+    const elencos = Object.entries(contenido.elencos).map(([perfil, e]) => `${perfil} (${e.contactos.length} contactos)`);
+    console.log(`[contenido] elencos cargados desde ${raiz}: ${elencos.join(", ")}`);
   } catch (error) {
     if (error instanceof ErrorDeContenido) {
       console.error(`\n[contenido] EL JUEGO NO PUEDE ARRANCAR\n${error.message}\n`);

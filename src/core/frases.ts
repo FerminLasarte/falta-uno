@@ -1,6 +1,6 @@
 /**
  * Lo que decís vos y lo que dice cualquiera sin texto propio: el primer mensaje
- * a cada uno, la llamada y la baja genérica. Sale de `contenido/frases.json`,
+ * a cada uno, la llamada y la baja genérica. Sale del `frases.json` de cada elenco,
  * con el mismo registro que el resto: es tu voz, no la de la app.
  */
 export interface Frases {

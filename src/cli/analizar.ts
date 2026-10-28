@@ -25,6 +25,7 @@ import { huella, leerGuardado, type ViernesGuardado } from "../core/registro.js"
 import { formatearHora } from "../core/tiempo.js";
 import { opcionesDeViernes, type Ajustes } from "../core/viernes.js";
 import { cargarContenido, type Contenido } from "../datos/cargar.js";
+import { jugable, type Elenco } from "../core/perfiles.js";
 import type { PerfilId } from "../core/tipos.js";
 import { imprimirTabla, medir, type Medicion, type Momento } from "./medicion.js";
 
@@ -100,7 +101,7 @@ async function leer(archivo: string): Promise<Leido[] | null> {
 }
 
 /** "contacto:carlos_el_quejoso" → "el chat con Carlos". */
-function nombrarPantalla(pantalla: string, contenido: Contenido): string {
+function nombrarPantalla(pantalla: string, elenco: Elenco | undefined): string {
   const [tipo, id] = pantalla.split(":");
   switch (tipo) {
     case "grupo":
@@ -110,9 +111,9 @@ function nombrarPantalla(pantalla: string, contenido: Contenido): string {
     case "partido":
       return "la cancha";
     case "contacto":
-      return `el chat con ${contenido.contactos.find((c) => c.id === id)?.nombre ?? id}`;
+      return `el chat con ${elenco?.contactos.find((c) => c.id === id)?.nombre ?? id}`;
     case "interrupcion":
-      return `el chat con ${contenido.interrupciones.find((i) => i.id === id)?.de ?? id}`;
+      return `el chat con ${elenco?.interrupciones.find((i) => i.id === id)?.de ?? id}`;
     default:
       return pantalla;
   }
@@ -129,7 +130,7 @@ function imprimirLinea(leido: Leido, medicion: Medicion, contenido: Contenido): 
     ms: m.ms,
     orden: m.paso - 0.5,
     hora: "",
-    texto: `mira ${nombrarPantalla(m.pantalla, contenido)}`,
+    texto: `mira ${nombrarPantalla(m.pantalla, contenido.elencos[leido.perfil])}`,
     tuyo: false,
   }));
   const todo = [...medicion.linea, ...marcas].sort((a, b) => a.ms - b.ms || a.orden - b.orden);
@@ -186,6 +187,10 @@ const medidos = leidos.flatMap((leido) => {
   const perfil = contenido.perfiles.find((p) => p.id === leido.perfil);
   if (!perfil) {
     console.log(`  ⚠ ${leido.archivo}: el perfil "${leido.perfil}" ya no existe`);
+    return [];
+  }
+  if (!jugable(contenido.elencos, perfil.id)) {
+    console.log(`  ⚠ ${leido.archivo}: ${perfil.nombre} todavía no tiene elenco`);
     return [];
   }
   const opciones = opcionesDeViernes(contenido, perfil, leido.semilla, leido.viernes, leido.ajustes);

@@ -30,7 +30,7 @@ export const ESTADOS_CONTACTO = [
 ] as const;
 export type EstadoContacto = (typeof ESTADOS_CONTACTO)[number];
 
-export const PERFILES = ["acomodado", "pibe_de_barrio", "oficinista"] as const;
+export const PERFILES = ["acomodado", "pibe", "oficinista"] as const;
 export type PerfilId = (typeof PERFILES)[number];
 
 /** Efectos declarativos. Nunca código embebido: son datos que el núcleo interpreta. */
@@ -101,8 +101,6 @@ export interface Condicion {
   readonly confirmado?: string;
   /** Ese contacto no está en la lista. */
   readonly noConfirmado?: string;
-  /** Ese contacto está en tu agenda: cada perfil tiene la suya, y no todos lo conocen. */
-  readonly enAgenda?: string;
   /** Hay por lo menos tantos en la lista. */
   readonly confirmadosMin?: number;
   /** Faltan por lo menos tantos para llenar la lista: "si les falta gente, traigo a mi primo". */
@@ -192,6 +190,7 @@ export function destinos(opcion: OpcionDialogo): (string | null)[] {
   return Array.isArray(opcion.siguiente) ? opcion.siguiente.map((d) => d.nodo) : [opcion.siguiente as string | null];
 }
 
+/** Quién arma el partido. Sus amigos y su mundo están en su elenco (ver `perfiles.ts`). */
 export interface DefinicionPerfil {
   readonly id: PerfilId;
   readonly nombre: string;
@@ -199,16 +198,10 @@ export interface DefinicionPerfil {
   readonly dineroInicial: number;
   readonly ventaja: string;
   readonly desventaja: string;
-  /** El contacto que solo tiene este perfil en la agenda. */
-  readonly contactoUnico: string;
   /** Lo que le contestás a la cancha cuando pregunta cómo van a pagar: así se elige el perfil. */
   readonly respuesta: string;
   /** Lo que implica, en una línea, debajo de la respuesta. */
   readonly resumen: string;
-  /** Contactos comunes que este perfil no tiene en la agenda. */
-  readonly excluidos?: readonly string[];
-  /** Cuánto más (o menos) probable es cada interrupción con este perfil, por id. */
-  readonly probabilidadInterrupciones?: Readonly<Record<string, number>>;
 }
 
 /** La configuración de un viernes, ya con su modo (ver `configDeViernes`). */

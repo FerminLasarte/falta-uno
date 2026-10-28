@@ -102,7 +102,7 @@ npm install
 | `npm run humo` | Smoke test: levanta el juego, verifica que la ventana cargue, lo cierra. |
 | `npm run jugar` | Juga un viernes completo por consola. Acepta stdin por pipe. |
 | `npm run validar` | Valida todo el contenido y reporta el volumen escrito. |
-| `npm run bot -- 500` | Corre 500 viernes headless por perfil y por estilo de jugador, y reporta balance. Acepta `--perfil oficinista`, `--estilo razonable,atento` y `--modo torneo-f5,partido-f8` (o `--modo todos`). |
+| `npm run bot -- 500` | Corre 500 viernes headless por perfil y por estilo de jugador, y reporta balance. Acepta `--perfil pibe`, `--estilo razonable,atento` y `--modo torneo-f5,partido-f8` (o `--modo todos`). |
 | `npm run bot -- 1 --narrar` | Imprime un partido completo con su desglose y narración. |
 | `npm run valor -- 300` | Valor esperado de cada respuesta: rejuega cada decisión del bot con las otras respuestas, en la misma situación, y lista las que convienen siempre, las que no convienen nunca y las que dan lo mismo. Acepta `--estilo atento`, `--plata` (detalle de las charlas con plata), `--todo` y `--colchon 3000`. |
 | `npm run analizar -- carpeta` | Reproduce viernes jugados por personas (`partidas/` o un guardado) y saca el mismo informe que el bot, con la línea de tiempo de cada uno (`--linea`). |
@@ -155,7 +155,9 @@ src/datos/       Schema, validador de grafo y carga de contenido.
 src/cli/         Herramientas de consola: jugar, validar, bot, valor y analizar.
   estilos.ts     Cómo juega el bot: razonable, atento y apurado.
   medicion.ts    Medir un viernes: lo que reportan el bot y el analizador, con la misma vara.
-contenido/       Los datos del juego. Un archivo por contacto, más el grupo (grupo.json).
+contenido/       Los datos del juego: lo común en la raíz, y el mundo de cada perfil en
+                 elencos/<perfil>/ (un archivo por contacto, grupo, interrupciones y frases).
+                 Lo de borradores/ no se carga.
 arte/            La escena en Blender, el script que la exporta y los créditos de assets.
 tests/           Tests sobre el núcleo y el contenido.
 ```
@@ -247,20 +249,21 @@ que da prestar atención: escribe primero al mejor de los puestos que faltan, us
 audios, atiende a la cancha, no miente sobre lo que la lista va a descubrir y cuida la plata) y
 **apurado** (confirma lo más rápido posible y no atiende a nadie). El atento llama a todos los que
 avisan que no saben si llegan; el razonable, a la mitad; el apurado, a ninguno. Con la lista llena
-atiende lo pendiente y la cierra, como en el juego. Lista llena, Oficinista, 500 viernes:
+atiende lo pendiente y la cierra, como en el juego. Lista llena, El Pibe, 500 viernes (sin
+rebalancear desde que es el único perfil que se juega):
 
 | | razonable | atento | apurado |
 |---|---|---|---|
-| Partido F5 | 80% | 100% | 15% |
-| Partido F6 | 66% | 100% | 3% |
-| Partido F8 | 45% | 27% | 1% |
-| **Torneo F5** (el slice) | **55%** | **86%** | **9%** |
-| Torneo F6 | 24% | 53% | 2% |
-| Torneo F8 | 19% | 38% | 6% |
+| Partido F5 | 99% | 100% | 65% |
+| Partido F6 | 88% | 94% | 68% |
+| Partido F8 | 82% | 86% | 40% |
+| **Torneo F5** (el slice) | **78%** | **86%** | **63%** |
+| Torneo F6 | 59% | 69% | 53% |
+| Torneo F8 | 60% | 57% | 46% |
 
 El partido lo deciden los titulares: los mejores de cada puesto según el formato, y el que juega
 fuera de su puesto rinde 20 puntos menos (al arco, sin arquero, va el peor). El banco no suma. El
-razonable gana entre el 39% y el 57% de los partidos que juega; el atento, entre el 45% y el 59%.
+razonable gana entre el 36% y el 50% de los partidos que juega; el atento, entre el 41% y el 54%.
 
 La plata del viernes es un bolsillo aparte: arranca con tu parte de la cancha y se llena con lo
 que ponen los que vienen. Los arreglos que cuestan plata se pagan de ahí. Lo de la campaña es el
@@ -273,8 +276,8 @@ Las perillas, en `contenido/config.json` salvo donde se dice:
   menos). Es un escalón, no una rampa: con 77 el razonable pasa del 55% al 87%.
 - **Aviso de los que dudan:** 20 minutos antes de la revisión (`avisoAntes`). Si dudan varios,
   llamarlos a todos no siempre entra en el reloj.
-- **Excusas:** uno o dos de la agenda no pueden esa noche, elegidos por la semilla; nunca el
-  contacto único del perfil, y nunca tantos que no quede margen.
+- **Excusas:** uno o dos de la agenda no pueden esa noche, elegidos por la semilla; nunca tantos
+  que no quede margen.
 - **Tu parte:** 1500 (`cuota`), con eso arranca el bolsillo de cada viernes.
 - **Revisión:** 20:30; en el partido de fútbol 5 y 6, 20:40, para que las bajas lleguen cuando queda
   poco para reponer.

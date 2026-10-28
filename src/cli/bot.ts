@@ -5,7 +5,7 @@
  * núcleo no toca el DOM.
  *
  *   npm run bot -- 500
- *   npm run bot -- 500 --perfil oficinista --estilo razonable,apurado
+ *   npm run bot -- 500 --perfil pibe --estilo razonable,apurado
  *   npm run bot -- 500 --modo partido-f5,torneo-f8      (o --modo todos; sin --modo, el del slice)
  *   npm run bot -- 1 --narrar
  *
@@ -17,6 +17,7 @@ import { Registro } from "../core/registro.js";
 import { resolver } from "../core/resolucion.js";
 import { opcionesDeViernes } from "../core/viernes.js";
 import { cargarContenido } from "../datos/cargar.js";
+import { elencoDe, perfilesJugables } from "../core/perfiles.js";
 import type { DefinicionPerfil } from "../core/tipos.js";
 import { ESTILOS, jugarViernes, type Estilo } from "./estilos.js";
 import { imprimirTabla, medir, type Medicion } from "./medicion.js";
@@ -39,7 +40,7 @@ const OBJETIVOS: Readonly<Record<string, readonly [number, number]>> = {
   atento: [75, 85],
   apurado: [20, 35],
 };
-const PERFIL_DEL_SLICE = "oficinista";
+const PERFIL_DEL_SLICE = "pibe";
 
 /**
  * La meta de los formatos grandes (paso 8 del slice): en F6 y F8 la diferencia
@@ -63,7 +64,7 @@ function elegidos<T extends { id: string }>(todos: readonly T[], filtro: string 
   return encontrados;
 }
 
-const perfiles = elegidos(contenido.perfiles, valor("--perfil"), "Perfil");
+const perfiles = elegidos(perfilesJugables(contenido.perfiles, contenido.elencos), valor("--perfil"), "Perfil");
 const clave = (m: Modo): string => `${m.competencia}-${m.formato}`;
 const modos: Modo[] =
   valor("--modo") === "todos"
@@ -169,10 +170,9 @@ if (marcasGrandes.length > 0) {
 
 // Un contacto que nadie usa nunca es contenido muerto: hay que arreglarlo o sacarlo.
 const conteo = new Map<string, number>();
-for (const c of contenido.contactos) conteo.set(c.id, 0);
+for (const p of perfiles) for (const c of elencoDe(contenido.elencos, p.id).contactos) conteo.set(c.id, 0);
 for (const m of todas) for (const id of m.usados) conteo.set(id, (conteo.get(id) ?? 0) + 1);
-const agendas = new Set(perfiles.flatMap((p) => opcionesPara(p, "x").agenda.map((c) => c.id)));
-const muertos = [...conteo].filter(([id, n]) => agendas.has(id) && n / todas.length < 0.05);
+const muertos = [...conteo].filter(([, n]) => n / todas.length < 0.05);
 
 console.log(`  Contactos que casi nunca entran en juego:`);
 if (muertos.length === 0) {

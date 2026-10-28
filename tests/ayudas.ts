@@ -28,7 +28,6 @@ export const PERFIL: DefinicionPerfil = {
   dineroInicial: 20000,
   ventaja: "-",
   desventaja: "-",
-  contactoUnico: "el_sindicalista",
   respuesta: "Te la transfiero cuando salga del laburo.",
   resumen: "-",
 };

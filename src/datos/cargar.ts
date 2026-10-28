@@ -8,7 +8,8 @@ import type { DefinicionTorneo } from "../core/campana.js";
 import type { DefinicionInscripcion } from "../core/inscripcion.js";
 import type { DefinicionInterrupcion } from "../core/interrupciones.js";
 import type { ConfigContenido } from "../core/modo.js";
-import type { DefinicionContacto, DefinicionPerfil } from "../core/tipos.js";
+import type { Elenco, Elencos } from "../core/perfiles.js";
+import type { DefinicionContacto, DefinicionPerfil, PerfilId } from "../core/tipos.js";
 import {
   configSchema,
   contactoSchema,
@@ -30,15 +31,19 @@ import {
   type ProblemaContenido,
 } from "./validar.js";
 
+/**
+ * Lo común está en la raíz de `contenido/`: la config, los perfiles, la charla
+ * con la cancha, el torneo y el relato. El mundo de cada perfil, en
+ * `contenido/elencos/<perfil>/`: sus contactos, su grupo, sus interrupciones y
+ * sus frases. Lo que está en `contenido/borradores/` no se carga.
+ */
 export interface Contenido {
   readonly config: ConfigContenido;
   readonly perfiles: readonly DefinicionPerfil[];
-  readonly contactos: readonly DefinicionContacto[];
-  readonly interrupciones: readonly DefinicionInterrupcion[];
-  readonly grupo: DefinicionGrupo;
+  /** Solo los perfiles que ya tienen elenco: los otros todavía no se juegan. */
+  readonly elencos: Elencos;
   readonly inscripcion: DefinicionInscripcion;
   readonly torneo: DefinicionTorneo;
-  readonly frases: Frases;
   readonly relato: Relato;
 }
 
@@ -77,17 +82,50 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
   const leer = async <T extends z.ZodTypeAny>(archivo: string, schema: T): Promise<z.infer<T> | null> =>
     validar(schema, await leerJson(join(raiz, archivo)), archivo, problemas);
 
-  const config = await leer("config.json", configSchema);
-  const perfiles = await leer("perfiles.json", perfilSchema.array());
-  const interrupciones = await leer("interrupciones.json", interrupcionSchema.array());
-  const grupo = await leer("grupo.json", grupoSchema);
+  const config = (await leer("config.json", configSchema)) as ConfigContenido | null;
+  const perfiles = (await leer("perfiles.json", perfilSchema.array())) as DefinicionPerfil[] | null;
   const inscripcion = await leer("inscripcion.json", inscripcionSchema);
   const torneo = await leer("torneo.json", torneoSchema);
-  const frases = await leer("frases.json", frasesSchema);
   const relato = await leer("relato.json", relatoSchema);
   if (relato) problemas.push(...revisarRelato(relato));
 
-  const dirContactos = join(raiz, "contactos");
+  const elencos: Partial<Record<PerfilId, Elenco>> = {};
+  const carpetas = (await readdir(join(raiz, "elencos"), { withFileTypes: true })).filter((d) => d.isDirectory());
+  for (const { name: id } of carpetas.sort((a, b) => a.name.localeCompare(b.name))) {
+    const perfil = perfiles?.find((p) => p.id === id);
+    if (!perfil) {
+      if (perfiles) problemas.push({ archivo: `elencos/${id}/`, detalle: "no es la carpeta de ningún perfil de perfiles.json" });
+      continue;
+    }
+    const elenco = await cargarElenco(join(raiz, "elencos", id), `elencos/${id}/`, config, problemas);
+    if (elenco) elencos[perfil.id] = elenco;
+  }
+  if (carpetas.length === 0) problemas.push({ archivo: "elencos/", detalle: "ningún perfil tiene elenco: no hay nada para jugar" });
+  if (perfiles && inscripcion) problemas.push(...revisarPerfiles(perfiles, elencos, inscripcion));
+
+  if (problemas.length > 0 || !config || !perfiles || !inscripcion || !torneo || !relato) {
+    throw new ErrorDeContenido(problemas);
+  }
+
+  return { config, perfiles, elencos, inscripcion, torneo, relato };
+}
+
+/** Un elenco entero, revisado por dentro: todo lo que nombra tiene que estar en él. */
+async function cargarElenco(
+  dir: string,
+  prefijo: string,
+  config: ConfigContenido | null,
+  todos: ProblemaContenido[],
+): Promise<Elenco | null> {
+  const problemas: ProblemaContenido[] = [];
+  const leer = async <T extends z.ZodTypeAny>(archivo: string, schema: T): Promise<z.infer<T> | null> =>
+    validar(schema, await leerJson(join(dir, archivo)), archivo, problemas);
+
+  const grupo = (await leer("grupo.json", grupoSchema)) as DefinicionGrupo | null;
+  const interrupciones = (await leer("interrupciones.json", interrupcionSchema.array())) as DefinicionInterrupcion[] | null;
+  const frases = (await leer("frases.json", frasesSchema)) as Frases | null;
+
+  const dirContactos = join(dir, "contactos");
   const archivos = (await readdir(dirContactos)).filter((a) => a.endsWith(".json")).sort();
   const contactos: DefinicionContacto[] = [];
   const idsVistos = new Map<string, string>();
@@ -117,31 +155,15 @@ export async function cargarContenido(raiz = "contenido"): Promise<Contenido> {
   }
 
   problemas.push(...revisarCondiciones(contactos));
-  if (grupo && config) problemas.push(...revisarGrupo(grupo as DefinicionGrupo, contactos, config));
-  if (perfiles && interrupciones && inscripcion) {
-    problemas.push(
-      ...revisarPerfiles(perfiles as DefinicionPerfil[], contactos, interrupciones as DefinicionInterrupcion[], inscripcion),
-    );
-  }
-  if (perfiles && grupo && interrupciones) {
-    problemas.push(
-      ...revisarMarcas(perfiles as DefinicionPerfil[], contactos, grupo as DefinicionGrupo, interrupciones as DefinicionInterrupcion[]),
-    );
-  }
+  if (grupo && config) problemas.push(...revisarGrupo(grupo, contactos, config));
+  if (grupo && interrupciones) problemas.push(...revisarMarcas(contactos, grupo, interrupciones));
 
-  if (problemas.length > 0 || !config || !perfiles || !interrupciones || !grupo || !inscripcion || !torneo || !frases || !relato) {
-    throw new ErrorDeContenido(problemas);
+  // Los revisores nombran el archivo como si el elenco fuera lo único que hay.
+  const propios = new Set(["grupo.json", "interrupciones.json", "frases.json"]);
+  for (const p of problemas) {
+    const archivo = propios.has(p.archivo) || p.archivo.endsWith("/") ? p.archivo : `contactos/${p.archivo}`;
+    todos.push({ archivo: `${prefijo}${archivo}`, detalle: p.detalle });
   }
-
-  return {
-    config: config as ConfigContenido,
-    perfiles: perfiles as DefinicionPerfil[],
-    contactos,
-    interrupciones: interrupciones as DefinicionInterrupcion[],
-    grupo: grupo as DefinicionGrupo,
-    inscripcion,
-    torneo,
-    frases,
-    relato,
-  };
+  if (problemas.length > 0 || !grupo || !interrupciones || !frases) return null;
+  return { contactos, grupo, interrupciones, frases };
 }

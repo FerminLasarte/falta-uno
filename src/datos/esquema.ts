@@ -43,7 +43,6 @@ export const condicionSchema = z
     escuchado: z.string().min(1).optional(),
     confirmado: z.string().min(1).optional(),
     noConfirmado: z.string().min(1).optional(),
-    enAgenda: z.string().min(1).optional(),
     confirmadosMin: z.number().int().min(0).optional(),
     faltanMin: z.number().int().min(1).optional(),
     faltanMax: z.number().int().min(0).optional(),
@@ -107,11 +106,8 @@ export const perfilSchema = z
     dineroInicial: z.number().int().min(0),
     ventaja: z.string().min(1),
     desventaja: z.string().min(1),
-    contactoUnico: z.string().min(1),
     respuesta: z.string().min(1),
     resumen: z.string().min(1),
-    excluidos: z.array(z.string().min(1)).optional(),
-    probabilidadInterrupciones: z.record(z.string(), z.number().positive()).optional(),
   })
   .strict();
 
@@ -156,6 +152,7 @@ const porCompetencia = <T extends z.ZodTypeAny>(t: T) => z.object({ partido: t, 
 export const inscripcionSchema = z
   .object({
     chat: z.string().min(1),
+    de: z.string().min(1),
     saludo: z.string().min(1),
     competencias: porCompetencia(respuestaInscripcionSchema),
     preguntaFormato: porCompetencia(z.string().min(1)),

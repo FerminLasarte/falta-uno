@@ -21,6 +21,8 @@ export interface RespuestaInscripcion {
 export interface DefinicionInscripcion {
   /** El id de la interrupción cuyo chat comparte. */
   readonly chat: string;
+  /** Quién escribe: la cancha, que todavía no es de ningún perfil porque el perfil se elige acá. */
+  readonly de: string;
   readonly saludo: string;
   readonly competencias: Readonly<Record<Competencia, RespuestaInscripcion>>;
   readonly preguntaFormato: Readonly<Record<Competencia, string>>;

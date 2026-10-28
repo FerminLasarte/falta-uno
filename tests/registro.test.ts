@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { opcionesDeViernes } from "../src/core/viernes.js";
 import { cargarContenido } from "../src/datos/cargar.js";
+import { perfilesJugables } from "../src/core/perfiles.js";
 import { Partida, type OpcionesPartida } from "../src/core/partida.js";
 import { FORMATO_GUARDADO, huella, leerGuardado, Registro, type Guardado, type Paso } from "../src/core/registro.js";
 import { resolver } from "../src/core/resolucion.js";
@@ -10,9 +11,11 @@ import { agendaCompleta, CONFIG, PERFIL, SIN_INTERRUPCIONES } from "./ayudas.js"
 
 const contenido = await cargarContenido();
 
+const jugables = perfilesJugables(contenido.perfiles, contenido.elencos);
+
 /** Como arma el viernes el juego: la agenda del perfil y la charla con la cancha. */
 function opcionesReales(semilla: string, indice = 0): OpcionesPartida {
-  const perfil = contenido.perfiles[indice]!;
+  const perfil = jugables[indice % jugables.length]!;
   return opcionesDeViernes(contenido, perfil, semilla, { fecha: 1, dinero: perfil.dineroInicial });
 }
 

@@ -1,7 +1,7 @@
 import { configDeViernes, MODO_POR_DEFECTO } from "../core/modo.js";
 import { crearLector } from "./entrada.js";
 import { alDia, Partida, type EventoFeed } from "../core/partida.js";
-import { agendaDe } from "../core/perfiles.js";
+import { elencoDe, perfilesJugables } from "../core/perfiles.js";
 import { resolver } from "../core/resolucion.js";
 import { formatearHora } from "../core/tiempo.js";
 import { cargarContenido, ErrorDeContenido } from "../datos/cargar.js";
@@ -40,21 +40,23 @@ const contenido = await cargarContenido().catch((error: unknown) => {
 // --------------------------------------------------------------- arranque
 
 console.log(`\n${C.bold}FALTA UNO${C.reset} ${C.dim}— viernes, 19:00${C.reset}\n`);
-contenido.perfiles.forEach((p, i) => {
+const jugables = perfilesJugables(contenido.perfiles, contenido.elencos);
+jugables.forEach((p, i) => {
   console.log(`  ${C.bold}${i + 1}${C.reset}. ${p.nombre}`);
   console.log(`     ${C.verde}+${C.reset} ${p.ventaja}`);
   console.log(`     ${C.rojo}−${C.reset} ${p.desventaja}\n`);
 });
 
-const eleccion = Number(await preguntar("Elegí perfil (1-3): "));
-const perfil = contenido.perfiles[Math.min(Math.max(eleccion, 1), 3) - 1] ?? contenido.perfiles[0]!;
+const eleccion = Number(await preguntar(`Elegí perfil (1-${jugables.length}): `));
+const perfil = jugables[Math.min(Math.max(eleccion, 1), jugables.length) - 1] ?? jugables[0]!;
+const elenco = elencoDe(contenido.elencos, perfil.id);
 const semilla = process.env["SEMILLA"] ?? String(Date.now());
 
 const partida = new Partida({
   perfil,
-  agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos),
-  interrupciones: contenido.interrupciones,
-  grupo: contenido.grupo,
+  agenda: elenco.contactos,
+  interrupciones: elenco.interrupciones,
+  grupo: elenco.grupo,
   config: configDeViernes(contenido.config, MODO_POR_DEFECTO),
   semilla,
 });

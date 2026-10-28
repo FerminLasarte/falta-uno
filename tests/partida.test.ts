@@ -273,13 +273,6 @@ describe("las excusas de la noche", () => {
     for (const semilla of ["a", "b", "c", "d", "e"]) expect(excusados(conExcusas(5, 5, semilla))).toHaveLength(1);
   });
 
-  it("nunca le toca al contacto único del perfil", () => {
-    const agenda = [...agendaCompleta(), contacto("el_sindicalista")];
-    for (const semilla of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
-      expect(excusados(conExcusas(2, 2, semilla, agenda))).not.toContain("el_sindicalista");
-    }
-  });
-
   it("la misma semilla elige a los mismos", () => {
     expect(excusados(conExcusas(1, 2, "igual"))).toEqual(excusados(conExcusas(1, 2, "igual")));
   });

@@ -31,8 +31,9 @@ canchas. Contestale así:
 
 1. **"anotarnos en el torneo relámpago"**
 2. **"fútbol 5"**
-3. Cuando te pregunta cómo van a pagar la seña: **"te la transfiero cuando
-   salga del laburo"**. Eso te hace *El Oficinista*.
+3. Cuando te pregunta cómo van a pagar la seña: **"la juntamos entre todos,
+   como siempre"**. Eso te hace *El Pibe*. Los otros dos todavía no se pueden
+   elegir.
 4. En **Info del grupo** podés ponerle nombre al grupo y apodos a tus amigos,
    si querés. Después tocá **Listo**.
 

@@ -6,24 +6,17 @@
 import { personalizar, type Apodos } from "./apodos.js";
 import { rivalDeFecha, semillaDeFecha, type DefinicionTorneo } from "./campana.js";
 import { configDeViernes, MODO_POR_DEFECTO, type ConfigContenido, type Modo } from "./modo.js";
-import type { Frases } from "./frases.js";
 import type { Relato } from "./relato.js";
-import type { DefinicionGrupo } from "./grupo.js";
 import { charlaDeInscripcion, type DefinicionInscripcion } from "./inscripcion.js";
-import type { DefinicionInterrupcion } from "./interrupciones.js";
 import type { OpcionesPartida } from "./partida.js";
-import { agendaDe } from "./perfiles.js";
-import type { DefinicionContacto, DefinicionPerfil } from "./tipos.js";
+import { elencoDe, type Elencos } from "./perfiles.js";
+import type { DefinicionPerfil } from "./tipos.js";
 
 /** Lo del contenido que hace falta para armar un viernes. */
 export interface ContenidoDelViernes {
   readonly config: ConfigContenido;
-  readonly perfiles: readonly DefinicionPerfil[];
-  readonly contactos: readonly DefinicionContacto[];
-  readonly interrupciones: readonly DefinicionInterrupcion[];
-  readonly grupo: DefinicionGrupo;
+  readonly elencos: Elencos;
   readonly inscripcion: DefinicionInscripcion;
-  readonly frases: Frases;
   readonly relato: Relato;
   readonly torneo: DefinicionTorneo;
 }
@@ -42,8 +35,9 @@ export function opcionesDeViernes(
   ajustes: Ajustes = {},
 ): OpcionesPartida {
   const modo = ajustes.modo ?? MODO_POR_DEFECTO;
+  const elenco = elencoDe(contenido.elencos, perfil.id);
   const { agenda, grupo, interrupciones } = personalizar(
-    { agenda: agendaDe(perfil, contenido.perfiles, contenido.contactos), grupo: contenido.grupo, interrupciones: contenido.interrupciones },
+    { agenda: elenco.contactos, grupo: elenco.grupo, interrupciones: elenco.interrupciones },
     ajustes.apodos,
     modo,
   );
@@ -63,7 +57,7 @@ export function opcionesDeViernes(
     interrupciones,
     grupo,
     config,
-    frases: contenido.frases,
+    frases: elenco.frases,
     relato: contenido.relato,
   };
 }

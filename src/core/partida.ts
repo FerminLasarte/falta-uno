@@ -755,7 +755,6 @@ export class Partida {
     if (c.escuchado !== undefined && !this.escuchado(c.escuchado)) return false;
     if (c.confirmado !== undefined && !confirmado(c.confirmado)) return false;
     if (c.noConfirmado !== undefined && confirmado(c.noConfirmado)) return false;
-    if (c.enAgenda !== undefined && !this.agenda.has(c.enAgenda)) return false;
     if (c.confirmadosMin !== undefined && this.roster().confirmados < c.confirmadosMin) return false;
     if (c.faltanMin !== undefined && this.config.jugadoresNecesarios - this.roster().confirmados < c.faltanMin) return false;
     if (c.faltanMax !== undefined && this.config.jugadoresNecesarios - this.roster().confirmados > c.faltanMax) return false;
@@ -1135,8 +1134,7 @@ export class Partida {
         this.disparadas.add(definicion.id);
         continue;
       }
-      const factor = this.perfil.probabilidadInterrupciones?.[definicion.id] ?? 1;
-      if (!this.rng.ocurre(Math.min(100, definicion.probabilidad * factor))) continue;
+      if (!this.rng.ocurre(definicion.probabilidad)) continue;
       this.disparadas.add(definicion.id);
       this.pulso.tipear(
         definicion.id,
@@ -1158,16 +1156,15 @@ export class Partida {
 
   /**
    * Esta noche algunos no pueden, hagas lo que hagas: lo decide la semilla, con
-   * su propio azar para no mover nada más. Nunca el contacto único del perfil, y
-   * nunca tantos que no quede margen para llenar la lista.
+   * su propio azar para no mover nada más. Nunca tantos que no quede margen
+   * para llenar la lista.
    */
   private repartirExcusas(agenda: readonly DefinicionContacto[], semilla: number | string): void {
     const rango = this.config.excusas;
     if (!rango) return;
     const rng = new Rng(`${semilla}:excusas`);
     const cuantos = Math.min(this.margen(agenda), rng.entero(rango.min, rango.max));
-    const posibles = agenda.filter((c) => c.id !== this.perfil.contactoUnico);
-    for (const c of rng.mezclar(posibles).slice(0, cuantos)) {
+    for (const c of rng.mezclar(agenda).slice(0, cuantos)) {
       this.excusas.set(c.id, rng.elegir(c.excusas ?? [this.frases.excusa]));
     }
   }
